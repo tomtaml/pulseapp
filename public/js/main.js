@@ -15,16 +15,17 @@ let step = 0;
 let state = {
   app_version:APP_VERSION, variant, workshop_code:workshopCode, language,
   participant_group:variants[variant].groups[0], consent_confirmed:false, prototype_disclaimer_confirmed:false,
-  current_soc:55, minimum_soc:variant === "uk-v2h" ? 40 : 50, departure_time:"17:00",
-  explicit_confirmation:true, comprehension_items:[], trust_values:[], sus_values:[],
+  current_soc:55, minimum_soc:variant === "uk-v2h" ? 40 : 65, departure_time:"17:00", dwell_minutes:90,
+  winter_condition:"snow", explicit_confirmation:true, comprehension_items:[], trust_values:[], sus_values:[],
   wireless_acceptance:3, bidirectional_participation:3, accessibility_understanding:3, optional_note:""
 };
 
 const screen = document.querySelector("#screen");
 const variantBadge = document.querySelector("#variantBadge");
 const collectionBadge = document.querySelector("#collectionBadge");
+const languageBtn = document.querySelector("#languageBtn");
 
-document.querySelector("#languageBtn").addEventListener("click", () => { syncState(); language = language === "fi" ? "en" : "fi"; state.language = language; render(); });
+languageBtn.addEventListener("click", () => { syncState(); language = language === "fi" ? "en" : "fi"; state.language = language; render(); });
 document.querySelector("#textSizeBtn").addEventListener("click", () => document.body.classList.toggle("large-text"));
 document.querySelector("#contrastBtn").addEventListener("click", () => document.body.classList.toggle("high-contrast"));
 
@@ -52,8 +53,11 @@ function syncState() {
   if (val("current_soc")) state.current_soc = Number(val("current_soc"));
   if (val("minimum_soc")) state.minimum_soc = Number(val("minimum_soc"));
   if (val("departure_time")) state.departure_time = val("departure_time");
+  if (val("dwell_minutes")) state.dwell_minutes = Number(val("dwell_minutes"));
   if (config.free_text_enabled && document.getElementById("optional_note")) state.optional_note = val("optional_note").slice(0,500); else state.optional_note = "";
-  state.comprehension_items = [state.c1 === "yes", state.c2 === "no", state.c3 === "yes"];
+  state.comprehension_items = variant === "fi-citizen"
+    ? [state.c1 === "no", state.c2 === "no", state.c3 === "yes"]
+    : [state.c1 === "yes", state.c2 === "no", state.c3 === "yes"];
 }
 
 function validStep() {
@@ -128,12 +132,13 @@ function attach() {
 
 function render() {
   document.documentElement.lang = language;
+  languageBtn.textContent = language === "fi" ? "FI / EN" : "EN / FI";
   variantBadge.textContent = variants[variant].badge;
   collectionBadge.textContent = collectionStatus();
   collectionBadge.classList.toggle("live",config.collection_enabled && !isDemo);
   if (step <= 4) screen.innerHTML = renderCoreScreen(step,ctx());
   else if (step <= 9) screen.innerHTML = renderEvalScreen(step,ctx());
-  else screen.innerHTML = `${progress(10)}<h1>${state.submitted ? esc(t(language,"done")) : esc(t(language,"demoDone"))}</h1><p>${language === "fi" ? "Tulokset käsitellään työpajan SRF-jäljitettävyysketjussa erillään teknisistä suorituskykymittareista." : "Results are handled through the workshop SRF traceability chain, separately from technical performance metrics."}</p><p class="status">${state.submission_id ? `Submission ID: ${esc(state.submission_id)}` : ""}</p>`;
+  else screen.innerHTML = `${progress(10)}<div class="finish-icon">✓</div><h1>${state.submitted ? esc(t(language,"done")) : esc(t(language,"demoDone"))}</h1><p>${language === "fi" ? "Tämän mobiilitehtävän havainnot voidaan yhdistää työpajan SRF-jäljitettävyysketjuun. Teknisiä suorituskykymittareita käsitellään erillään." : "Observations from this mobile task can be linked to the workshop SRF traceability chain. Technical performance metrics are handled separately."}</p><p class="status">${state.submission_id ? `Submission ID: ${esc(state.submission_id)}` : ""}</p>`;
   attach(); screen.focus({preventScroll:true});
 }
 
