@@ -1,75 +1,101 @@
 # PULSE SRF Workshop App
 
-Mobile-first QR-openable prototype for the PULSE Societal Readiness Framework workshops.
+Mobile-first, QR-openable research prototype for PULSE Societal Readiness Framework workshops.
 
-The app is designed for early workshop testing of wireless charging, V2G/V2H comprehension, usability, trust, control, accessibility and acceptance. It is intentionally a **research prototype**, not a production charging app.
+Version **0.2** separates the operational fleet case from citizen/accessibility review while keeping the interface comparable enough to test whether the same PULSE Pilot App concepts are understandable across groups.
 
-## Variants
+## Study variants
 
-| Variant | Purpose | URL parameter |
+| Variant | Purpose | Example route |
 |---|---|---|
 | Finland fleet | Wireless charging + V2G for fleet drivers, dispatchers and fleet managers | `?variant=fi-fleet&workshop=TAMPERE-S4` |
-| Finland citizen/accessibility | Same fictional delivery-van prototype, adapted for citizens and vulnerable groups | `?variant=fi-citizen&workshop=TAMPERE-S4` |
-| UK V2H alternative | Wireless charging + V2H framing for the British case | `?variant=uk-v2h&workshop=OXFORD-S4` |
+| Finland citizen/accessibility | Same fictional delivery-van interface reviewed by citizens, road users and accessibility/vulnerable-group participants | `?variant=fi-citizen&workshop=TAMPERE-S4` |
+| UK V2H alternative | Wireless charging + V2H for the Oxfordshire-oriented case | `?variant=uk-v2h&workshop=OXFORD-S4` |
 
-## Research logic
+Add `&demo=1` for a walkthrough that **never submits research data**, even if collection is enabled on the deployment.
 
-The prototype supports the SRF traceability pipeline:
+## v0.2 workshop flow
+
+1. Research-prototype notice and acknowledgement
+2. Broad participant perspective
+3. Wireless-charging alignment task, including snow/ice in Finland
+4. Battery need, minimum departure reserve and departure time
+5. Plan/reliability/renewable-signal comprehension
+6. V2G or V2H offer with mobility protection and explicit confirmation
+7. Charging-failure / emergency-departure scenario
+8. Comprehension check
+9. Full 10-item SUS after hands-on use
+10. Trust, accessibility/independent understanding, wireless acceptance and V2G/V2H participation
+
+The citizen/accessibility variant uses **fictional fleet values** so citizens and vulnerable-group participants can evaluate comprehension and usability without being treated as fleet operational decision-makers.
+
+## SRF traceability
+
+The intended evidence chain is:
 
 ```text
-Workshop use → comprehension / SUS / trust / acceptance signals → SRF register → DCE attributes → Behavioural Twin inputs
+Workshop activity
+  → structured app signal
+  → SRF Activity Map
+  → Issue Response Log
+  → Transparency Log / design response
+  → DCE attribute or SRF indicator
+  → Behavioural Twin input
 ```
 
-It collects structured, anonymous workshop responses only after explicit consent.
+Wireless-charging acceptance and V2G/V2H participation are measured separately. SUS is also kept separate from trust and comprehension.
 
-## Privacy-by-design principles
+## Privacy-by-design defaults
 
-- No names, emails, phone numbers, exact addresses, employer names, vehicle IDs or GPS are requested.
-- No IP address is stored by the application code.
-- Collection is disabled unless `COLLECTION_ENABLED=true`.
-- The API rejects common accidental PII fields.
-- Comments are capped and preceded by a no-PII reminder.
-- Server-side Turnstile verification is supported.
-- D1 database can be created in the EU jurisdiction.
+- Research collection is **off by default** (`COLLECTION_ENABLED=false`).
+- Free text is **off by default** (`FREE_TEXT_ENABLED=false`).
+- No name, email, phone, precise address, employer, vehicle ID or GPS is requested.
+- The Worker strips common accidental PII field names before persistence.
+- Request bodies are capped at 20 KB.
+- There is no public data-export endpoint.
+- Turnstile can be required and is validated server-side.
+- The database can be created using the approved Cloudflare D1 jurisdiction.
 
-## Quick start
+See `docs/ETHICS_DEPLOYMENT_CHECKLIST.md` before enabling collection.
+
+## SUS wording
+
+The standard English 10-item SUS wording is included. The Finnish version in v0.2 is explicitly a **working PULSE translation for cognitive testing** and should be reviewed/back-translated and documented before formal cross-language SUS comparisons.
+
+## Local development
 
 ```bash
 npm install
+cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-Open:
+Open for example:
 
 ```text
-http://localhost:8787/?variant=fi-fleet&workshop=TAMPERE-S4
-http://localhost:8787/?variant=fi-citizen&workshop=TAMPERE-S4
-http://localhost:8787/?variant=uk-v2h&workshop=OXFORD-S4
+http://localhost:8787/?variant=fi-fleet&workshop=TAMPERE-S4&demo=1
+http://localhost:8787/?variant=fi-citizen&workshop=TAMPERE-S4&demo=1
+http://localhost:8787/?variant=uk-v2h&workshop=OXFORD-S4&demo=1
 ```
 
-## Cloudflare setup
+## Cloudflare deployment outline
 
-Create an EU D1 database:
+Create the D1 database using the jurisdiction approved for the study, then put its database ID into `wrangler.jsonc`.
+
+Example for an EU-jurisdiction database:
 
 ```bash
-npx wrangler d1 create pulse_srf_workshop --jurisdiction=eu
+npx wrangler d1 create pulse-srf-workshop --jurisdiction=eu
+npx wrangler d1 migrations apply pulse-srf-workshop --remote
 ```
 
-Add the returned database id to `wrangler.jsonc`.
-
-Run migration:
-
-```bash
-npx wrangler d1 migrations apply pulse_srf_workshop --remote
-```
-
-Set secrets:
+Set the production Turnstile secret without committing it:
 
 ```bash
 npx wrangler secret put TURNSTILE_SECRET_KEY
 ```
 
-Optional public Turnstile site key goes in `public/app.js` or can be injected during deployment.
+Set the public site key, expected hostname and environment variables in the Worker configuration/deployment settings. Keep `COLLECTION_ENABLED=false` through the dry run and approvals.
 
 Deploy:
 
@@ -79,37 +105,29 @@ npm run deploy
 
 ## QR generation
 
-After deployment, generate QR codes:
+Install the small Python dependency:
 
 ```bash
-python scripts/make_qr.py https://your-worker-url.workers.dev
+python3 -m pip install -r requirements.txt
 ```
 
-This creates QR links for:
+Then:
 
-- `fi-fleet` Tampere fleet workshop
-- `fi-citizen` Tampere citizen/accessibility workshop
-- `uk-v2h` Oxfordshire V2H workshop
+```bash
+python3 scripts/make_qr.py https://your-final-domain.example TAMPERE-S4
+```
 
-## Ethics checklist before live use
+QR codes are generated separately for the three study variants.
 
-Before using this in workshops:
+## Research documentation
 
-1. Insert approved consent wording.
-2. Insert approved SUS wording.
-3. Confirm whether optional free text is allowed.
-4. Confirm retention and deletion period.
-5. Confirm D1 jurisdiction and Cloudflare account ownership.
-6. Confirm Turnstile configuration.
-7. Confirm export process and access control.
-8. Test QR links on iOS and Android.
+- `docs/ETHICS_DEPLOYMENT_CHECKLIST.md` — go/no-go checklist before live collection
+- `docs/DATA_DICTIONARY.md` — stored fields, exclusions and SRF traceability
 
-See `docs/ETHICS_DEPLOYMENT_CHECKLIST.md`.
+## Current status
 
-## Data dictionary
-
-See `docs/DATA_DICTIONARY.md`.
+`prototype-v0.2` is a development branch. It is suitable for interface review and dry workshop testing with collection disabled. Production data collection should only be enabled after the UH ethics/data-protection and deployment checks are complete.
 
 ## License
 
-MIT for code. Research instruments and final wording should be reviewed under project governance before reuse.
+MIT for code. Research instruments, translations and final study wording remain subject to project governance and research approval.

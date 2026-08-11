@@ -1,0 +1,31 @@
+name: validate prototype
+
+on:
+  push:
+    branches: [main, prototype-v0.2]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Node dependencies
+        run: npm install --ignore-scripts
+      - name: Check Worker and browser module syntax
+        run: |
+          node --check src/index.js
+          node --check public/app.js
+          for file in public/js/*.js; do node --check "$file"; done
+      - name: Check QR helper syntax
+        run: python3 -m py_compile scripts/make_qr.py
+      - name: Confirm research collection remains disabled in repository defaults
+        run: grep -q '"COLLECTION_ENABLED": "false"' wrangler.jsonc
+      - name: Confirm free text remains disabled in repository defaults
+        run: grep -q '"FREE_TEXT_ENABLED": "false"' wrangler.jsonc
