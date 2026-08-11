@@ -14,10 +14,10 @@ export function actions(language, step, nextLabel = t(language, "continue"), all
   return `<div class="actions">${allowBack && step > 0 ? `<button class="secondary" data-action="back">${t(language, "back")}</button>` : ""}<button class="primary" data-action="next">${nextLabel}</button></div>`;
 }
 
-export function radioGroup(name, options, value) {
+export function radioGroup(name, options, value = "") {
   return `<div class="options">${options.map(([v, label]) => `<label class="option"><input type="radio" name="${name}" value="${esc(v)}" ${value === v ? "checked" : ""}><span>${esc(label)}</span></label>`).join("")}</div>`;
 }
 
-export function likert(language, name, value = 3) {
+export function likert(language, name, value = null) {
   return `<div class="likert-anchors"><span>${t(language, "stronglyDisagree")}</span><span>${t(language, "stronglyAgree")}</span></div><div class="likert" role="radiogroup" aria-label="${esc(name)}">${[1,2,3,4,5].map(v => `<label class="likert-option"><input type="radio" name="${name}" value="${v}" ${Number(value) === v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div>`;
 }
