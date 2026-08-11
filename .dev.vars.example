@@ -1,0 +1,2 @@
+# Cloudflare Turnstile test secret. Replace in production using `wrangler secret put TURNSTILE_SECRET_KEY`.
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
