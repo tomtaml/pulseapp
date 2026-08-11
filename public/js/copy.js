@@ -46,6 +46,14 @@ export const copy = {
     privacy: "Älä kirjoita nimiä, sähköpostiosoitteita, puhelinnumeroita, työnantajan nimeä tai tarkkoja osoitteita.",
     done: "Kiitos — vastaus tallennettiin.", demoDone: "Demo valmis — tutkimusdataa ei lähetetty.",
     stronglyDisagree: "Täysin eri mieltä", stronglyAgree: "Täysin samaa mieltä"
+  },
+  el: {
+    continue: "Συνέχεια", back: "Πίσω", submit: "Υποβολή ανώνυμης απάντησης",
+    agree: "Έχω διαβάσει τις πληροφορίες του εργαστηρίου που μου παρουσιάστηκαν και συμφωνώ να συνεχίσω.",
+    notReal: "Κατανοώ ότι πρόκειται για προσομοίωση και όχι για πραγματική υπηρεσία φόρτισης.",
+    privacy: "Μην εισάγετε ονόματα, διευθύνσεις email, αριθμούς τηλεφώνου, εργοδότη ή ακριβείς διευθύνσεις.",
+    done: "Ευχαριστούμε — η απάντηση καταγράφηκε.", demoDone: "Η επίδειξη ολοκληρώθηκε — δεν στάλθηκαν ερευνητικά δεδομένα.",
+    stronglyDisagree: "Διαφωνώ απόλυτα", stronglyAgree: "Συμφωνώ απόλυτα"
   }
 };
 
@@ -62,18 +70,31 @@ export const susItems = {
     "I felt very confident using the system.",
     "I needed to learn a lot of things before I could get going with this system."
   ],
-  // PULSE working translation for cognitive testing. Validate/back-translate before final research use.
+  // Finnish workshop wording supplied for PULSE. Validate/back-translate before cross-country comparative use if required by the study protocol.
   fi: [
-    "Luulen, että käyttäisin tätä järjestelmää mielelläni usein.",
-    "Järjestelmä oli mielestäni tarpeettoman monimutkainen.",
-    "Järjestelmä oli mielestäni helppokäyttöinen.",
-    "Luulen, että tarvitsisin teknisen henkilön tukea voidakseni käyttää tätä järjestelmää.",
-    "Järjestelmän eri toiminnot olivat mielestäni hyvin yhteensopivia.",
-    "Järjestelmässä oli mielestäni liikaa epäjohdonmukaisuutta.",
-    "Uskon, että useimmat ihmiset oppisivat käyttämään tätä järjestelmää hyvin nopeasti.",
-    "Järjestelmä oli mielestäni hyvin kömpelö käyttää.",
-    "Tunsin oloni hyvin varmaksi käyttäessäni järjestelmää.",
-    "Minun piti mielestäni opetella paljon asioita ennen kuin pääsin alkuun järjestelmän käytössä."
+    "Uskon, että haluaisin käyttää tätä järjestelmää usein.",
+    "Pidin järjestelmää tarpeettoman monimutkaisena.",
+    "Järjestelmää oli mielestäni helppo käyttää.",
+    "Luulen, että tarvitsisin teknisen henkilön tukea pystyäkseni käyttämään tätä järjestelmää.",
+    "Järjestelmän eri toiminnot oli mielestäni integroitu hyvin toisiinsa.",
+    "Mielestäni järjestelmässä oli liikaa epäjohdonmukaisuuksia.",
+    "Voisin kuvitella, että useimmat ihmiset oppisivat käyttämään tätä järjestelmää erittäin nopeasti.",
+    "Pidin järjestelmää erittäin hankalakäyttöisenä.",
+    "Tunsin oloni erittäin varmaksi järjestelmää käyttäessäni.",
+    "Minun piti oppia paljon asioita ennen kuin pääsin alkuun tämän järjestelmän kanssa."
+  ],
+  // Greek workshop wording supplied for PULSE. Native-language review / validation status should be recorded before comparative SUS use.
+  el: [
+    "Πιστεύω ότι θα ήθελα να χρησιμοποιώ αυτό το σύστημα συχνά.",
+    "Βρήκα το σύστημα άσκοπα πολύπλοκο.",
+    "Πιστεύω ότι το σύστημα ήταν εύκολο στη χρήση.",
+    "Πιστεύω ότι θα χρειαζόμουν την υποστήριξη ενός τεχνικού για να μπορέσω να χρησιμοποιήσω αυτό το σύστημα.",
+    "Βρήκα ότι οι διάφορες λειτουργίες αυτού του συστήματος ήταν καλά ενσωματωμένες.",
+    "Πιστεύω ότι υπήρχε μεγάλη ασυνέπεια σε αυτό το σύστημα.",
+    "Φαντάζομαι ότι οι περισσότεροι άνθρωποι θα μάθαιναν να χρησιμοποιούν αυτό το σύστημα πολύ γρήγορα.",
+    "Βρήκα το σύστημα πολύ δύσχρηστο στη χρήση.",
+    "Ένιωσα μεγάλη αυτοπεποίθηση χρησιμοποιώντας το σύστημα.",
+    "Χρειάστηκε να μάθω πολλά πράγματα πριν μπορέσω να αρχίσω να χρησιμοποιώ αυτό το σύστημα."
   ]
 };
 
