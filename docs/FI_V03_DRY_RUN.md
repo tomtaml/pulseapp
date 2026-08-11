@@ -2,6 +2,8 @@
 
 Use the `prototype-v0.3` Cloudflare preview only. Research collection must remain disabled.
 
+> Preview deployment check: Cloudflare should build this branch with the non-production deploy command (`npx wrangler versions upload`), not retry the production `main` build.
+
 ## Fleet route
 
 `?variant=fi-fleet&workshop=TAMPERE-S4&demo=1`
