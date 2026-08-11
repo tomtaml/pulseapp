@@ -1,4 +1,4 @@
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.3.0";
 const JSON_HEADERS = {"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0"};
 const MAX_BODY_BYTES = 20000;
 const ALLOWED_VARIANTS = new Set(["fi-fleet","fi-citizen","uk-v2h"]);
@@ -83,9 +83,11 @@ function researchPayload(body,env){
     participant_group:clean.participant_group,
     language:clean.language,
     alignment_clarity:integerInRange(clean.alignment_clarity,1,5),
+    winter_condition:["clear","snow","slush"].includes(clean.winter_condition)?clean.winter_condition:null,
     current_soc:integerInRange(clean.current_soc,5,100),
     minimum_soc:integerInRange(clean.minimum_soc,10,100),
     departure_time:/^([01]\d|2[0-3]):[0-5]\d$/.test(clean.departure_time||"")?clean.departure_time:null,
+    dwell_minutes:integerInRange(clean.dwell_minutes,15,480),
     plan_comprehension:integerInRange(clean.plan_comprehension,1,5),
     explicit_confirmation:clean.explicit_confirmation===true,
     fault_priority:["retry","override","support","alternative"].includes(clean.fault_priority)?clean.fault_priority:null,
