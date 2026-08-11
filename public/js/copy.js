@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.3.0";
 
 export const variants = {
   "fi-fleet": {
@@ -70,7 +70,6 @@ export const susItems = {
     "I felt very confident using the system.",
     "I needed to learn a lot of things before I could get going with this system."
   ],
-  // Finnish workshop wording supplied for PULSE. Validate/back-translate before cross-country comparative use if required by the study protocol.
   fi: [
     "Uskon, että haluaisin käyttää tätä järjestelmää usein.",
     "Pidin järjestelmää tarpeettoman monimutkaisena.",
@@ -83,7 +82,6 @@ export const susItems = {
     "Tunsin oloni erittäin varmaksi järjestelmää käyttäessäni.",
     "Minun piti oppia paljon asioita ennen kuin pääsin alkuun tämän järjestelmän kanssa."
   ],
-  // Greek workshop wording supplied for PULSE. Native-language review / validation status should be recorded before comparative SUS use.
   el: [
     "Πιστεύω ότι θα ήθελα να χρησιμοποιώ αυτό το σύστημα συχνά.",
     "Βρήκα το σύστημα άσκοπα πολύπλοκο.",
