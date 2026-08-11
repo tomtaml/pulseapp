@@ -18,7 +18,9 @@
   ],
   "vars": {
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "TURNSTILE_EXPECTED_HOSTNAME": "",
     "COLLECTION_ENABLED": "false",
+    "FREE_TEXT_ENABLED": "false",
     "ENVIRONMENT": "development"
   }
 }
