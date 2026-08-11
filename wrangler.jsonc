@@ -3,6 +3,8 @@
   "name": "pulse-srf-workshop",
   "main": "src/index.js",
   "compatibility_date": "2026-08-11",
+  "workers_dev": true,
+  "preview_urls": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -13,6 +15,6 @@
     "TURNSTILE_EXPECTED_HOSTNAME": "",
     "COLLECTION_ENABLED": "false",
     "FREE_TEXT_ENABLED": "false",
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "preview"
   }
 }
