@@ -3,6 +3,8 @@
 Use the `prototype-v0.3` Cloudflare preview only. Research collection must remain disabled.
 
 > Preview deployment check: Cloudflare should build this branch with the non-production deploy command (`npx wrangler versions upload`), not retry the production `main` build.
+>
+> Fresh preview-trigger commit pushed 11 Aug 2026 after confirming non-production branch builds are enabled in Cloudflare.
 
 ## Fleet route
 
