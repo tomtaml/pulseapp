@@ -1,0 +1,54 @@
+.v06-fi-fleet .bay-visual[hidden],
+.v06-fi-fleet .alignment-controls[hidden],
+.v06-fi-fleet .scenario-condition-v05[hidden],
+.v06-fi-fleet .auto-failure-v05[hidden],
+.v06-fi-fleet .grid-context-v05[hidden],
+.v06-fi-fleet .cycle-card[hidden],
+.v06-fi-fleet fieldset[hidden],
+.v06-fi-fleet .v06-hide-original,
+.v06-fi-fleet .v06-old-align-notice {
+  display: none !important;
+}
+
+.v06-fi-fleet .v06-move-feedback {
+  display: grid;
+  gap: .2rem;
+}
+
+.v06-fi-fleet .v06-guidance-arrow.v06-up {
+  left: 48%;
+  top: 27%;
+  animation: v06PulseUp .9s infinite alternate;
+}
+
+.v06-fi-fleet .v06-guidance-arrow.v06-right {
+  left: 57%;
+  top: 50%;
+}
+
+.v06-fi-fleet .v06-guidance-arrow.v06-down {
+  left: 48%;
+  top: 65%;
+  animation: v06PulseDown .9s infinite alternate;
+}
+
+.v06-fi-fleet .v06-dpad button.recommended {
+  background: #e6f5ec;
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(11, 107, 88, .12);
+}
+
+.v06-fi-fleet .v06-fallback-rating {
+  display: block;
+  margin-top: .9rem;
+}
+
+@keyframes v06PulseUp {
+  from { transform: translateY(2px); }
+  to { transform: translateY(-7px); }
+}
+
+@keyframes v06PulseDown {
+  from { transform: translateY(-2px); }
+  to { transform: translateY(7px); }
+}
