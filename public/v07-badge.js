@@ -5,6 +5,6 @@ if (v07Brand && !document.querySelector('#v07BuildBadge')) {
   const badge = document.createElement('span');
   badge.id = 'v07BuildBadge';
   badge.className = 'status-badge';
-  badge.textContent = 'UI v0.7 preview';
+  badge.textContent = 'UI v0.7.1 preview';
   v07Brand.appendChild(badge);
 }
