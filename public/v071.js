@@ -16,14 +16,15 @@ if ((v071Params.get("variant") || "fi-fleet") === "fi-fleet") {
   ];
 
   function headingText() { return document.querySelector("#screen h1")?.textContent || ""; }
-  function isAgreement() { return /Millä ehdoilla ajoneuvo|Under what conditions can the vehicle/i.test(headingText()); }
-  function isCycle() { return /Seuraa latausta, V2G-aktivointia|Follow charging, V2G activation/i.test(headingText()); }
+  function isAgreement() { return /Millä ehdoilla ajoneuvo|Under what conditions can the vehicle|V2G ennen latausjaksoa|V2G decision before|Sopiiko lyhyt V2G/i.test(headingText()); }
+  function isCycle() { return /Seuraa latausta, V2G-aktivointia|Follow charging, V2G activation|Seuraa yksi virtuaalinen lataus|Run one virtual charging/i.test(headingText()); }
   function isFault() { return /Lumimyrsky keskeyttää|Snowstorm interrupts|Talviolosuhde keskeyttää|Winter conditions interrupt/i.test(headingText()); }
 
   function simplifyAgreement() {
     if (!isAgreement()) { document.body.classList.remove("v071-agreement-active"); return; }
     document.body.classList.add("v071-agreement-active");
     const h1 = document.querySelector("#screen h1");
+    if (h1) h1.textContent = tr("Millä ehdoilla ajoneuvo voi osallistua V2G:hen?", "Under what conditions can the vehicle participate in V2G?");
     const lead = h1?.nextElementSibling;
     if (lead?.classList.contains("lead")) lead.textContent = tr(
       "Kaluston V2G-sopimus on tässä skenaariossa jo hyväksytty. Tarkista neljä keskeistä takuuta ja arvioi sen jälkeen, kuka hyväksyy yksittäisen V2G-aktivoinnin.",
@@ -62,8 +63,10 @@ if ((v071Params.get("variant") || "fi-fleet") === "fi-fleet") {
     });
 
     const legends = [...document.querySelectorAll("#screen fieldset legend")];
-    const auth = legends.find(el => /yksittäinen V2G-aktivointi|individual V2G activation/i.test(el.textContent || ""));
+    const auth = legends.find(el => /Miten V2G pitäisi|yksittäinen V2G-aktivointi|How should V2G normally|individual V2G activation/i.test(el.textContent || ""));
     if (auth) auth.textContent = tr("Kuka hyväksyy yksittäisen V2G-aktivoinnin?", "Who should authorise an individual V2G activation?");
+    const acceptance = legends.find(el => /Kuinka hyväksyttävä tämä V2G|Kuinka hyväksyttävät nämä V2G|How acceptable would this V2G|How acceptable would these V2G/i.test(el.textContent || ""));
+    if (acceptance) acceptance.textContent = tr("Kuinka hyväksyttävät nämä V2G-ehdot olisivat omassa työroolissasi?", "How acceptable would these V2G conditions be in your work role?");
   }
 
   function replaySnapshot(minute) {
