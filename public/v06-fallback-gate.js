@@ -1,6 +1,6 @@
 const v06GateParams = new URLSearchParams(location.search);
 if ((v06GateParams.get("variant") || "fi-fleet") === "fi-fleet") {
-  const KEY = "pulse-v06-v2-fallback-rating";
+  const KEY = "pulse-v06-v3-fallback-rating";
   const MIRROR_ID = "v06FallbackRatingMirror";
 
   function isPositioningScreen() {
