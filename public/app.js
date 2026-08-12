@@ -9,3 +9,4 @@ import "./v071.js";
 import "./v06-version.js";
 import "./v06-badge.js";
 import "./v07-badge.js";
+import "./v071-version.js";
