@@ -7,6 +7,7 @@ import "./v06-core-sync.js";
 import "./v07.js";
 import "./v071.js";
 import "./v08-dispatcher.js";
+import "./v08-dispatcher-cleanup.js";
 import "./v06-version.js";
 import "./v06-badge.js";
 import "./v07-badge.js";
