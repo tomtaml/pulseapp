@@ -1,0 +1,16 @@
+.v071-agreement-active .v07-contract-level[hidden],
+.v071-agreement-active .v07-contract-rule[hidden],
+.v071-agreement-active .v07-activation-level[hidden],
+.v071-agreement-active .v07-tech-note[hidden],
+.v071-agreement-active .v06-v2g-condition[hidden],
+.v071-agreement-active #screen>.guarantee[hidden]{display:none!important}
+.v071-agreement-active .v07-agreement-card{gap:.75rem}
+.v071-agreement-summary{display:grid;gap:.25rem;padding:.85rem 1rem;border-radius:14px;background:#edf6ff;border-left:5px solid #17457f}
+.v071-agreement-summary span{color:#52635d}
+.v071-replay-wrap{display:grid;gap:.35rem;margin-top:.2rem;padding:.85rem 1rem;border:1px dashed #aebfba;border-radius:14px;background:#f8fbfa}
+.v071-replay-wrap small{color:#61716b}
+.v071-replay{width:100%}
+.v071-fault-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:.9rem 0 1rem}
+.v071-fault-metrics>div{display:grid;gap:.2rem;padding:.8rem;border:1px solid #cfdad6;border-radius:14px;background:#fff;text-align:center}
+.v071-fault-metrics span{font-size:.82rem;color:#61716b}.v071-fault-metrics strong{font-size:1.3rem;color:#17457f}
+@media(max-width:720px){.v071-fault-metrics{grid-template-columns:1fr 1fr 1fr}.v071-fault-metrics>div{padding:.65rem .35rem}.v071-fault-metrics strong{font-size:1.1rem}}
