@@ -1,12 +1,12 @@
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "0.7.0";
 
 export const variants = {
   "fi-fleet": {
     badge: "Finland · Tampere fleet · wireless V2G",
     title: { en: "Wireless charging + V2G for delivery fleets", fi: "Langaton lataus + V2G jakelukalustolle" },
     intro: {
-      en: "Follow one short Tampere delivery-stop scenario: align the van, protect the next job, review a V2G offer, run a virtual cycle and respond to a winter disruption. We test the service — not your technical knowledge.",
-      fi: "Käy läpi yksi lyhyt Tampereen jakelupysähdyksen skenaario: kohdista auto, turvaa seuraava toimitus, arvioi V2G-tarjous, seuraa virtuaalinen jakso ja ratkaise talvihäiriö. Testaamme palvelua — emme teknistä osaamistasi."
+      en: "Follow one Tampere delivery-stop scenario: align the van, protect the next job, review the fleet V2G agreement, follow an accelerated charging/V2G activation and respond to a winter disruption. We test the service — not your technical knowledge.",
+      fi: "Käy läpi yksi Tampereen jakelupysähdyksen skenaario: kohdista auto, turvaa seuraava toimitus, arvioi kaluston V2G-sopimuksen ehtoja, seuraa nopeutettu lataus/V2G-aktivointi ja ratkaise talvihäiriö. Testaamme palvelua — emme teknistä osaamistasi."
     },
     groups: ["fleet_driver", "dispatcher", "fleet_manager", "other"]
   },
