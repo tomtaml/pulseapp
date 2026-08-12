@@ -47,11 +47,13 @@ if (variant === "fi-fleet") {
       return;
     }
 
-    guided.textContent = guidedStage
+    const guidedText = guidedStage
       ? tr("Manuaaliohjaus: 15 cm oikealle ja suorista", "Manual guidance: 15 cm right, then straighten")
       : tr("Manuaaliohjaus: siirry 35 cm oikealle", "Manual guidance: move 35 cm right");
+    if (guided.textContent !== guidedText) guided.textContent = guidedText;
 
-    auto.textContent = tr("Kokeile pysäköintiavustinta", "Try parking assistant");
+    const autoText = tr("Kokeile pysäköintiavustinta", "Try parking assistant");
+    if (auto.textContent !== autoText && !autoFailed) auto.textContent = autoText;
 
     if (surface !== "clear" && autoFailed) {
       auto.disabled = true;
@@ -90,6 +92,7 @@ if (variant === "fi-fleet") {
     if (!preview) {
       preview = document.createElement("div");
       preview.className = "role-preview-v05";
+      preview.hidden = true;
       container.insertAdjacentElement("afterend", preview);
     }
     const update = () => {
@@ -101,11 +104,20 @@ if (variant === "fi-fleet") {
         fleet_manager: ["Kalusto- ja sopimusreitti", "Fleet / contract route", "Luotettavuusraja, V2G-valtuutus, hyvitys, akkutakuu, vastuut ja hankintaehto. Ei oletuksena kuljettaja-SUS:ia.", "Reliability threshold, V2G authorisation, compensation, battery guarantee, liability and procurement conditions. No driver SUS by default."],
         other: ["Ohjattu sidosryhmäreitti", "Facilitated stakeholder route", "Käytä prototyyppiä keskustelun ärsykkeenä ja kirjaa toteutettavuus- ja vastuukysymykset SRF-lokiin.", "Use the prototype as a discussion stimulus and record feasibility and responsibility issues in the SRF log."]
       }[role];
-      if (!text) { preview.hidden = true; return; }
+      if (!text) {
+        preview.hidden = true;
+        preview.replaceChildren();
+        return;
+      }
       preview.hidden = false;
       preview.innerHTML = `<strong>${text[fi() ? 0 : 1]}</strong><span>${text[fi() ? 2 : 3]}</span><small>${tr("v0.5: roolikohtainen reititys rakennetaan tämän jaon pohjalta.", "v0.5: role-specific routing is being built from this split.")}</small>`;
     };
-    roleInputs.forEach(i => { if (!i.dataset.v05Role) { i.dataset.v05Role = "1"; i.addEventListener("change", update); } });
+    roleInputs.forEach(i => {
+      if (!i.dataset.v05Role) {
+        i.dataset.v05Role = "1";
+        i.addEventListener("change", update);
+      }
+    });
     update();
   }
 
@@ -160,7 +172,8 @@ if (variant === "fi-fleet") {
     if (!override) return;
     const ready = /Ready to leave|Lähtövalmius|Cycle completed|Jakso suoritettu/i.test(phase);
     const started = !/Ready to start|Valmis aloittamaan/i.test(phase);
-    override.textContent = tr("Tarvitsen auton nyt — lopeta energiajaks o", "Need the vehicle now — stop energy session").replace("jaks o", "jakso");
+    const label = tr("Tarvitsen auton nyt — lopeta energiajakso", "Need the vehicle now — stop energy session");
+    if (override.textContent !== label) override.textContent = label;
     override.hidden = !started || ready;
   }
 
@@ -171,7 +184,12 @@ if (variant === "fi-fleet") {
     gridPanel();
   }
 
-  const observer = new MutationObserver(() => apply());
-  observer.observe(document.querySelector("#screen"), {childList:true, subtree:true});
-  apply();
+  const screen = document.querySelector("#screen");
+  if (screen) {
+    // Observe only replacement of the rendered screen. v0.5 itself mutates descendants;
+    // observing the whole subtree caused a self-triggering MutationObserver loop in Firefox.
+    const observer = new MutationObserver(() => apply());
+    observer.observe(screen, {childList:true});
+    apply();
+  }
 }
