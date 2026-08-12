@@ -1,0 +1,9 @@
+.v08-role-preview,.v08-dispatcher-status{margin-top:1rem;border:1px solid #c8d6d2;border-radius:18px;background:#f5faf8;padding:1rem 1.1rem}
+.v08-role-preview{display:grid;gap:.3rem}.v08-role-preview strong{color:#17457f;font-size:1.08rem}.v08-role-preview span{line-height:1.45;color:#41534d}
+.v08-dispatcher-status{display:grid;gap:1rem;background:linear-gradient(180deg,#fff 0%,#f2f7fc 100%)}
+.v08-status-head{display:flex;justify-content:space-between;gap:1rem;align-items:center}.v08-status-head strong{font-size:1.18rem;color:#17457f}.v08-status-head span{font-weight:750;color:#0a694b;background:#e7f8ed;border-radius:999px;padding:.35rem .65rem}
+.v08-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.v08-status-grid>div{display:grid;gap:.2rem;padding:.8rem;border:1px solid #cfdbd7;border-radius:14px;background:#fff}.v08-status-grid span{font-size:.86rem;color:#62716c}.v08-status-grid strong{font-size:1.08rem;color:#123f7d}
+.v08-status-note{padding:.75rem .85rem;border-radius:12px;background:#edf5fb;color:#334d5c;line-height:1.4}
+.v08-dispatcher .v08-dispatcher-status+fieldset{margin-top:1.1rem}
+@media(max-width:640px){.v08-status-head{display:grid}.v08-status-head span{justify-self:start}.v08-status-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.v08-status-grid{grid-template-columns:1fr}}

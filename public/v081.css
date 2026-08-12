@@ -1,0 +1,9 @@
+.v081-dispatcher-contract{display:grid;gap:1rem;margin:1rem 0 1.25rem;padding:1rem;border:1px solid #c8d6d2;border-radius:22px;background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%)}
+.v081-contract-head{display:grid;gap:.25rem;padding:.9rem 1rem;border-left:5px solid #17457f;border-radius:14px;background:#edf6ff}
+.v081-contract-head strong{font-size:1.12rem;color:#173f75}.v081-contract-head span{color:#53645e}
+.v081-guarantees{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.v081-guarantees>div{display:grid;gap:.2rem;padding:.8rem;border:1px solid #cfdbd7;border-radius:14px;background:#fff}.v081-guarantees span{font-size:.88rem;color:#64736d}.v081-guarantees strong{color:#17457f}
+.v081-credit{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.85rem 1rem;border:1px solid #e5cc86;border-radius:14px;background:#fff8e8}.v081-credit>span{display:grid;gap:.2rem}.v081-credit small{color:#655f4f}.v081-credit b{white-space:nowrap;font-size:1.3rem;color:#17457f}
+.v081-activation{display:grid;gap:.25rem;padding:.85rem 1rem;border-left:5px solid #0b6b55;border-radius:14px;background:#eef9f3}.v081-activation strong{color:#0b5d4b}
+.v081-reserve-note{margin:.75rem 0 1rem;padding:.8rem 1rem;border-left:5px solid #0b6b55;border-radius:12px;background:#eaf8ef;color:#164c3c;font-weight:700}
+.v081-dispatcher-agreement .v07-agreement-card,.v081-dispatcher-agreement .v06-v2g-condition{display:none!important}
+@media(max-width:720px){.v081-guarantees{grid-template-columns:1fr 1fr}.v081-credit{align-items:flex-start;flex-direction:column}}
