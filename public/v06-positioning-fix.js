@@ -6,10 +6,10 @@ if (v06FixVariant === "fi-fleet") {
   const fi = () => document.documentElement.lang === "fi";
   const tr = (fiText, enText) => fi() ? fiText : enText;
 
-  const AUTO_KEY = "pulse-v06-v2-auto-tried";
-  const STEP_KEY = "pulse-v06-v2-manual-step";
-  const WRONG_KEY = "pulse-v06-v2-wrong-moves";
-  const FALLBACK_KEY = "pulse-v06-v2-fallback-rating";
+  const AUTO_KEY = "pulse-v06-v3-auto-tried";
+  const STEP_KEY = "pulse-v06-v3-manual-step";
+  const WRONG_KEY = "pulse-v06-v3-wrong-moves";
+  const FALLBACK_KEY = "pulse-v06-v3-fallback-rating";
 
   function isPositioningScreen() {
     const heading = document.querySelector("h1");
@@ -69,7 +69,10 @@ if (v06FixVariant === "fi-fleet") {
   }
 
   function ratingHtml(name, savedValue) {
-    return `<div class="likert-anchors"><span>${tr("Täysin eri mieltä", "Strongly disagree")}</span><span>${tr("Täysin samaa mieltä", "Strongly agree")}</span></div><div class="likert" role="radiogroup" aria-label="${name}">${[1,2,3,4,5].map(v => `<label class="likert-option"><input type="radio" name="${name}" value="${v}" ${Number(savedValue) === v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div>`;
+    return `<div class="likert-anchors"><span>${tr("Täysin eri mieltä", "Strongly disagree")}</span><span>${tr("Täysin samaa mieltä", "Strongly agree")}</span></div>
+      <div class="likert" role="radiogroup" aria-label="${name}">
+        ${[1,2,3,4,5].map(v => `<label class="likert-option"><input type="radio" name="${name}" value="${v}" ${Number(savedValue) === v ? "checked" : ""}><span>${v}</span></label>`).join("")}
+      </div>`;
   }
 
   function ensureFallbackRating() {
@@ -92,6 +95,27 @@ if (v06FixVariant === "fi-fleet") {
         document.querySelector(".v06-extra-error")?.remove();
       });
     });
+  }
+
+  function installFallbackValidation() {
+    if (!isPositioningScreen() || manualStep() < 3) return;
+    const next = document.querySelector('[data-action="next"]');
+    if (!next || next.dataset.v06FallbackValidation === "1") return;
+    next.dataset.v06FallbackValidation = "1";
+    next.addEventListener("click", event => {
+      const selected = document.querySelector('input[name="alignment_fallback_acceptability"]:checked');
+      if (selected) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      let error = document.querySelector(".v06-extra-error");
+      if (!error) {
+        error = document.createElement("p");
+        error.className = "v06-extra-error error";
+        next.closest(".actions")?.insertAdjacentElement("beforebegin", error);
+      }
+      error.textContent = tr("Arvioi myös manuaalisen varakohdistuksen hyväksyttävyys.", "Also rate the acceptability of manual fallback positioning.");
+      error.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, true);
   }
 
   function completeMainAlignment() {
@@ -129,29 +153,72 @@ if (v06FixVariant === "fi-fleet") {
     renderPositioningFix();
   }
 
+  function buildAssistPanel(step, ps, autoTried, wrongMoves) {
+    if (step >= 3) {
+      return `<div class="v06-success"><strong>${tr("Kohdistus valmis", "Positioning complete")}</strong><span>${tr("Langaton lataus voidaan aloittaa. Manuaalinen varakohdistus onnistui pysäköintiavustimen keskeytymisen jälkeen.", "Wireless charging can start. Manual fallback positioning succeeded after the parking assistant stopped.")}</span></div>`;
+    }
+
+    if (!autoTried) {
+      return `<div class="v06-assist-panel">
+        <button type="button" class="primary v06-fix-auto">${tr("Kokeile pysäköintiavustinta", "Try parking assistant")}</button>
+        <small>${tr("Avustin tarkistaa ensin lumivallin, reunamerkinnät ja vapaan tilan.", "The assistant first checks the snowbank, edge markings and available clearance.")}</small>
+      </div>`;
+    }
+
+    const recommendedClass = move => ps.expected === move ? "recommended" : "";
+    const feedback = wrongMoves
+      ? tr(`Väärän suunnan yrityksiä: ${wrongMoves}. Seuraa korostettua nuolta ja etäisyysohjetta.`, `Wrong-direction attempts: ${wrongMoves}. Follow the highlighted arrow and distance guidance.`)
+      : tr("Seuraa korostettua nuolta ja etäisyysohjetta.", "Follow the highlighted arrow and distance guidance.");
+
+    return `<div class="v06-assist-panel">
+      <div class="v06-assist-failure">
+        <strong>⚠ ${tr("Pysäköintiavustin keskeytti kohdistuksen", "Parking assistant stopped positioning")}</strong>
+        <p>${tr("Järjestelmä ei pysty varmistamaan vapaata tilaa lumivallin ja osittain peittyneen reunamerkinnän vuoksi. Tarkista ympäristö ja jatka manuaalisella ohjauksella.", "The system cannot verify clear space because of the snowbank and partly obscured edge marking. Check the surroundings and continue with manual guidance.")}</p>
+        <small>${tr("Kuljettaja vastaa turvallisesta ajoliikkeestä.", "The driver remains responsible for the safe manoeuvre.")}</small>
+      </div>
+      <div class="v06-manual-title">
+        <strong>${tr("Manuaalinen varakohdistus", "Manual fallback positioning")}</strong>
+        <span>${tr("Tee kolme pientä korjausta: pituussuunta, sivuttaissuunta ja lopuksi hienosäätö.", "Make three small corrections: longitudinal, lateral, then final fine adjustment.")}</span>
+      </div>
+      <div class="v06-dpad" aria-label="${tr("Manuaalisen kohdistuksen ohjaimet", "Manual positioning controls")}">
+        <span></span><button type="button" data-v06-fix-move="forward" class="${recommendedClass("forward")}">↑<small>${moveLabel("forward")}</small></button><span></span>
+        <button type="button" data-v06-fix-move="left" class="${recommendedClass("left")}">←<small>${moveLabel("left")}</small></button>
+        <button type="button" data-v06-fix-move="right" class="${recommendedClass("right")}">→<small>${moveLabel("right")}</small></button>
+        <button type="button" data-v06-fix-move="back" class="${recommendedClass("back")}">↓<small>${moveLabel("back")}</small></button>
+      </div>
+      <div class="v06-move-feedback" aria-live="polite">
+        <strong>${tr("Suositeltu korjaus:", "Recommended correction:")} ${ps.instruction}</strong>
+        <span>${feedback}</span>
+      </div>
+    </div>`;
+  }
+
   function renderPositioningFix() {
     if (!isPositioningScreen()) return;
 
     const heading = document.querySelector("h1");
     if (heading) heading.textContent = tr("Aja latausalueelle ja kohdista auto", "Drive onto the charging zone and position the vehicle");
     const lead = heading?.nextElementSibling;
-    if (lead?.classList.contains("lead")) lead.textContent = tr(
-      "Lumivalli kaventaa ruutua. Pysäköintiavustin tarkistaa ensin, voidaanko automaattista kohdistusta käyttää turvallisesti. Jos se keskeytyy, viimeistele kohdistus sovelluksen manuaaliohjauksella.",
-      "A snowbank narrows the bay. The parking assistant first checks whether automatic positioning can be used safely. If it stops, finish positioning with the app's manual guidance."
-    );
+    if (lead?.classList.contains("lead")) {
+      lead.textContent = tr(
+        "Lumivalli kaventaa ruutua. Pysäköintiavustin tarkistaa ensin, voidaanko automaattista kohdistusta käyttää turvallisesti. Jos se keskeytyy, viimeistele kohdistus sovelluksen manuaaliohjauksella.",
+        "A snowbank narrows the bay. The parking assistant first checks whether automatic positioning can be used safely. If it stops, finish positioning with the app's manual guidance."
+      );
+    }
 
     const originalVisual = document.querySelector(".bay-visual");
     const originalControls = document.querySelector(".alignment-controls");
     if (!originalVisual || !originalControls) return;
+
     originalVisual.hidden = true;
     originalControls.hidden = true;
     originalVisual.classList.add("v06-hide-original");
     originalControls.classList.add("v06-hide-original");
 
-    const oldNotice = originalControls.nextElementSibling;
-    if (oldNotice?.classList.contains("notice") && /Kohdista auto ensin|Align the vehicle first/i.test(oldNotice.textContent || "")) {
-      oldNotice.classList.add("v06-old-align-notice");
+    const oldNotice = [...document.querySelectorAll(".notice")].find(el => /Kohdista auto ensin|Align the vehicle first/i.test(el.textContent || ""));
+    if (oldNotice) {
       oldNotice.hidden = true;
+      oldNotice.classList.add("v06-old-align-notice");
     }
 
     const surfaceLegend = [...document.querySelectorAll("fieldset legend")].find(el => /Pinta tässä skenaariossa|Surface in this scenario/i.test(el.textContent || ""));
@@ -171,11 +238,7 @@ if (v06FixVariant === "fi-fleet") {
       originalVisual.insertAdjacentElement("beforebegin", wrap);
     }
 
-    const recommendedClass = move => ps.expected === move ? "recommended" : "";
-    const feedback = wrongMoves
-      ? tr(`Väärän suunnan yrityksiä: ${wrongMoves}. Seuraa korostettua nuolta ja etäisyysohjetta.`, `Wrong-direction attempts: ${wrongMoves}. Follow the highlighted arrow and distance guidance.`)
-      : tr("Seuraa korostettua nuolta ja etäisyysohjetta.", "Follow the highlighted arrow and distance guidance.");
-
+    const assistHtml = buildAssistPanel(step, ps, autoTried, wrongMoves);
     wrap.innerHTML = `
       <div class="v06-scenario-chip">❄ ${tr("Tampere · talviskenaario", "Tampere · winter scenario")}</div>
       <div class="v06-topview ${ps.cls}" role="img" aria-label="${tr("Ylhäältä kuvattu jakeluauto, langaton latausalue ja lumivalli", "Top-down delivery van, wireless charging zone and snowbank")}">
@@ -188,25 +251,25 @@ if (v06FixVariant === "fi-fleet") {
         <div class="v06-readout"><strong>${ps.score}%</strong><span>${ps.instruction}</span></div>
       </div>
       <div class="v06-power-status ${ps.cls}"><strong>${ps.status}</strong><span>${ps.detail}</span></div>
-      <div class="v06-condition"><strong>❄ ${tr("Skenaario-olosuhde", "Scenario condition")}</strong><span>${tr("Luminen pinta · lumivalli kaventaa ruutua", "Snow-covered surface · snowbank narrows the bay")}</span><small>${tr("Olosuhde on osa työpajaskenaariota, ei osallistujan valinta.", "The condition is assigned by the workshop scenario, not selected by the participant.")}</small></div>
-      ${step < 3 ? `<div class="v06-assist-panel">
-        ${!autoTried ? `<button type="button" class="primary v06-fix-auto">${tr("Kokeile pysäköintiavustinta", "Try parking assistant")}</button>` : `<div class="v06-assist-failure"><strong>⚠ ${tr("Pysäköintiavustin keskeytti kohdistuksen", "Parking assistant stopped positioning")}</strong><p>${tr("Järjestelmä ei pysty varmistamaan vapaata tilaa lumivallin ja osittain peittyneen reunamerkinnän vuoksi. Tarkista ympäristö ja jatka manuaalisella ohjauksella.", "The system cannot verify clear space because of the snowbank and partly obscured edge marking. Check the surroundings and continue with manual guidance.")}</p><small>${tr("Kuljettaja vastaa turvallisesta ajoliikkeestä.", "The driver remains responsible for the safe manoeuvre.")}</small></div>
-        <div class="v06-manual-title"><strong>${tr("Manuaalinen varakohdistus", "Manual fallback positioning")}</strong><span>${tr("Tee kolme pientä korjausta: pituussuunta, sivuttaissuunta ja lopuksi hienosäätö.", "Make three small corrections: longitudinal, lateral, then final fine adjustment.")}</span></div>
-        <div class="v06-dpad" aria-label="${tr("Manuaalisen kohdistuksen ohjaimet", "Manual positioning controls")}">
-          <span></span><button type="button" data-v06-fix-move="forward" class="${recommendedClass("forward")}">↑<small>${moveLabel("forward")}</small></button><span></span>
-          <button type="button" data-v06-fix-move="left" class="${recommendedClass("left")}">←<small>${moveLabel("left")}</small></button><button type="button" data-v06-fix-move="right" class="${recommendedClass("right")}">→<small>${moveLabel("right")}</small></button><button type="button" data-v06-fix-move="back" class="${recommendedClass("back")}">↓<small>${moveLabel("back")}</small></button>
-        </div>
-        <div class="v06-move-feedback" aria-live="polite"><strong>${tr("Suositeltu korjaus:", "Recommended correction:")} ${ps.instruction}</strong><span>${feedback}</span></div>` : ""}
-      </div>` : `<div class="v06-success"><strong>${tr("Kohdistus valmis", "Positioning complete")}</strong><span>${tr("Langaton lataus voidaan aloittaa. Manuaalinen varakohdistus onnistui pysäköintiavustimen keskeytymisen jälkeen.", "Wireless charging can start. Manual fallback positioning succeeded after the parking assistant stopped.")}</span></div>`}
+      <div class="v06-condition">
+        <strong>❄ ${tr("Skenaario-olosuhde", "Scenario condition")}</strong>
+        <span>${tr("Luminen pinta · lumivalli kaventaa ruutua", "Snow-covered surface · snowbank narrows the bay")}</span>
+        <small>${tr("Olosuhde on osa työpajaskenaariota, ei osallistujan valinta.", "The condition is assigned by the workshop scenario, not selected by the participant.")}</small>
+      </div>
+      ${assistHtml}
     `;
 
     wrap.querySelector(".v06-fix-auto")?.addEventListener("click", () => {
       sessionStorage.setItem(AUTO_KEY, "1");
       renderPositioningFix();
     });
-    wrap.querySelectorAll("[data-v06-fix-move]").forEach(btn => btn.addEventListener("click", () => handleMove(btn.dataset.v06FixMove)));
+
+    wrap.querySelectorAll("[data-v06-fix-move]").forEach(btn => {
+      btn.addEventListener("click", () => handleMove(btn.dataset.v06FixMove));
+    });
 
     ensureFallbackRating();
+    installFallbackValidation();
   }
 
   if (screen) {
