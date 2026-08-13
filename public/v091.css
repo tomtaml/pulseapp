@@ -1,49 +1,5 @@
-body.v091-manager-contract .v07-agreement-card,
-body.v091-manager-contract .v06-v2g-condition,
-body.v091-manager-contract #screen > .guarantee {
-  display:none !important;
-}
-
-.v091-sla-summary,
-.v091-sla-fault-note {
-  border:1px solid var(--border,#cfdad7);
-  border-radius:18px;
-  background:#f4faf7;
-  padding:18px;
-  margin:18px 0;
-}
-.v091-sla-head {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:14px;
-}
-.v091-sla-head strong { color:#123f7a; font-size:1.05rem; }
-.v091-sla-head span { font-size:.85rem; font-weight:700; padding:6px 10px; border-radius:999px; background:#e6efec; }
-.v091-sla-grid {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-}
-.v091-sla-grid > div {
-  background:#fff;
-  border:1px solid var(--border,#cfdad7);
-  border-radius:14px;
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-.v091-sla-grid span { color:#556a64; font-size:.88rem; }
-.v091-sla-grid strong { color:#123f7a; }
-.v091-sla-summary > small { display:block; margin-top:12px; color:#556a64; line-height:1.4; }
-.v091-sla-fault-note { border-left:5px solid #0b765d; }
-.v091-sla-fault-note strong,
-.v091-sla-fault-note span { display:block; }
-.v091-sla-fault-note strong { color:#123f7a; margin-bottom:5px; }
-
-@media (max-width:640px){
-  .v091-sla-grid { grid-template-columns:1fr; }
-  .v091-sla-head { align-items:flex-start; flex-direction:column; }
-}
+@import url('/v010.css');
+@import url('/v010-scene.css');
+@import url('/v010-scene2.css');
+@import url('/v010-panels.css');
+@import url('/v010-access.css');
