@@ -11,6 +11,7 @@ import "./v08-dispatcher-cleanup.js";
 import "./v081-style.js";
 import "./v081-dispatcher.js";
 import "./v09-fleet-manager-fixed.js";
+import "./v091-fleet-manager.js";
 import "./v06-version.js";
 import "./v06-badge.js";
 import "./v07-badge.js";
