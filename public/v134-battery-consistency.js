@@ -64,7 +64,7 @@ if (enabled134) {
       soc = protectedSoc;
     }
 
-    soc = Math.max(protectedSoc, Math.min(100, soc));
+    soc = Math.max(0, Math.min(100, soc));
     return {
       ...patch,
       soc_percent: round1(soc),
