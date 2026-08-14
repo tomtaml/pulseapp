@@ -53,19 +53,33 @@ export class WorkshopSessionRegistry extends V13Registry {
     await this.ctx.storage.put("utility_clock",{origin_ms:null,running:false,last_step:0,completed:false});
   }
 
+  async makeFirstSessionReference(data){
+    const ref=data?.session?.session_ref;if(!ref)return data;
+    const key=`session:${ref}`,current=await this.ctx.storage.get(key);if(!current)return data;
+    const protectedSoc=Math.max(52,Math.min(64,Number(current.protected_soc_percent||56)));
+    const arrivalSoc=Math.max(35,protectedSoc-5);
+    const routeNeed=Math.min(Number(current.route_need_soc_percent||38),protectedSoc-10);
+    const patched={...current,reference_v2g_demo:true,arrival_soc_percent:arrivalSoc,soc_percent:arrivalSoc,route_need_soc_percent:routeNeed,protected_soc_percent:protectedSoc,dwell_minutes:75,availability_start:"15:30",availability_end:"16:45",departure_time:"17:00",estimated_charge_to_reserve_minutes:11,v2g_window_minutes:35,v2g_eligible:true,flexibility_kw:Math.max(12,Number(current.flexibility_kw||0))};
+    await this.ctx.storage.put(key,patched);
+    const {token_hash,...publicPatched}=patched;
+    data.session={...data.session,...publicPatched};
+    return data;
+  }
+
   async register(){
     const beforeClock=await this.ensureClock();
     if(beforeClock.complete)await this.clearPreviousRun();
     const activeBefore=(await this.activeSessions()).length;
     const response=await super.register();
-    const data=await response.json();
+    let data=await response.json();
+    if(activeBefore===0)data=await this.makeFirstSessionReference(data);
 
     if(!beforeClock.running){
       await this.ctx.storage.put("utility_clock",{origin_ms:null,running:false,last_step:0,completed:false});
       if(activeBefore===0){
         await this.ctx.storage.put("events",[]);
         const s=data?.session;
-        if(s)await this.appendEvent("SESSION",`${s.session_ref} liittyi odottamaan yhteisen kellon käynnistystä`,`${s.session_ref} joined and is waiting for the shared clock to start`,s.session_ref,{state:s.state||"DOCKING"});
+        if(s)await this.appendEvent("SESSION",`${s.session_ref} liittyi odottamaan yhteisen kellon käynnistystä`,`${s.session_ref} joined and is waiting for the shared clock to start`,s.session_ref,{state:s.state||"DOCKING",reference_v2g_demo:true});
       }
     }
     const clock=await this.ensureClock();
