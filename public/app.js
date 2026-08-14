@@ -24,5 +24,6 @@ import "./v09-badge.js";
 import "./v1-core.js";
 import "./v1-cycle-ui.js";
 import "./v12-shared-session.js";
+import "./v132-run-preflight.js";
 import "./v13-style.js";
 import "./v13-grid-sync.js";
