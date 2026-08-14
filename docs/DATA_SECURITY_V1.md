@@ -10,6 +10,7 @@ The preview is deliberately non-collecting:
 - no D1 binding in `wrangler.jsonc`
 - charging backend mode is `mock`
 - charging commands are disabled
+- research submit route has a Cloudflare Workers rate-limit binding
 
 A single accidental flag change must not enable collection. The Worker therefore uses a fail-closed readiness gate.
 
@@ -20,14 +21,16 @@ All conditions must be true at the same time:
 1. `COLLECTION_ENABLED=true`
 2. `ENVIRONMENT=production`
 3. D1 is bound as `DB`
-4. production `TURNSTILE_SECRET_KEY` exists as a Worker secret
-5. `TURNSTILE_EXPECTED_HOSTNAME` is explicitly configured
-6. `RESEARCH_ALLOWED_ORIGIN` is explicitly configured
-7. request Origin matches the configured origin
-8. Turnstile Siteverify succeeds server-side
-9. Turnstile `action` is exactly `pulse-workshop-submit`
-10. Siteverify hostname matches the configured hostname
-11. payload passes strict variant/role/range validation
+4. the research rate-limiter binding exists
+5. a non-test production `TURNSTILE_SITE_KEY` is configured
+6. production `TURNSTILE_SECRET_KEY` exists as a Worker secret
+7. `TURNSTILE_EXPECTED_HOSTNAME` is explicitly configured
+8. `RESEARCH_ALLOWED_ORIGIN` is explicitly configured
+9. request Origin matches the configured origin
+10. Turnstile Siteverify succeeds server-side
+11. Turnstile `action` is exactly `pulse-workshop-submit`
+12. Siteverify hostname matches the configured hostname
+13. payload passes strict variant/role/range validation
 
 If any requirement is missing, collection remains locked.
 
@@ -49,7 +52,7 @@ If later analysis needs to join technical and SSH evidence, create a pseudonymou
 
 Use a production Turnstile widget separate from test/staging. Keep the secret only in Cloudflare Worker secrets. Restrict the widget hostnames and validate Siteverify `hostname` and `action` on every submission.
 
-The test site key currently in `wrangler.jsonc` is acceptable only while collection is locked.
+The test site key currently in `wrangler.jsonc` is acceptable only while collection is locked. v1.0 explicitly prevents that test site key from satisfying the production collection gate.
 
 ## D1 before live collection
 
@@ -66,7 +69,9 @@ Before enabling collection:
 
 ## Abuse and availability protection
 
-Before live public collection, add a rate limit to the research submission endpoint and monitor failed Turnstile validation. Do not use application research rows as an abuse log.
+The v1.0 Worker has a `RESEARCH_RATE_LIMITER` binding set to 60 submit attempts per minute per Cloudflare location for the shared research-submit key. This avoids persisting or using IP addresses as research identifiers while providing a first layer against endpoint flooding. Turnstile validation remains a separate control.
+
+Before live collection, review the limit against the expected workshop concurrency and monitor failed Turnstile validation. Do not use application research rows as an abuse log.
 
 ## Future charging backend connector
 
@@ -85,6 +90,7 @@ Verify all of the following before changing `COLLECTION_ENABLED`:
 - invalid role/variant/range values are rejected;
 - no PII/operational identifiers appear in D1 rows;
 - repeated/expired Turnstile tokens fail;
+- rate limit returns 429 under controlled load testing;
 - CSP and security headers remain present;
 - `/api/health` reports the correct app version and collection status;
 - charging command endpoint remains disabled.
