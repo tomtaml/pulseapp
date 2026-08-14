@@ -28,3 +28,4 @@ import "./v132-run-preflight.js";
 import "./v13-style.js";
 import "./v13-grid-sync.js";
 import "./v132-participant-bridge.js";
+import "./v134-battery-consistency.js";
