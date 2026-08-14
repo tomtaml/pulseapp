@@ -30,3 +30,4 @@ import "./v13-grid-sync.js";
 import "./v132-participant-bridge.js";
 import "./v134-battery-consistency.js";
 import "./v135-v2g-transition-fix.js";
+import "./v136-mobility-hold.js";
