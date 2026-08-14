@@ -3,6 +3,12 @@ import { BackendChargingAdapter } from "./backend-adapter.js";
 
 let adapter = null;
 let capabilities = null;
+let unsubscribe = null;
+
+function publishSnapshot(snapshot) {
+  window.PULSE_CHARGING_LAST_SNAPSHOT = snapshot;
+  window.dispatchEvent(new CustomEvent("pulse:charging-snapshot", { detail: snapshot }));
+}
 
 export async function initChargingAdapter() {
   if (adapter) return { adapter, capabilities };
@@ -20,6 +26,12 @@ export async function initChargingAdapter() {
     capabilities = { protocol: "pulse-session-v1", backend_mode: mode, commands_enabled: false, available: false };
   }
   window.PULSE_CHARGING = Object.freeze({ adapter, capabilities, mode });
+  if (typeof adapter.subscribe === "function") {
+    unsubscribe?.();
+    unsubscribe = adapter.subscribe(publishSnapshot);
+  } else if (typeof adapter.getSnapshot === "function") {
+    try { publishSnapshot(await adapter.getSnapshot("demo")); } catch {}
+  }
   window.dispatchEvent(new CustomEvent("pulse:charging-ready", { detail: window.PULSE_CHARGING }));
   return window.PULSE_CHARGING;
 }
