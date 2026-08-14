@@ -1,4 +1,6 @@
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "1.0.0";
+const RESEARCH_SCHEMA_VERSION = "research-v1";
+const CHARGING_PROTOCOL_VERSION = "pulse-session-v1";
 const JSON_HEADERS = {"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0"};
 const MAX_BODY_BYTES = 24000;
 const ALLOWED_VARIANTS = new Set(["fi-fleet","fi-citizen","uk-v2h"]);
@@ -6,7 +8,7 @@ const ALLOWED_GROUPS = new Set(["fleet_driver","dispatcher","fleet_manager","cit
 const PII_KEYS = new Set([
   "name","full_name","first_name","last_name","email","phone","telephone","address","street_address","postal_address","postcode","zip",
   "social_security_number","employer","employer_name","company","company_name","organisation","organization","vehicle_id","vin","license_plate",
-  "registration_number","gps","latitude","longitude","lat","long","location"
+  "registration_number","gps","latitude","longitude","lat","long","location","ip","ip_address","user_agent","charger_id","evse_id","raw_session_id"
 ]);
 
 function securityHeaders(response) {
@@ -17,6 +19,8 @@ function securityHeaders(response) {
   h.set("Permissions-Policy","camera=(), microphone=(), geolocation=(), payment=(), usb=()");
   h.set("Cross-Origin-Opener-Policy","same-origin");
   h.set("Cross-Origin-Resource-Policy","same-origin");
+  h.set("Strict-Transport-Security","max-age=31536000");
+  h.set("X-Robots-Tag","noindex, nofollow, noarchive");
   h.set("Content-Security-Policy","default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
   return new Response(response.body,{status:response.status,statusText:response.statusText,headers:h});
 }
@@ -43,20 +47,48 @@ function scrubObject(value,depth=0){
   return null;
 }
 
+function collectionReadiness(env){
+  const ready = env.COLLECTION_ENABLED==="true"
+    && env.ENVIRONMENT==="production"
+    && !!env.DB
+    && !!env.TURNSTILE_SECRET_KEY
+    && !!safeString(env.TURNSTILE_EXPECTED_HOSTNAME,253).trim()
+    && !!safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
+  return {enabled:ready};
+}
+function freeTextAllowed(env){return collectionReadiness(env).enabled && env.FREE_TEXT_ENABLED==="true" && env.RESEARCH_FREE_TEXT_APPROVED==="true";}
+function sameOriginResearchRequest(request,env){
+  const configured=safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
+  if(!configured)return false;
+  let expected;
+  try{expected=new URL(configured).origin;}catch{return false;}
+  const requestOrigin=new URL(request.url).origin;
+  const origin=request.headers.get("origin");
+  const secFetchSite=request.headers.get("sec-fetch-site");
+  if(requestOrigin!==expected||origin!==expected)return false;
+  if(secFetchSite&&secFetchSite!=="same-origin")return false;
+  return true;
+}
+
 async function verifyTurnstile(env,token){
-  if(!env.TURNSTILE_SECRET_KEY)return {success:env.ENVIRONMENT!=="production",action:"pulse-workshop-submit",hostname:"local"};
+  if(!env.TURNSTILE_SECRET_KEY)return {success:false};
   if(!token||typeof token!=="string"||token.length>2048)return {success:false};
   const form=new FormData();
   form.append("secret",env.TURNSTILE_SECRET_KEY);
   form.append("response",token);
   form.append("idempotency_key",crypto.randomUUID());
-  const res=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{method:"POST",body:form});
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  let res;
+  try{res=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{method:"POST",body:form,signal:controller.signal});}
+  catch{return {success:false};}
+  finally{clearTimeout(timeout);}
   if(!res.ok)return {success:false};
   const result=await res.json();
   if(!result.success)return result;
-  if(result.action&&result.action!=="pulse-workshop-submit")return {...result,success:false};
+  if(result.action!=="pulse-workshop-submit")return {...result,success:false};
   const expected=safeString(env.TURNSTILE_EXPECTED_HOSTNAME,253).trim().toLowerCase();
-  if(expected&&safeString(result.hostname,253).toLowerCase()!==expected)return {...result,success:false};
+  if(!expected||safeString(result.hostname,253).toLowerCase()!==expected)return {...result,success:false};
   return result;
 }
 
@@ -94,7 +126,8 @@ function validate(body){
 function researchPayload(body,env){
   const clean=scrubObject(body);
   const base={
-    app_version:safeString(clean.app_version,20)||APP_VERSION,
+    schema_version:RESEARCH_SCHEMA_VERSION,
+    app_version:APP_VERSION,
     variant:clean.variant,workshop_code:clean.workshop_code,participant_group:clean.participant_group,language:clean.language,
     winter_condition:["clear","snow","slush"].includes(clean.winter_condition)?clean.winter_condition:null,
     current_soc:integerInRange(clean.current_soc,5,100),minimum_soc:integerInRange(clean.minimum_soc,10,100),
@@ -121,14 +154,15 @@ function researchPayload(body,env){
     accessibility_understanding:integerInRange(clean.accessibility_understanding,1,5),wireless_acceptance:integerInRange(clean.wireless_acceptance,1,5),
     bidirectional_participation:integerInRange(clean.bidirectional_participation,1,5)
   });
-  if(env.FREE_TEXT_ENABLED==="true")base.optional_note=safeString(clean.optional_note,500);
+  if(freeTextAllowed(env))base.optional_note=safeString(clean.optional_note,500);
   return base;
 }
 
 async function handleSubmit(request,env){
-  if(env.COLLECTION_ENABLED!=="true")return json({ok:false,error:"Collection is disabled until ethics/deployment approval."},503);
-  if(!env.DB)return json({ok:false,error:"Research database is not configured."},503);
+  if(!collectionReadiness(env).enabled)return json({ok:false,error:"Research collection is locked until the approved production configuration is complete."},503);
+  if(!sameOriginResearchRequest(request,env))return json({ok:false,error:"Research submission origin rejected."},403);
   if(!(request.headers.get("content-type")||"").toLowerCase().includes("application/json"))return json({ok:false,error:"JSON required."},415);
+  const declared=Number(request.headers.get("content-length")||0);if(declared>MAX_BODY_BYTES)return json({ok:false,error:"Submission too large."},413);
   const raw=await request.text();
   if(new TextEncoder().encode(raw).byteLength>MAX_BODY_BYTES)return json({ok:false,error:"Submission too large."},413);
   let body;try{body=JSON.parse(raw);}catch{return json({ok:false,error:"Malformed JSON."},400);}
@@ -143,15 +177,51 @@ async function handleSubmit(request,env){
   const bidirectional=clean.variant==="fi-fleet"?clean.v2g_acceptance_under_guarantees:clean.bidirectional_participation;
   const id=crypto.randomUUID();
   await env.DB.prepare(`INSERT INTO submissions (id,app_version,variant,workshop_code,participant_group,language,comprehension_score,sus_completed,sus_score,trust_score,accessibility_understanding,wireless_acceptance,bidirectional_participation,payload_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .bind(id,clean.app_version,clean.variant,clean.workshop_code,clean.participant_group,clean.language,comprehension,1,sus,trust,accessibility,wireless,bidirectional,JSON.stringify(clean)).run();
+    .bind(id,APP_VERSION,clean.variant,clean.workshop_code,clean.participant_group,clean.language,comprehension,1,sus,trust,accessibility,wireless,bidirectional,JSON.stringify(clean)).run();
   return json({ok:true,submission_id:id});
+}
+
+function chargingCapabilities(env){
+  const mode=env.CHARGING_BACKEND_MODE==="api"?"api":"mock";
+  return {protocol:CHARGING_PROTOCOL_VERSION,backend_mode:mode,commands_enabled:false,available:mode==="mock"};
+}
+function validSessionRef(value){return /^[A-Za-z0-9_-]{1,64}$/.test(value||"");}
+function mockChargingSnapshot(sessionRef){
+  return {
+    protocol_version:CHARGING_PROTOCOL_VERSION,session_ref:sessionRef,state:"READY",observed_at:new Date().toISOString(),
+    soc_percent:55,protected_soc_percent:65,power_kw:0,energy_to_vehicle_kwh:0,energy_to_grid_kwh:0,
+    direction:"idle",departure_ready:false,fault_code:null
+  };
+}
+function handleChargingSession(request,env,sessionRef){
+  if(!validSessionRef(sessionRef))return json({ok:false,error:"Invalid session reference."},400);
+  if(env.CHARGING_BACKEND_MODE==="api")return json({ok:false,error:"Charging backend connector is not configured in this preview."},501);
+  if(sessionRef!=="demo")return json({ok:false,error:"Mock session not found."},404);
+  return json(mockChargingSnapshot(sessionRef));
+}
+function handleChargingCommand(env){
+  if(env.CHARGING_COMMANDS_ENABLED!=="true")return json({ok:false,error:"Charging commands are disabled for this deployment."},503);
+  return json({ok:false,error:"Charging command connector and pilot authentication are not configured."},501);
 }
 
 export default {async fetch(request,env){
   const url=new URL(request.url);
-  if(url.pathname==="/api/config"&&request.method==="GET")return json({collection_enabled:env.COLLECTION_ENABLED==="true",free_text_enabled:env.FREE_TEXT_ENABLED==="true",turnstile_site_key:env.TURNSTILE_SITE_KEY||null,environment:env.ENVIRONMENT||"unknown",app_version:APP_VERSION});
-  if(url.pathname==="/api/health"&&request.method==="GET")return json({ok:true,version:APP_VERSION,collection_enabled:env.COLLECTION_ENABLED==="true"});
-  if(url.pathname==="/api/submit"&&request.method==="POST")return handleSubmit(request,env);
+  const readiness=collectionReadiness(env);
+  if(url.pathname==="/api/config"&&request.method==="GET")return json({
+    collection_enabled:readiness.enabled,
+    free_text_enabled:freeTextAllowed(env),
+    turnstile_site_key:readiness.enabled?(env.TURNSTILE_SITE_KEY||null):null,
+    environment:env.ENVIRONMENT||"unknown",
+    app_version:APP_VERSION,
+    research_schema_version:RESEARCH_SCHEMA_VERSION,
+    charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock",
+    charging_commands_enabled:false
+  });
+  if(url.pathname==="/api/health"&&request.method==="GET")return json({ok:true,version:APP_VERSION,collection_enabled:readiness.enabled,charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock"});
+  if((url.pathname==="/api/submit"||url.pathname==="/api/research/submit")&&request.method==="POST")return handleSubmit(request,env);
+  if(url.pathname==="/api/charging/capabilities"&&request.method==="GET")return json(chargingCapabilities(env));
+  if(url.pathname.startsWith("/api/charging/session/")&&request.method==="GET")return handleChargingSession(request,env,decodeURIComponent(url.pathname.slice("/api/charging/session/".length)));
+  if(url.pathname.startsWith("/api/charging/session/")&&url.pathname.endsWith("/command")&&request.method==="POST")return handleChargingCommand(env);
   if(url.pathname.startsWith("/api/"))return json({ok:false,error:"Not found."},404);
   return securityHeaders(await env.ASSETS.fetch(request));
 }};
