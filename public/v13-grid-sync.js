@@ -9,21 +9,26 @@ if(v13Enabled){
  const screen=()=>document.querySelector('#screen');
  const step=()=>{const m=(screen()?.innerText||'').match(/([1-6])\s*\/\s*6/);return m?Number(m[1]):0;};
  function mySession(){const ref=window.PULSE_OPS_SESSION?.session_ref;return summary?.sessions?.find(s=>s.session_ref===ref)||null;}
- function recClass(a){if(String(a).includes('V2G')||String(a).includes('EXPORT'))return'v2g';if(String(a).includes('CHARGE')||String(a).includes('RESTORE'))return'charge';return'';}
+ function recClass(a){if(String(a).includes('V2G')||String(a).includes('EXPORT'))return'v2g';if(String(a).includes('CHARGE')||String(a).includes('RESTORE'))return'charge';if(String(a).includes('READY'))return'ready';return'';}
  function renderSignal(){
   const n=step();if(![3,4].includes(n)||!summary?.utility_clock)return;
   const root=screen(),next=root?.querySelector("[data-action='next']");if(!root||!next)return;
-  let el=root.querySelector('#v13GridSignal');if(!el){el=document.createElement('section');el.id='v13GridSignal';el.className='v13-grid-signal';next.parentElement?.insertAdjacentElement('beforebegin',el);}
+  let el=root.querySelector('#v13GridSignal');if(!el){el=document.createElement('section');el.id='v13GridSignal';next.parentElement?.insertAdjacentElement('beforebegin',el);}
   const c=summary.utility_clock,s=mySession(),r=s?.utility_recommendation||{};
-  const profile=s?`<div class="v13-grid-metrics"><div><span>${tr('SoC nyt','SoC now')}</span><strong>${Math.round(s.soc_percent)}%</strong></div><div><span>${tr('Suojattu lähtövaraus','Protected reserve')}</span><strong>${Math.round(s.protected_soc_percent)}%</strong></div><div><span>${tr('Seuraavan reitin tarve','Next-route need')}</span><strong>${Math.round(s.route_need_soc_percent)}% · ${Math.round(s.route_km)} km</strong></div><div><span>${tr('Pysähdys','Dwell')}</span><strong>${Math.round(s.dwell_minutes)} min</strong></div></div>`:'';
-  el.innerHTML=`<h3>${tr('Yhteinen hyötysähkösignaali','Shared utility signal')} · ${c.simulated_time}</h3><p>${tr(c.intent_fi,c.intent_en)||'—'}</p><div class="v13-grid-metrics"><div><span>${tr('Kysyntä','Demand')}</span><strong>${c.demand_index}/100</strong></div><div><span>RES</span><strong>${c.res_percent}%</strong></div><div><span>${tr('Hintasignaali','Price signal')}</span><strong>${c.price_c_kwh} c/kWh</strong></div><div><span>${tr('Seuraava jakso','Next interval')}</span><strong>${c.complete?'—':`${c.seconds_to_next}s`}</strong></div></div>${profile}${s?`<div class="v13-grid-rec ${recClass(r.action)}">${tr('Tämän ajoneuvon ohje','Vehicle recommendation')}: ${tr(r.reason_fi,r.reason_en)||r.action}</div>`:''}<div class="v13-grid-wait">${tr('Liikkumisvara ohittaa aina verkkopalvelun. Kaikki tämän työpajan QR-istunnot käyttävät samaa simuloitua kelloa.','Mobility reserve always overrides grid service. All workshop QR sessions use the same simulated clock.')}</div>`;
+  if(n===3){
+   el.className='v13-grid-signal v13-decision-signal';
+   const buffer=s?Math.round(Number(s.soc_percent)-Number(s.protected_soc_percent)):0;
+   el.innerHTML=`<div class="v13-signal-head"><strong>${c.simulated_time} · ${tr('verkon pyyntö','grid signal')}</strong><span>${tr(c.intent_fi,c.intent_en)||'—'}</span></div>${s?`<div class="v13-driver-essentials"><div><span>${tr('Akun varaus','Battery')}</span><strong>${Math.round(s.soc_percent)}%</strong></div><div><span>${tr('Suojattu raja','Protected')}</span><strong>${Math.round(s.protected_soc_percent)}%</strong></div><div><span>${tr('Puskuri','Buffer')}</span><strong>${buffer>0?'+':''}${buffer}%</strong></div></div><div class="v13-grid-rec ${recClass(r.action)}"><span>${tr('Tämä ajoneuvo','This vehicle')}</span><strong>${tr(r.reason_fi,r.reason_en)||r.action}</strong></div>`:''}<small>${tr('Liikkumisvara ohittaa aina verkkopalvelun. Tarkemmat kysyntä-, RES- ja hintatiedot näkyvät energiajärjestelmän näkymässä.','Mobility reserve always overrides grid service. Detailed demand, RES and price information remains in the utility view.')}</small>`;
+  }else{
+   el.className='v13-grid-signal v13-cycle-signal';
+   el.innerHTML=`<div class="v13-cycle-clock"><strong>${c.simulated_time}</strong><span>${tr(c.intent_fi,c.intent_en)||'—'}</span>${s?`<b class="${recClass(r.action)}">${tr(r.reason_fi,r.reason_en)||r.action}</b>`:''}</div>`;
+  }
  }
  function syncLegacyClock(){
   const c=summary?.utility_clock;if(!c||step()!==4)return;
   const time=document.querySelector('.v1-adapter-cycle .v07-cycle-top > div:first-child strong');if(time)time.textContent=c.simulated_time;
-  const slots=[...document.querySelectorAll('.v1-adapter-cycle .v07-market-slot')];slots.forEach((x,i)=>x.classList.toggle('active',i===c.step_index));
-  const root=screen();const intro=[...root?.querySelectorAll(':scope > p')||[]].find(p=>/20 s|20 sek|75 minuut|75 min/i.test(p.textContent||''));
-  if(intro)intro.textContent=tr('Kaikki työpajan ajoneuvot seuraavat samaa hyötysähkökelloa. Yksi 15 minuutin jakso kestää tässä demossa noin 20 sekuntia. Ajoneuvon SoC ja lähtövaraus ratkaisevat, voiko se ladata, osallistua V2G:hen vai vapautua ajoon.','All workshop vehicles follow the same utility clock. One simulated 15-minute interval lasts about 20 seconds. Vehicle SoC and protected reserve determine whether it charges, joins V2G or is released for mobility.');
+  const root=screen();const intro=[...root?.querySelectorAll(':scope > p')||[]].find(p=>/20 s|20 sek|75 minuut|75 min|hyötysähkökello|utility clock/i.test(p.textContent||''));
+  if(intro)intro.textContent=tr('Seuraa vain ajoneuvon tilaa: akun varausta, energian suuntaa ja lähtövalmiutta. Taustalla yhteinen hyötysähkökello ohjaa latausta ja V2G:tä liikkumisrajojen sisällä.','Follow the vehicle state: battery level, energy direction and departure readiness. In the background, the shared utility clock coordinates charging and V2G within mobility constraints.');
  }
  function publish(adapter,patch){try{return adapter.publish(patch);}catch{return null;}}
  function state(){return window.PULSE_CHARGING_LAST_SNAPSHOT||window.PULSE_CHARGING?.adapter?.getSnapshot?.()||null;}
