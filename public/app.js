@@ -1,5 +1,6 @@
 import "./js/main.js";
 import "./js/augment.js";
+import "./js/charging/index.js";
 import "./v05.js";
 import "./v06.js";
 import "./v06-positioning-fix.js";
