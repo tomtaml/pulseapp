@@ -1,6 +1,6 @@
 {
   "name": "pulse-srf-workshop-app",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,6 @@
     "preview:static": "python3 -m http.server 8080 -d public"
   },
   "devDependencies": {
-    "wrangler": "^4.30.0"
+    "wrangler": "^4.36.0"
   }
 }
