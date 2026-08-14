@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b5d4b" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>PULSE utility view</title>
+  <link rel="stylesheet" href="/utility.css" />
+</head>
+<body>
+  <header class="utility-topbar">
+    <div class="brand"><strong>PULSE</strong><span id="viewBadge">Utility / aggregator preview</span><span id="safetyBadge">Read-only · mock</span></div>
+    <div class="tools"><button id="languageBtn" type="button">FI / EN</button><a id="participantLink" href="/?variant=fi-fleet&demo=1">Participant app</a></div>
+  </header>
+  <main id="utilityApp" class="utility-shell" aria-live="polite">
+    <section class="hero">
+      <p class="eyebrow" id="eyebrow">PULSE v1.1 · energiajärjestelmän näkymä</p>
+      <h1 id="title">Langattoman latauksen ja V2G:n koontinäkymä</h1>
+      <p id="intro">Seuraa useita samanaikaisia latausistuntoja, energian suuntaa, V2G-joustoa, huipputehon leikkausta ja uusiutuvaan sähköön ajoitettua latausta.</p>
+      <div class="status-strip" id="statusStrip"></div>
+    </section>
+    <section id="dashboard" class="dashboard"><p>Loading…</p></section>
+  </main>
+  <footer class="utility-footer"><span id="footerText">Workshop prototype · operational aggregates only · no research responses</span></footer>
+  <script type="module" src="/utility.js"></script>
+</body>
+</html>
