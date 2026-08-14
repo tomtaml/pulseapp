@@ -1,6 +1,7 @@
 const APP_VERSION = "1.0.0";
 const RESEARCH_SCHEMA_VERSION = "research-v1";
 const CHARGING_PROTOCOL_VERSION = "pulse-session-v1";
+const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const JSON_HEADERS = {"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0"};
 const MAX_BODY_BYTES = 24000;
 const ALLOWED_VARIANTS = new Set(["fi-fleet","fi-citizen","uk-v2h"]);
@@ -48,10 +49,14 @@ function scrubObject(value,depth=0){
 }
 
 function collectionReadiness(env){
+  const siteKey=safeString(env.TURNSTILE_SITE_KEY,100).trim();
   const ready = env.COLLECTION_ENABLED==="true"
     && env.ENVIRONMENT==="production"
     && !!env.DB
+    && !!env.RESEARCH_RATE_LIMITER
     && !!env.TURNSTILE_SECRET_KEY
+    && !!siteKey
+    && siteKey!==TURNSTILE_TEST_SITE_KEY
     && !!safeString(env.TURNSTILE_EXPECTED_HOSTNAME,253).trim()
     && !!safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
   return {enabled:ready};
@@ -162,6 +167,8 @@ async function handleSubmit(request,env){
   if(!collectionReadiness(env).enabled)return json({ok:false,error:"Research collection is locked until the approved production configuration is complete."},503);
   if(!sameOriginResearchRequest(request,env))return json({ok:false,error:"Research submission origin rejected."},403);
   if(!(request.headers.get("content-type")||"").toLowerCase().includes("application/json"))return json({ok:false,error:"JSON required."},415);
+  const {success:rateOk}=await env.RESEARCH_RATE_LIMITER.limit({key:"research-submit"});
+  if(!rateOk)return json({ok:false,error:"Submission rate limit reached. Please retry shortly."},429);
   const declared=Number(request.headers.get("content-length")||0);if(declared>MAX_BODY_BYTES)return json({ok:false,error:"Submission too large."},413);
   const raw=await request.text();
   if(new TextEncoder().encode(raw).byteLength>MAX_BODY_BYTES)return json({ok:false,error:"Submission too large."},413);
@@ -220,7 +227,10 @@ export default {async fetch(request,env){
   if(url.pathname==="/api/health"&&request.method==="GET")return json({ok:true,version:APP_VERSION,collection_enabled:readiness.enabled,charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock"});
   if((url.pathname==="/api/submit"||url.pathname==="/api/research/submit")&&request.method==="POST")return handleSubmit(request,env);
   if(url.pathname==="/api/charging/capabilities"&&request.method==="GET")return json(chargingCapabilities(env));
-  if(url.pathname.startsWith("/api/charging/session/")&&request.method==="GET")return handleChargingSession(request,env,decodeURIComponent(url.pathname.slice("/api/charging/session/".length)));
+  if(url.pathname.startsWith("/api/charging/session/")&&request.method==="GET"){
+    try{return handleChargingSession(request,env,decodeURIComponent(url.pathname.slice("/api/charging/session/".length)));}
+    catch{return json({ok:false,error:"Invalid session reference."},400);}
+  }
   if(url.pathname.startsWith("/api/charging/session/")&&url.pathname.endsWith("/command")&&request.method==="POST")return handleChargingCommand(env);
   if(url.pathname.startsWith("/api/"))return json({ok:false,error:"Not found."},404);
   return securityHeaders(await env.ASSETS.fetch(request));
