@@ -1,16 +1,13 @@
 import { normalizeSnapshot } from "./session-model.js";
 
 export class BackendChargingAdapter {
-  constructor({ basePath = "/api/charging", sessionToken = "" } = {}) {
+  constructor({ basePath = "/api/charging" } = {}) {
     if (!basePath.startsWith("/api/")) throw new Error("Charging API must remain same-origin.");
     this.basePath = basePath.replace(/\/$/, "");
-    this.sessionToken = sessionToken;
   }
 
   headers(extra = {}) {
-    const out = { "accept": "application/json", ...extra };
-    if (this.sessionToken) out["x-pulse-session-token"] = this.sessionToken;
-    return out;
+    return { "accept": "application/json", ...extra };
   }
 
   async getCapabilities() {
