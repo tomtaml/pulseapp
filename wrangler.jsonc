@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "pulse-srf-workshop",
-  "main": "src/v06-index.js",
+  "main": "src/index.js",
   "compatibility_date": "2026-08-11",
   "workers_dev": true,
   "preview_urls": true,
@@ -10,11 +10,22 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  "ratelimits": [
+    {
+      "name": "RESEARCH_RATE_LIMITER",
+      "namespace_id": "913701",
+      "simple": { "limit": 60, "period": 60 }
+    }
+  ],
   "vars": {
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     "TURNSTILE_EXPECTED_HOSTNAME": "",
+    "RESEARCH_ALLOWED_ORIGIN": "",
     "COLLECTION_ENABLED": "false",
     "FREE_TEXT_ENABLED": "false",
-    "ENVIRONMENT": "preview"
+    "RESEARCH_FREE_TEXT_APPROVED": "false",
+    "ENVIRONMENT": "preview",
+    "CHARGING_BACKEND_MODE": "mock",
+    "CHARGING_COMMANDS_ENABLED": "false"
   }
 }
