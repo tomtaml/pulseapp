@@ -22,3 +22,4 @@ import "./v08-badge.js";
 import "./v09-version.js";
 import "./v09-badge.js";
 import "./v1-core.js";
+import "./v1-cycle-ui.js";
