@@ -17,7 +17,7 @@ export default {async fetch(request,env,ctx){
   const url=new URL(request.url);
   if(url.pathname==="/api/health"&&request.method==="GET"){
     const response=await sharedWorker.fetch(request,env,ctx);const data=await response.json().catch(()=>({ok:false}));
-    return out({...data,operational_registry:"shared-utility-clock",operational_registry_version:"1.3.3",utility_clock_mode:"operator-started-server-authoritative",utility_slot_real_seconds:30,utility_run_real_seconds:180},response.status);
+    return out({...data,operational_registry:"shared-utility-clock",operational_registry_version:"1.3.6",utility_clock_mode:"operator-started-server-authoritative",utility_slot_real_seconds:30,utility_run_real_seconds:180},response.status);
   }
   if(url.pathname==="/api/charging/utility-clock/start"&&request.method==="POST"){
     if(!registryEnabled(env))return out({ok:false,error:"Operational mock registry is disabled."},503);
