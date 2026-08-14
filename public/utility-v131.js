@@ -30,7 +30,7 @@ function ensureClockControl(data){
     const nextText=c.complete?label131('✓ ajojakso päättynyt','✓ run complete'):c.running?label131(`● yhteinen kello käynnissä · ${c.seconds_to_next}s`,`● shared clock running · ${c.seconds_to_next}s`):label131('● QR-istunnot odottavat käynnistystä','● QR sessions waiting for start');
     if(badge.textContent!==nextText)badge.textContent=nextText;
   }
-  const view=document.getElementById('viewBadge');if(view&&view.textContent!=='Utility / aggregator v1.3.3')view.textContent='Utility / aggregator v1.3.3';
+  const view=document.getElementById('viewBadge');if(view&&view.textContent!=='Utility / aggregator v1.3.4')view.textContent='Utility / aggregator v1.3.4';
   const safety=document.getElementById('safetyBadge');const safetyText=label131('Shared mock · kellon käynnistys utility-näkymästä','Shared mock · utility starts clock');if(safety&&safety.textContent!==safetyText)safety.textContent=safetyText;
 
   let box=face.querySelector('.utility-clock-control');
