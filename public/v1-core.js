@@ -1,4 +1,7 @@
 const qv1 = new URLSearchParams(location.search);
+let devConfig = null;
+let devCaps = null;
+let devState = null;
 
 async function addCoreBadge() {
   const top = document.querySelector('.brand-block');
@@ -12,6 +15,15 @@ async function addCoreBadge() {
   top.append(badge);
 }
 
+function renderDevPanel() {
+  const panel=document.getElementById('v1DevPanel');
+  if(!panel||!devConfig||!devCaps||!devState)return;
+  panel.innerHTML = `<h2>PULSE v1 technical core</h2>
+    <p><strong>Protocol:</strong> ${devCaps.protocol || '—'} · <strong>backend:</strong> ${devCaps.backend_mode || '—'} · <strong>commands:</strong> ${devCaps.commands_enabled ? 'enabled' : 'locked'}</p>
+    <p><strong>Research collection:</strong> ${devConfig.collection_enabled ? 'enabled' : 'locked'} · <strong>schema:</strong> ${devConfig.research_schema_version || '—'} · <strong>app:</strong> ${devConfig.app_version || '—'}</p>
+    <p><strong>Demo session:</strong> ${devState.state || '—'} · SoC ${devState.soc_percent ?? '—'}% · protected ${devState.protected_soc_percent ?? '—'}% · direction ${devState.direction || '—'} · to vehicle ${Number(devState.energy_to_vehicle_kwh || 0).toFixed(1)} kWh · to grid ${Number(devState.energy_to_grid_kwh || 0).toFixed(1)} kWh</p>`;
+}
+
 async function addDevPanel() {
   if (qv1.get('dev') !== '1' || document.getElementById('v1DevPanel')) return;
   const app = document.querySelector('#app');
@@ -23,19 +35,22 @@ async function addDevPanel() {
   panel.innerHTML = '<h2>PULSE v1 technical core</h2><p>Loading normalized charging state…</p>';
   app.prepend(panel);
   try {
-    const [config, caps, state] = await Promise.all([
+    [devConfig, devCaps, devState] = await Promise.all([
       fetch('/api/config', {cache:'no-store'}).then(r=>r.json()),
       fetch('/api/charging/capabilities', {cache:'no-store'}).then(r=>r.json()),
       fetch('/api/charging/session/demo', {cache:'no-store'}).then(r=>r.json())
     ]);
-    panel.innerHTML = `<h2>PULSE v1 technical core</h2>
-      <p><strong>Protocol:</strong> ${caps.protocol || '—'} · <strong>backend:</strong> ${caps.backend_mode || '—'} · <strong>commands:</strong> ${caps.commands_enabled ? 'enabled' : 'locked'}</p>
-      <p><strong>Research collection:</strong> ${config.collection_enabled ? 'enabled' : 'locked'} · <strong>schema:</strong> ${config.research_schema_version || '—'} · <strong>app:</strong> ${config.app_version || '—'}</p>
-      <p><strong>Demo session:</strong> ${state.state || '—'} · SoC ${state.soc_percent ?? '—'}% · protected ${state.protected_soc_percent ?? '—'}% · direction ${state.direction || '—'}</p>`;
+    if(window.PULSE_CHARGING_LAST_SNAPSHOT)devState=window.PULSE_CHARGING_LAST_SNAPSHOT;
+    renderDevPanel();
   } catch {
     panel.innerHTML = '<h2>PULSE v1 technical core</h2><p>Diagnostics unavailable.</p>';
   }
 }
+
+window.addEventListener('pulse:charging-snapshot',event=>{
+  devState=event.detail;
+  renderDevPanel();
+});
 
 addCoreBadge();
 addDevPanel();
