@@ -49,7 +49,7 @@ The public QR workshop deployment must not be capable of controlling a real char
 
 Any future command path must include:
 
-- short-lived pilot-session authentication;
+- short-lived pilot-session authentication, preferably established server-side with `HttpOnly`, `Secure`, `SameSite` session cookies rather than exposing bearer credentials to browser JavaScript;
 - explicit role/permission checks;
 - server-side upstream credentials stored as Worker secrets;
 - idempotency key for every command;
