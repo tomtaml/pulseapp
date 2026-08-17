@@ -6,13 +6,16 @@ Purpose: create an isolated Worker for synthetic research-pipeline testing witho
 
 - Worker name: `pulse-srf-research-test`
 - Git branch: `prototype-v1.4-research-pipeline`
-- Wrangler config: `wrangler.research-test.jsonc`
+- Cloudflare build root: `/research-test`
+- Wrangler config in that root: `research-test/wrangler.jsonc`
 - Entry point: `src/research-test-entry.js`
 - D1 binding: `DB`
 - D1 database: `pulse-research-test-eu`
 - Collection: locked (`COLLECTION_ENABLED=false`)
 - Free text: locked (`FREE_TEXT_ENABLED=false`)
 - Operational registry: not mounted in this Worker
+
+The separate build root is intentional: the repository root still contains the stable workshop Worker's `wrangler.jsonc`, whose Worker name is `pulse-srf-workshop`. Using `/research-test` prevents the two Workers' deployment configurations from colliding.
 
 ## Cloudflare Workers Builds
 
@@ -22,10 +25,10 @@ Use these settings:
 
 - Worker/project name: `pulse-srf-research-test`
 - Production branch: `prototype-v1.4-research-pipeline`
-- Root directory: `/`
+- Root directory: `/research-test`
 - Build command: none
-- Deploy command: `npm run deploy:research-test`
-- Non-production deploy command (if enabled): `npx wrangler versions upload --config wrangler.research-test.jsonc`
+- Deploy command: `npx wrangler deploy`
+- Non-production deploy command (if enabled): `npx wrangler versions upload`
 
 Do not change the production branch or build settings of `pulse-srf-workshop`.
 
@@ -56,7 +59,7 @@ Stop if `research_db_bound` is false, or if either collection/free-text lock is 
 
 ## D1 schema test
 
-Only after the health check passes:
+Only after the health check passes, run from the repository root:
 
 ```bash
 npm run db:list:research-test
