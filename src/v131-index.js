@@ -9,7 +9,7 @@ const GRID_SLOTS=Object.freeze([
   {time:"16:45",demand:"moderate",demand_index:58,res:"moderate",res_percent:64,price_c_kwh:9,intent:"DEPARTURE_READY",intent_fi:"Vapauta lähtövalmiit ajoneuvot",intent_en:"Release departure-ready vehicles"}
 ]);
 const FINAL_STEP=GRID_SLOTS.length-1;
-const SLOT_REAL_MS=30*1000;
+const SLOT_REAL_MS=15*1000;
 const RUN_REAL_MS=GRID_SLOTS.length*SLOT_REAL_MS;
 
 function out(data,status=200){return new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0","x-content-type-options":"nosniff","referrer-policy":"no-referrer","x-robots-tag":"noindex, nofollow, noarchive"}});}
