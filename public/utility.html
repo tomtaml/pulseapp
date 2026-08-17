@@ -7,23 +7,28 @@
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>PULSE utility view</title>
   <link rel="stylesheet" href="/utility.css" />
+  <link rel="stylesheet" href="/utility-v13.css" />
+  <link rel="stylesheet" href="/utility-v132.css" />
 </head>
 <body>
   <header class="utility-topbar">
-    <div class="brand"><strong>PULSE</strong><span id="viewBadge">Utility / aggregator preview</span><span id="safetyBadge">Read-only · mock</span></div>
-    <div class="tools"><button id="languageBtn" type="button">FI / EN</button><a id="participantLink" href="/?variant=fi-fleet&demo=1">Participant app</a></div>
+    <div class="brand"><strong>PULSE</strong><span id="viewBadge">Utility / aggregator v1.3.11</span><span id="safetyBadge">Shared mock · utility starts clock</span></div>
+    <div class="tools"><button id="languageBtn" type="button">FI / EN</button><a id="participantLink" href="/?variant=fi-fleet&demo=1&ops=1">Participant app</a></div>
   </header>
   <main id="utilityApp" class="utility-shell" aria-live="polite">
     <section class="hero">
-      <p class="eyebrow" id="eyebrow">PULSE v1.1 · energiajärjestelmän näkymä</p>
-      <h1 id="title">Langattoman latauksen ja V2G:n koontinäkymä</h1>
-      <p id="intro">Seuraa useita samanaikaisia latausistuntoja, energian suuntaa, V2G-joustoa, huipputehon leikkausta ja uusiutuvaan sähköön ajoitettua latausta.</p>
+      <p class="eyebrow" id="eyebrow">PULSE v1.3.11 · shared utility clock</p>
+      <h1 id="title">Wireless charging and V2G operational view</h1>
+      <p id="intro">Loading shared workshop scenario…</p>
       <div class="status-strip" id="statusStrip"></div>
     </section>
     <section id="dashboard" class="dashboard"><p>Loading…</p></section>
   </main>
   <footer class="utility-footer"><span id="footerText">Workshop prototype · operational aggregates only · no research responses</span></footer>
+  <script type="module" src="/utility-v134-stable-live.js"></script>
+  <script type="module" src="/utility-v136-hold.js"></script>
   <script type="module" src="/utility.js"></script>
-  <script type="module" src="/utility-v12.js"></script>
+  <script type="module" src="/utility-v131.js"></script>
+  <script type="module" src="/utility-v137-version.js?v=1311"></script>
 </body>
 </html>
