@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import baseWorker from "./index.js";
 
 const OPS_PROTOCOL = "pulse-session-v1";
-const OPS_STATES = new Set(["DOCKING","ALIGNING","READY","CHARGING","V2G_AVAILABLE","V2G_ACTIVE","RECHARGING","READY_TO_DEPART","FAULT","OVERRIDDEN","SESSION_ENDED"]);
+const OPS_STATES = new Set(["DOCKING","ALIGNING","READY","CHARGING","V2G_AVAILABLE","V2G_ACTIVE","RECHARGING","READY_TO_DEPART","PAUSED","FAULT","OVERRIDDEN","SESSION_ENDED"]);
 const OPS_DIRECTIONS = new Set(["idle","grid_to_vehicle","vehicle_to_grid"]);
 const STALE_MS = 30 * 60 * 1000;
 const ENDED_STALE_MS = 5 * 60 * 1000;
@@ -60,14 +60,20 @@ function recommendation(session,clock){
     if(soc<buffer) return {action:"CHARGE_BUFFER",target_state:"CHARGING",reason_fi:"RES-painotteinen lataus ja V2G-puskuri",reason_en:"RES-aligned charging and V2G buffer",target_soc_percent:buffer};
     return {action:session.v2g_eligible?"V2G_AVAILABLE":"HOLD",target_state:session.v2g_eligible?"V2G_AVAILABLE":"READY",reason_fi:session.v2g_eligible?"Jousto valmiina huippua varten":"Liikkumisvara turvattu",reason_en:session.v2g_eligible?"Flexibility ready for peak":"Mobility reserve protected",target_soc_percent:buffer};
   }
-  if(slot===2||slot===3){
-    if(session.v2g_eligible&&soc>=reserve+4) return {action:"EXPORT_V2G",target_state:"V2G_ACTIVE",reason_fi:"Korkea kysyntä: anna lyhyt V2G-jousto",reason_en:"High demand: provide short V2G flexibility",target_soc_percent:reserve+2};
-    return {action:"MOBILITY_PRIORITY",target_state:"V2G_AVAILABLE",reason_fi:"Ei riittävää V2G-puskuria — liikkuminen etusijalla",reason_en:"Insufficient V2G buffer — mobility first",target_soc_percent:reserve};
+  if(slot===2){
+    const firstPeakFloor=Math.min(85,reserve+4);
+    if(session.v2g_eligible&&soc>firstPeakFloor+0.05) return {action:"EXPORT_V2G",target_state:"V2G_ACTIVE",reason_fi:"Korkea kysyntä: käytä V2G-puskurin ylempää osaa",reason_en:"High demand: use the upper part of the V2G buffer",target_soc_percent:firstPeakFloor};
+    return {action:"MOBILITY_PRIORITY",target_state:"PAUSED",reason_fi:"Ensimmäisen huippujakson V2G-puskuri käytetty — liikkuminen etusijalla",reason_en:"First peak-slot V2G buffer used — mobility first",target_soc_percent:firstPeakFloor};
+  }
+  if(slot===3){
+    const secondPeakFloor=Math.min(85,reserve+2);
+    if(session.v2g_eligible&&soc>secondPeakFloor+0.05) return {action:"EXPORT_V2G",target_state:"V2G_ACTIVE",reason_fi:"Kysyntä on yhä korkea: käytä jäljellä olevaa turvallista V2G-puskuria",reason_en:"Demand remains high: use the remaining safe V2G buffer",target_soc_percent:secondPeakFloor};
+    return {action:"MOBILITY_PRIORITY",target_state:"PAUSED",reason_fi:"Turvallinen V2G-puskuri käytetty — liikkuminen etusijalla",reason_en:"Safe V2G buffer used — mobility first",target_soc_percent:secondPeakFloor};
   }
   if(slot===4){
-    const restore=Math.min(85,reserve+5);
-    if(soc<restore) return {action:"RESTORE_RESERVE",target_state:"RECHARGING",reason_fi:"Palauta lähtöpuskuri V2G:n jälkeen",reason_en:"Restore departure buffer after V2G",target_soc_percent:restore};
-    return {action:"HOLD_READY",target_state:"V2G_AVAILABLE",reason_fi:"Lähtöpuskuri palautettu",reason_en:"Departure buffer restored",target_soc_percent:restore};
+    const restore=Math.min(85,reserve+8);
+    if(soc<restore) return {action:"RESTORE_RESERVE",target_state:"RECHARGING",reason_fi:"Palauta lähtö- ja V2G-puskuri ennen vapautusta",reason_en:"Restore departure and V2G buffer before release",target_soc_percent:restore};
+    return {action:"HOLD_READY",target_state:"PAUSED",reason_fi:"Lähtö- ja V2G-puskuri palautettu",reason_en:"Departure and V2G buffer restored",target_soc_percent:restore};
   }
   if(soc>=reserve) return {action:"READY_TO_DEPART",target_state:"READY_TO_DEPART",reason_fi:"Ajoneuvo voidaan vapauttaa",reason_en:"Vehicle can be released",target_soc_percent:reserve};
   return {action:"CHARGE_MOBILITY",target_state:"CHARGING",reason_fi:"Lataa vähintään lähtövaraukseen",reason_en:"Charge to protected departure reserve",target_soc_percent:reserve};
@@ -113,7 +119,7 @@ export class WorkshopSessionRegistry extends DurableObject {
   async summary(){
     await this.prune();const activeRaw=await this.activeSessions();const clock=await this.ensureClock(activeRaw.length>0);const active=activeRaw.map(s=>({...publicSession(s),utility_recommendation:recommendation(s,clock)})).sort((a,b)=>String(a.session_ref).localeCompare(String(b.session_ref)));
     const importPower=active.reduce((v,s)=>v+Math.max(0,Number(s.power_kw)||0),0),exportPower=active.reduce((v,s)=>v+Math.max(0,-(Number(s.power_kw)||0)),0),energyIn=active.reduce((v,s)=>v+(Number(s.energy_to_vehicle_kwh)||0),0),energyOut=active.reduce((v,s)=>v+(Number(s.energy_to_grid_kwh)||0),0);
-    const flex=active.filter(s=>s.v2g_eligible&&["READY","V2G_AVAILABLE","V2G_ACTIVE"].includes(s.state)).reduce((v,s)=>v+(Number(s.flexibility_kw)||0),0);const weighted=active.filter(s=>["CHARGING","RECHARGING"].includes(s.state));const res=weighted.length?weighted.reduce((v,s)=>v+(Number(s.res_alignment_pct)||0),0)/weighted.length:0;const state_counts={};for(const s of active)state_counts[s.state]=(state_counts[s.state]||0)+1;
+    const flex=active.filter(s=>["V2G_AVAILABLE","EXPORT_V2G"].includes(s.utility_recommendation?.action)).reduce((v,s)=>v+(Number(s.flexibility_kw)||0),0);const weighted=active.filter(s=>["CHARGING","RECHARGING"].includes(s.state));const res=weighted.length?weighted.reduce((v,s)=>v+(Number(s.res_alignment_pct)||0),0)/weighted.length:0;const state_counts={};for(const s of active)state_counts[s.state]=(state_counts[s.state]||0)+1;
     const events=(await this.ctx.storage.get("events")||[]).slice(0,12);
     return json({protocol_version:OPS_PROTOCOL,source:"shared-utility-clock",registry_connected:true,observed_at:new Date().toISOString(),utility_clock:clock,grid_series:GRID_SLOTS,sessions:active,events,aggregate:{active_sessions:active.length,import_power_kw:importPower,export_power_kw:exportPower,net_power_kw:importPower-exportPower,energy_to_vehicle_kwh:energyIn,energy_to_grid_kwh:energyOut,peak_shaving_kw:exportPower,res_aligned_share_pct:res,flexibility_available_kw:flex,state_counts}});
   }
