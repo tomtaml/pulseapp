@@ -53,6 +53,8 @@ if(v13Enabled){
     if(s.state==='PAUSED')p({state:'RECHARGING'});
     else if(s.state==='V2G_ACTIVE'||s.state==='V2G_AVAILABLE')p({state:'RECHARGING'});
     else if(s.state==='READY'||s.state==='READY_TO_DEPART')p({state:'CHARGING'});
+  }else if(target==='PAUSED'){
+    if(['READY','CHARGING','V2G_AVAILABLE','V2G_ACTIVE','RECHARGING'].includes(s.state))p({state:'PAUSED',power_kw:0,direction:'idle'});
   }else if(target==='READY_TO_DEPART'){
     if(s.state==='PAUSED')p({state:'READY_TO_DEPART',power_kw:0,direction:'idle',departure_ready:true});
     else if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
@@ -99,7 +101,8 @@ if(v13Enabled){
   if(['CHARGE_MOBILITY','CHARGE_BUFFER'].includes(action))charge(22,target,'CHARGING');
   else if(action==='EXPORT_V2G')exportV2G(Number(c.step_index)===3?12:18,target);
   else if(action==='RESTORE_RESERVE')charge(22,target,'RECHARGING');
-  else if(action==='V2G_AVAILABLE'||action==='HOLD_READY'||action==='MOBILITY_PRIORITY')moveTo(adapter,'PAUSED',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
+  else if(action==='V2G_AVAILABLE')moveTo(adapter,'V2G_AVAILABLE',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
+  else if(action==='HOLD_READY'||action==='MOBILITY_PRIORITY')moveTo(adapter,'PAUSED',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
   else if(action==='READY_TO_DEPART')moveTo(adapter,'READY_TO_DEPART',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG,departure_ready:true});
   ensureResearchGate();
  }
