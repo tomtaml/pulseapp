@@ -39,18 +39,23 @@ if(v13Enabled){
   if(s.state===target){publish(adapter,{...base,...patch,state:target});return;}
   const p=x=>{publish(adapter,{...base,...x});s=state();};
   if(target==='CHARGING'){
-    if(s.state==='READY_TO_DEPART'||s.state==='READY')p({state:'CHARGING'});else if(s.state==='V2G_ACTIVE'||s.state==='V2G_AVAILABLE')p({state:'RECHARGING'});
+    if(s.state==='READY_TO_DEPART'||s.state==='READY'||s.state==='PAUSED')p({state:'CHARGING'});else if(s.state==='V2G_ACTIVE'||s.state==='V2G_AVAILABLE')p({state:'RECHARGING'});
   }else if(target==='V2G_AVAILABLE'){
-    if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
+    if(s.state==='PAUSED')p({state:'V2G_AVAILABLE',power_kw:0,direction:'idle'});
+    else if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
     if(state()?.state==='CHARGING')p({state:'V2G_AVAILABLE',power_kw:0,direction:'idle'});
   }else if(target==='V2G_ACTIVE'){
-    if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
+    if(s.state==='PAUSED')p({state:'V2G_AVAILABLE',power_kw:0,direction:'idle'});
+    else if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
     if(state()?.state==='CHARGING')p({state:'V2G_AVAILABLE',power_kw:0,direction:'idle'});
     if(state()?.state==='V2G_AVAILABLE')p({state:'V2G_ACTIVE'});
   }else if(target==='RECHARGING'){
-    if(s.state==='V2G_ACTIVE'||s.state==='V2G_AVAILABLE')p({state:'RECHARGING'});else if(s.state==='READY'||s.state==='READY_TO_DEPART')p({state:'CHARGING'});
+    if(s.state==='PAUSED')p({state:'RECHARGING'});
+    else if(s.state==='V2G_ACTIVE'||s.state==='V2G_AVAILABLE')p({state:'RECHARGING'});
+    else if(s.state==='READY'||s.state==='READY_TO_DEPART')p({state:'CHARGING'});
   }else if(target==='READY_TO_DEPART'){
-    if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
+    if(s.state==='PAUSED')p({state:'READY_TO_DEPART',power_kw:0,direction:'idle',departure_ready:true});
+    else if(s.state==='READY')p({state:'CHARGING',power_kw:0,direction:'idle'});
     const q=state()?.state;if(['CHARGING','V2G_AVAILABLE','V2G_ACTIVE','RECHARGING'].includes(q))p({state:'READY_TO_DEPART',power_kw:0,direction:'idle',departure_ready:true});
   }
   const q=state();if(q&&q.state===target)publish(adapter,{...base,...patch,state:target});
@@ -82,19 +87,19 @@ if(v13Enabled){
  function applyRecommendation(){
   if(step()!==4)return;const adapter=window.PULSE_CHARGING?.adapter,sess=mySession(),c=summary?.utility_clock;if(!adapter||typeof adapter.publish!=='function'||!sess||!c)return;
   const rec=sess.utility_recommendation||{},snap=state();if(!snap||['FAULT','OVERRIDDEN','SESSION_ENDED'].includes(snap.state))return;
-  const now=Date.now(),realSec=Math.min(4,Math.max(.25,(now-lastTick)/1000));lastTick=now;const simMin=realSec/Number(c.slot_real_seconds||20)*15;const battery=Number(sess.battery_kwh||75);let soc=Number(snap.soc_percent??sess.arrival_soc_percent??55),toV=Number(snap.energy_to_vehicle_kwh||0),toG=Number(snap.energy_to_grid_kwh||0);
+  const now=Date.now(),realSec=Math.min(4,Math.max(.25,(now-lastTick)/1000));lastTick=now;const simMin=realSec/Number(c.slot_real_seconds||15)*15;const battery=Number(sess.battery_kwh||75);let soc=Number(snap.soc_percent??sess.arrival_soc_percent??55),toV=Number(snap.energy_to_vehicle_kwh||0),toG=Number(snap.energy_to_grid_kwh||0);
   const charge=(kw,target,stateName='CHARGING')=>{const kwh=Math.min(Math.max(0,(target-soc)/100*battery),kw*simMin/60);soc=Math.min(target,soc+kwh/battery*100);toV+=kwh;moveTo(adapter,stateName,{soc_percent:Number(soc.toFixed(1)),power_kw:soc>=target-.15?0:kw,energy_to_vehicle_kwh:Number(toV.toFixed(2)),energy_to_grid_kwh:Number(toG.toFixed(2)),direction:soc>=target-.15?'idle':'grid_to_vehicle',departure_ready:false});};
   const exportV2G=(kw,target)=>{const kwh=Math.min(Math.max(0,(soc-target)/100*battery),kw*simMin/60);soc=Math.max(target,soc-kwh/battery*100);toG+=kwh;moveTo(adapter,'V2G_ACTIVE',{soc_percent:Number(soc.toFixed(1)),power_kw:soc<=target+.15?0:-kw,energy_to_vehicle_kwh:Number(toV.toFixed(2)),energy_to_grid_kwh:Number(toG.toFixed(2)),direction:soc<=target+.15?'idle':'vehicle_to_grid',departure_ready:false});};
   const protectedSoc=Number(sess.protected_soc_percent??65);
   let action=rec.action,target=Number(rec.target_soc_percent??protectedSoc);
   if(Number(c.step_index)===4){
-    const restore=Math.min(85,protectedSoc+5);target=restore;
+    const restore=Math.min(85,protectedSoc+8);target=restore;
     action=soc<restore-.1?'RESTORE_RESERVE':'HOLD_READY';
   }else if(Number(c.step_index)===5&&soc>=protectedSoc){action='READY_TO_DEPART';target=protectedSoc;}
   if(['CHARGE_MOBILITY','CHARGE_BUFFER'].includes(action))charge(22,target,'CHARGING');
-  else if(action==='EXPORT_V2G')exportV2G(18,target);
+  else if(action==='EXPORT_V2G')exportV2G(Number(c.step_index)===3?12:18,target);
   else if(action==='RESTORE_RESERVE')charge(22,target,'RECHARGING');
-  else if(action==='V2G_AVAILABLE'||action==='HOLD_READY'||action==='MOBILITY_PRIORITY')moveTo(adapter,'V2G_AVAILABLE',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
+  else if(action==='V2G_AVAILABLE'||action==='HOLD_READY'||action==='MOBILITY_PRIORITY')moveTo(adapter,'PAUSED',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
   else if(action==='READY_TO_DEPART')moveTo(adapter,'READY_TO_DEPART',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG,departure_ready:true});
   ensureResearchGate();
  }
