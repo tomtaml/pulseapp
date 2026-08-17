@@ -16,13 +16,14 @@ if (enabled135) {
     const current = snapshot();
     if (!current || current.state !== 'V2G_ACTIVE') return;
 
-    const shouldStop = rec.action === 'MOBILITY_PRIORITY' ||
+    const mobilityHold = rec.action === 'MOBILITY_PRIORITY';
+    const shouldStop = mobilityHold ||
       (rec.target_state === 'V2G_AVAILABLE' && rec.action !== 'EXPORT_V2G');
     if (!shouldStop) return;
 
     try {
       adapter.publish({
-        state: 'V2G_AVAILABLE',
+        state: mobilityHold ? 'PAUSED' : 'V2G_AVAILABLE',
         soc_percent: current.soc_percent,
         protected_soc_percent: session?.protected_soc_percent ?? current.protected_soc_percent,
         power_kw: 0,
@@ -35,7 +36,7 @@ if (enabled135) {
         detail: { session_ref: ref, action: rec.action, simulated_time: summary.utility_clock?.simulated_time }
       }));
     } catch (error) {
-      console.warn('PULSE v1.3.5 could not stop V2G cleanly', error);
+      console.warn('PULSE v1.3.9 could not stop V2G cleanly', error);
     }
   }
 
