@@ -98,8 +98,9 @@ if(v13Enabled){
     const restore=Math.min(85,protectedSoc+8);target=restore;
     action=soc<restore-.1?'RESTORE_RESERVE':'HOLD_READY';
   }else if(Number(c.step_index)===5&&soc>=protectedSoc){action='READY_TO_DEPART';target=protectedSoc;}
-  if(['CHARGE_MOBILITY','CHARGE_BUFFER'].includes(action))charge(22,target,'CHARGING');
-  else if(action==='EXPORT_V2G')exportV2G(Number(c.step_index)===3?12:18,target);
+  if(action==='CHARGE_MOBILITY')charge(22,target,'CHARGING');
+  else if(action==='CHARGE_BUFFER')charge(Number(c.step_index)===1?14:22,target,'CHARGING');
+  else if(action==='EXPORT_V2G')exportV2G(Number(c.step_index)===3?8:12,target);
   else if(action==='RESTORE_RESERVE')charge(18,target,'RECHARGING');
   else if(action==='V2G_AVAILABLE')moveTo(adapter,'V2G_AVAILABLE',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
   else if(action==='HOLD_READY'||action==='MOBILITY_PRIORITY')moveTo(adapter,'PAUSED',{soc_percent:soc,power_kw:0,direction:'idle',energy_to_vehicle_kwh:toV,energy_to_grid_kwh:toG});
