@@ -18,6 +18,16 @@
       "migrations_dir": "../migrations"
     }
   ],
+  "ratelimits": [
+    {
+      "name": "SYNTHETIC_RATE_LIMITER",
+      "namespace_id": "913702",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ],
   "vars": {
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     "TURNSTILE_EXPECTED_HOSTNAME": "",
@@ -25,6 +35,7 @@
     "COLLECTION_ENABLED": "false",
     "FREE_TEXT_ENABLED": "false",
     "RESEARCH_FREE_TEXT_APPROVED": "false",
+    "SYNTHETIC_PIPELINE_ENABLED": "false",
     "ENVIRONMENT": "preview",
     "CHARGING_BACKEND_MODE": "mock",
     "CHARGING_COMMANDS_ENABLED": "false"
