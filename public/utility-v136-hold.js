@@ -1,4 +1,4 @@
-// v1.3.8 utility semantics for connected vehicles that are temporarily
+// v1.3.9 utility semantics for connected vehicles that are temporarily
 // unavailable for V2G because mobility or restored departure buffer takes priority.
 const fi136u = () => document.documentElement.lang === 'fi';
 const tr136u = (a,b) => fi136u() ? a : b;
@@ -22,9 +22,9 @@ function applyHoldSemantics136u(data) {
   if (metrics[5]) metrics[5].textContent = `${availableFlex.toFixed(0)} kW`;
 
   const badge = document.getElementById('viewBadge');
-  if (badge) badge.textContent = 'Utility / aggregator v1.3.8';
+  if (badge) badge.textContent = 'Utility / aggregator v1.3.9';
   const eyebrow = document.getElementById('eyebrow');
-  if (eyebrow) eyebrow.textContent = tr136u('PULSE v1.3.8 · yhteinen energiajärjestelmän kello','PULSE v1.3.8 · shared energy-system clock');
+  if (eyebrow) eyebrow.textContent = tr136u('PULSE v1.3.9 · yhteinen energiajärjestelmän kello','PULSE v1.3.9 · shared energy-system clock');
 }
 
 window.addEventListener('pulse:utility-stable-update', event => {
