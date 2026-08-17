@@ -1,0 +1,12 @@
+{
+  "name": "pulse-srf-research-test-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "versions:upload": "wrangler versions upload"
+  },
+  "devDependencies": {
+    "wrangler": "^4.36.0"
+  }
+}
