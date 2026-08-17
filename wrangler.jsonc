@@ -10,6 +10,14 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pulse-research-test-eu",
+      "database_id": "8a0525a7-4781-4992-b794-d8695e79f319",
+      "migrations_dir": "migrations"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       { "name": "OPS_REGISTRY", "class_name": "WorkshopSessionRegistry" }
