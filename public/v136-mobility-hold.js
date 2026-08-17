@@ -19,7 +19,7 @@ if (enabled136) {
     if (!adapter || typeof adapter.publish !== 'function' || changing) return null;
     changing = true;
     try { return adapter.publish(patch); }
-    catch (error) { console.warn('PULSE v1.3.6 hold transition failed', error); return null; }
+    catch (error) { console.warn('PULSE v1.3.8 hold transition failed', error); return null; }
     finally { changing = false; }
   }
 
@@ -46,10 +46,10 @@ if (enabled136) {
 
     const protectedSoc = Number(sess?.protected_soc_percent ?? s.protected_soc_percent ?? 0);
     const soc = Number(s.soc_percent ?? 0);
-    const restoreTarget = Math.min(85, protectedSoc + 5);
+    const restoreTarget = Math.min(85, protectedSoc + 8);
 
     if ([2,3].includes(Number(c.step_index)) && rec.action === 'MOBILITY_PRIORITY') {
-      if (['V2G_ACTIVE','V2G_AVAILABLE','CHARGING'].includes(s.state)) publish(holdPatch(s, sess));
+      if (['V2G_ACTIVE','V2G_AVAILABLE','CHARGING','RECHARGING'].includes(s.state)) publish(holdPatch(s, sess));
       return;
     }
 
@@ -90,10 +90,10 @@ if (enabled136) {
     const progress = card.querySelector('.v07-cycle-progress > div');
     const run = card.querySelector('.v1-run-adapter-cycle');
 
-    if (phase) phase.textContent = restore ? tr('Lähtöpuskuri palautettu','Departure buffer restored') : tr('Odottaa – liikkumisvara suojattu','Holding – mobility reserve protected');
+    if (phase) phase.textContent = restore ? tr('Lähtö- ja V2G-puskuri palautettu','Departure and V2G buffer restored') : tr('Odottaa – liikkumisvara suojattu','Holding – mobility reserve protected');
     if (sub) sub.textContent = restore ? tr('Ei energiansiirtoa · odottaa lähtövalmiuden vapautusta','No energy transfer · waiting for release') : tr('Ei energiansiirtoa · ajoneuvo pysyy kytkettynä','No energy transfer · vehicle remains connected');
-    if (explanation) explanation.textContent = restore ? tr('Tarvittava lähtöpuskuri on palautettu. Ajoneuvo pysyy kytkettynä yhteisen jakson loppuun.','The required departure buffer has been restored. The vehicle remains connected until the shared run ends.') : tr('V2G keskeytettiin ennen suojattua varaustasoa. Ajoneuvo odottaa seuraavaa yhteisen kellon päätöstä.','V2G stopped before the protected reserve. The vehicle waits for the next shared-clock decision.');
-    if (progress) progress.style.width = restore ? '92%' : '74%';
+    if (explanation) explanation.textContent = restore ? tr('Tavoiteltu lähtö- ja V2G-puskuri on palautettu. Ajoneuvo pysyy kytkettynä yhteisen jakson loppuun.','The target departure and V2G buffer has been restored. The vehicle remains connected until the shared run ends.') : tr('V2G on keskeytetty tämän huippujakson turvalliseen puskurirajaan. Ajoneuvo odottaa seuraavaa yhteisen kellon päätöstä.','V2G has stopped at the safe buffer limit for this peak interval. The vehicle waits for the next shared-clock decision.');
+    if (progress) progress.style.width = restore ? '94%' : '74%';
     if (run) run.hidden = true;
   }
 
