@@ -1,6 +1,6 @@
 import baseWorker from "./index.js";
 
-const RESEARCH_TEST_BUILD = "1.4.2-test";
+const RESEARCH_TEST_BUILD = "1.4.3-test";
 const SYNTHETIC_WORKSHOP = "TEST_PIPELINE";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const MAX_BODY_BYTES = 24000;
@@ -137,9 +137,16 @@ async function verifyTestTurnstile(env, token) {
   if (!result.success) return result;
 
   // Cloudflare's documented always-pass test response uses these values.
-  if (result.action !== "test" || result.hostname !== "localhost") {
+  const documentedTestResponse =
+    result.action === "test" && result.hostname === "localhost";
+  
+  const testingKeyResponse =
+    result.metadata?.result_with_testing_key === true;
+  
+  if (!documentedTestResponse && !testingKeyResponse) {
     return { ...result, success: false };
   }
+  
   return result;
 }
 
