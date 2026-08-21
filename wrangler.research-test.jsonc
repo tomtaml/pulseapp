@@ -13,9 +13,19 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "pulse-research-test-eu",
-      "database_id": "8a0525a7-4781-4992-b794-d8695e79f319",
+      "database_name": "pulse-research-test-eu-v2",
+      "database_id": "1b9f67e2-631e-4fe5-9f4f-a249a651fc67",
       "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "SYNTHETIC_RATE_LIMITER",
+      "namespace_id": "913702",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
     }
   ],
   "vars": {
@@ -25,6 +35,7 @@
     "COLLECTION_ENABLED": "false",
     "FREE_TEXT_ENABLED": "false",
     "RESEARCH_FREE_TEXT_APPROVED": "false",
+    "SYNTHETIC_PIPELINE_ENABLED": "false",
     "ENVIRONMENT": "preview",
     "CHARGING_BACKEND_MODE": "mock",
     "CHARGING_COMMANDS_ENABLED": "false"
