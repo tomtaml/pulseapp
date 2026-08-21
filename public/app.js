@@ -1,3 +1,4 @@
+import "./js/research-test-browser-shim.js";
 import "./js/main.js";
 import "./js/augment.js";
 import "./js/charging/index.js";
