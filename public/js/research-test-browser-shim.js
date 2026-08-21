@@ -1,6 +1,7 @@
 const qs = new URLSearchParams(location.search);
 const SYNTHETIC_WORKSHOP = "TEST_PIPELINE";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
+const SYNTHETIC_TEST_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
 const syntheticModeRequested = qs.get("synthetic") === "1"
   && qs.get("workshop") === SYNTHETIC_WORKSHOP
   && qs.get("demo") !== "1";
@@ -8,6 +9,7 @@ const syntheticModeRequested = qs.get("synthetic") === "1"
 if (syntheticModeRequested) {
   const nativeFetch = window.fetch.bind(window);
   let syntheticReady = false;
+  let syntheticWidgetId = 0;
 
   function sameOriginUrl(input) {
     try {
@@ -33,6 +35,37 @@ if (syntheticModeRequested) {
     if (badge.textContent !== text) badge.textContent = text;
     badge.classList.toggle("live", syntheticReady);
   }
+
+  function renderSyntheticVerification(target) {
+    const el = typeof target === "string" ? document.querySelector(target) : target;
+    if (!el) return;
+    const fi = document.documentElement.lang === "fi";
+    el.innerHTML = syntheticReady
+      ? `<div class="notice"><strong>${fi ? "Synteettinen ihmistarkistus" : "Synthetic human verification"}</strong><br>${fi ? "TEST_PIPELINE käyttää Cloudflaren testivarmennusta. Oikeaa osallistujaa ei varmenneta tässä portissa." : "TEST_PIPELINE uses Cloudflare test verification. No real participant verification occurs at this gate."}</div>`
+      : `<div class="warning">${fi ? "Synteettinen testiputki on lukittu." : "Synthetic test pipeline is locked."}</div>`;
+  }
+
+  // Gate 2E uses a browser-only Turnstile adapter so the existing participant UI can
+  // complete its normal verification step without pretending this is production human
+  // verification. The server still sends the synthetic token to Cloudflare Siteverify
+  // and accepts it only with the dedicated always-pass testing secret.
+  window.turnstile = {
+    render(target) {
+      syntheticWidgetId += 1;
+      renderSyntheticVerification(target);
+      return syntheticWidgetId;
+    },
+    getResponse() {
+      return syntheticReady ? SYNTHETIC_TEST_TOKEN : "";
+    },
+    reset(targetId) {
+      if (targetId) renderSyntheticVerification("#turnstile");
+    },
+    remove() {
+      const el = document.getElementById("turnstile");
+      if (el) el.innerHTML = "";
+    }
+  };
 
   const badge = document.getElementById("collectionBadge");
   if (badge) {
@@ -102,6 +135,7 @@ if (syntheticModeRequested) {
 
       payload.synthetic_test = true;
       payload.workshop_code = SYNTHETIC_WORKSHOP;
+      payload.turnstile_token = SYNTHETIC_TEST_TOKEN;
 
       const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
       headers.set("content-type", "application/json");
