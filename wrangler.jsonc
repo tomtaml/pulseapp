@@ -13,8 +13,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "pulse-research-test-eu-v2",
-      "database_id": "1b9f67e2-631e-4fe5-9f4f-a249a651fc67",
+      "database_name": "pulse-research-test-eu",
+      "database_id": "8a0525a7-4781-4992-b794-d8695e79f319",
       "migrations_dir": "migrations"
     }
   ],
