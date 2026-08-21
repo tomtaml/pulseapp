@@ -13,6 +13,8 @@
     "db:migrate:research-test": "wrangler d1 migrations apply pulse-research-test-eu-v2 --remote --config wrangler.research-test.jsonc",
     "db:list:research-test": "wrangler d1 migrations list pulse-research-test-eu-v2 --remote --config wrangler.research-test.jsonc",
     "db:synthetic:research-test": "wrangler d1 execute pulse-research-test-eu-v2 --remote --config wrangler.research-test.jsonc --file=./scripts/synthetic_research_insert.sql",
+    "export:analysis:research": "python3 scripts/export_analysis.py --record-kind research",
+    "export:analysis:synthetic": "python3 scripts/export_analysis.py --record-kind synthetic_test",
     "types": "wrangler types",
     "qr": "python3 scripts/make_qr.py",
     "preview:static": "python3 -m http.server 8080 -d public"
