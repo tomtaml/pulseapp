@@ -1,6 +1,6 @@
 import baseWorker from "./index.js";
 
-const RESEARCH_TEST_BUILD = "1.4.3-test";
+const RESEARCH_TEST_BUILD = "1.4.4-test";
 const SYNTHETIC_WORKSHOP = "TEST_PIPELINE";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const MAX_BODY_BYTES = 24000;
@@ -136,17 +136,16 @@ async function verifyTestTurnstile(env, token) {
   const result = await response.json();
   if (!result.success) return result;
 
-  // Cloudflare's documented always-pass test response uses these values.
   const documentedTestResponse =
     result.action === "test" && result.hostname === "localhost";
-  
+
   const testingKeyResponse =
     result.metadata?.result_with_testing_key === true;
-  
+
   if (!documentedTestResponse && !testingKeyResponse) {
     return { ...result, success: false };
   }
-  
+
   return result;
 }
 
@@ -336,7 +335,8 @@ export default {
         research_pipeline_mode: env.SYNTHETIC_PIPELINE_ENABLED === "true" ? "synthetic-test-enabled" : "synthetic-test-locked",
         research_db_bound: Boolean(env.DB),
         research_storage: env.DB ? "D1" : "unbound",
-        research_collection_locked: String(env.COLLECTION_ENABLED) !== "true",
+        research_collection_requested: env.COLLECTION_ENABLED === "true",
+        research_collection_locked: data.collection_enabled !== true,
         research_free_text_locked: String(env.FREE_TEXT_ENABLED) !== "true",
         research_test_only: true,
         synthetic_workshop_code: SYNTHETIC_WORKSHOP,
@@ -352,7 +352,6 @@ export default {
       return handleSyntheticSubmit(request, env);
     }
 
-    // All normal research endpoints continue through the production fail-closed gate.
     return baseWorker.fetch(request, env, ctx);
   }
 };
