@@ -7,10 +7,12 @@ if ((v140Params.get("variant") || "fi-fleet") === "fi-fleet") {
     const adapter = screen?.querySelector(".v1-adapter-cycle");
     if (!adapter) return;
 
-    screen.querySelectorAll(".v07-cycle-card, .cycle-card").forEach(card => {
+    screen.querySelectorAll(".v07-cycle-card, .cycle-card, .v06-cycle-card").forEach(card => {
       if (card === adapter || card.closest(".v1-adapter-cycle")) return;
       card.hidden = true;
       card.setAttribute("aria-hidden", "true");
+      card.style.setProperty("display", "none", "important");
+      card.style.setProperty("visibility", "hidden", "important");
     });
   }
 
@@ -24,7 +26,7 @@ if ((v140Params.get("variant") || "fi-fleet") === "fi-fleet") {
         suppressLegacyCycleCards();
       });
     });
-    observer.observe(screen, { childList: true, subtree: true });
+    observer.observe(screen, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "style", "class"] });
     suppressLegacyCycleCards();
   }
 }
