@@ -37,21 +37,21 @@ export class MockChargingAdapter extends EventTarget {
 
   async runReferenceCycle() {
     this.publish({ state: ChargingState.CHARGING, soc_percent: 55, power_kw: 22, energy_to_vehicle_kwh: 0, energy_to_grid_kwh: 0, direction: "grid_to_vehicle", departure_ready: false });
-    await sleep(2500 / this.speed);
+    await sleep(3000 / this.speed);
     this.publish({ state: ChargingState.CHARGING, soc_percent: 63, power_kw: 22, energy_to_vehicle_kwh: 5.1, direction: "grid_to_vehicle" });
-    await sleep(2500 / this.speed);
+    await sleep(3000 / this.speed);
     this.publish({ state: ChargingState.V2G_AVAILABLE, soc_percent: 72, power_kw: 0, energy_to_vehicle_kwh: 10.2, energy_to_grid_kwh: 0, direction: "idle" });
-    await sleep(1500 / this.speed);
+    await sleep(1800 / this.speed);
     this.publish({ state: ChargingState.V2G_ACTIVE, soc_percent: 71, power_kw: -18, energy_to_grid_kwh: 0.8, direction: "vehicle_to_grid" });
-    await sleep(2000 / this.speed);
+    await sleep(2400 / this.speed);
     this.publish({ state: ChargingState.V2G_ACTIVE, soc_percent: 69, power_kw: -18, energy_to_grid_kwh: 2.2, direction: "vehicle_to_grid" });
-    await sleep(2000 / this.speed);
+    await sleep(2400 / this.speed);
     this.publish({ state: ChargingState.V2G_ACTIVE, soc_percent: 66, power_kw: -18, energy_to_grid_kwh: 3.6, direction: "vehicle_to_grid" });
-    await sleep(1500 / this.speed);
+    await sleep(1800 / this.speed);
     this.publish({ state: ChargingState.RECHARGING, soc_percent: 66, power_kw: 22, energy_to_vehicle_kwh: 10.2, energy_to_grid_kwh: 3.6, direction: "grid_to_vehicle" });
-    await sleep(2500 / this.speed);
+    await sleep(2800 / this.speed);
     this.publish({ state: ChargingState.RECHARGING, soc_percent: 68, power_kw: 22, energy_to_vehicle_kwh: 11.4, energy_to_grid_kwh: 3.6, direction: "grid_to_vehicle" });
-    await sleep(2500 / this.speed);
+    await sleep(2800 / this.speed);
     this.publish({ state: ChargingState.READY_TO_DEPART, soc_percent: 70, power_kw: 0, energy_to_vehicle_kwh: 12.6, energy_to_grid_kwh: 3.6, direction: "idle", departure_ready: true });
     return this.snapshot;
   }
