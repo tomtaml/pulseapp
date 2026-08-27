@@ -1,7 +1,7 @@
 import "./js/research-test-browser-shim.js";
 import "./js/main.js";
 import "./js/augment.js";
-import "./js/charging/index.js?v=1402";
+import "./js/charging/index.js?v=1420";
 import "./v05.js";
 import "./v06.js";
 import "./v06-positioning-fix.js";
@@ -34,3 +34,4 @@ import "./v135-v2g-transition-fix.js";
 import "./v136-mobility-hold.js?v=1311";
 import "./v140-workshop-cycle-dedupe.js?v=1402";
 import "./v141-language-sync.js?v=1412";
+import "./v142-cycle-pacing.js?v=1420";
