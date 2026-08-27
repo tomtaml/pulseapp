@@ -14,6 +14,15 @@ if ((v140Params.get("variant") || "fi-fleet") === "fi-fleet") {
       card.style.setProperty("display", "none", "important");
       card.style.setProperty("visibility", "hidden", "important");
     });
+
+    // v071 still adds its own legacy replay wrapper after the hidden v07 card.
+    // Keep the adapter-backed replay button as the single participant control.
+    screen.querySelectorAll(".v071-replay-wrap").forEach(replay => {
+      replay.hidden = true;
+      replay.setAttribute("aria-hidden", "true");
+      replay.style.setProperty("display", "none", "important");
+      replay.style.setProperty("visibility", "hidden", "important");
+    });
   }
 
   if (screen) {
