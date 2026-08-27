@@ -1,4 +1,4 @@
-import { MockChargingAdapter } from "./mock-adapter.js?v=1402";
+import { MockChargingAdapter } from "./mock-adapter.js?v=1420";
 import { BackendChargingAdapter } from "./backend-adapter.js";
 
 let adapter = null;
