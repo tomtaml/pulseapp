@@ -20,7 +20,7 @@ let state = {
   alignment_stage:"approach", alignment_completed:false, alignment_method:"", alignment_clarity:null,
   constraint_owner:"", constraint_clarity:null, v2g_authorisation:"", preuse_v2g_acceptance:null,
   cycle_completed:false, cycle_overridden:false, energy_flow_clarity:null,
-  fault_decision:"", fault_owner:"", c1:"", c2:"", c3:"", comprehension_items:[],
+  fault_decision:"", fault_owner:"", c1:"", c2:"", c3:"", c4:"", comprehension_items:[],
   sus_values:[], trust_values:[], optional_note:"",
   trust_reliability:null, trust_predictability:null, control_confidence:null, failure_recovery_confidence:null,
   wireless_use_intention:null, v2g_acceptance_under_guarantees:null,
@@ -57,7 +57,7 @@ function syncState() {
   });
   if (config.free_text_enabled && document.getElementById("optional_note")) state.optional_note = document.getElementById("optional_note").value.slice(0,500); else state.optional_note = "";
   state.comprehension_items = variant === "fi-fleet"
-    ? [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g"]
+    ? [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g", state.c4 === "redecision"]
     : [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g"];
   if (variant === "fi-fleet") state.trust_values = [state.trust_reliability,state.trust_predictability,state.control_confidence,state.failure_recovery_confidence].filter(v => Number.isInteger(v));
   else state.trust_values = [state.trust_1,state.trust_2,state.trust_3].filter(v => Number.isInteger(v));
@@ -74,7 +74,8 @@ function validStep() {
   if (step === 5 && (!state.cycle_completed || !Number.isInteger(state.energy_flow_clarity))) return language === "fi" ? "Suorita virtuaalinen jakso ja arvioi energian suunnan selkeys." : "Run the virtual cycle and rate the clarity of energy flow.";
   if (step === 6 && variant === "fi-fleet" && (!state.fault_decision || !state.fault_owner)) return language === "fi" ? "Valitse toimintatapa ja päätösvastuu." : "Choose an action and decision owner.";
   if (step === 6 && variant !== "fi-fleet" && !state.fault_decision) return language === "fi" ? "Valitse tärkein tieto." : "Choose the most important information.";
-  if (step === 7 && (!state.c1 || !state.c2 || !state.c3)) return language === "fi" ? "Vastaa kaikkiin kolmeen kohtaan." : "Please answer all three items.";
+  if (step === 7 && variant === "fi-fleet" && (!state.c1 || !state.c2 || !state.c3 || !state.c4)) return language === "fi" ? "Vastaa kaikkiin neljään kohtaan." : "Please answer all four items.";
+  if (step === 7 && variant !== "fi-fleet" && (!state.c1 || !state.c2 || !state.c3)) return language === "fi" ? "Vastaa kaikkiin kolmeen kohtaan." : "Please answer all three items.";
   if (step === 8 && state.sus_values.filter(v => Number.isInteger(v)).length !== 10) return language === "fi" ? "Vastaa kaikkiin SUS-kohtiin." : "Please answer all SUS items.";
   if (step === 9 && variant === "fi-fleet") {
     const keys=["trust_reliability","trust_predictability","control_confidence","failure_recovery_confidence","wireless_use_intention","v2g_acceptance_under_guarantees"];

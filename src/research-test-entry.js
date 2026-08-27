@@ -1,6 +1,7 @@
 import baseWorker from "./index.js";
+import { validateComprehensionItems } from "./comprehension-contract.js";
 
-const RESEARCH_TEST_BUILD = "1.4.4-test";
+const RESEARCH_TEST_BUILD = "1.4.5-test";
 const SYNTHETIC_WORKSHOP = "TEST_PIPELINE";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const MAX_BODY_BYTES = 24000;
@@ -159,11 +160,8 @@ function validateCommon(body) {
   if (!["fi", "en"].includes(body.language)) return "Invalid language.";
   if (body.consent_confirmed !== true) return "Research notice/consent acknowledgement is required.";
   if (body.prototype_disclaimer_confirmed !== true) return "Prototype disclaimer acknowledgement is required.";
-  if (!Array.isArray(body.comprehension_items)
-      || body.comprehension_items.length !== 3
-      || body.comprehension_items.some(value => typeof value !== "boolean")) {
-    return "Three comprehension items are required.";
-  }
+  const comprehensionProblem = validateComprehensionItems(body);
+  if (comprehensionProblem) return comprehensionProblem;
   if (susScore(body.sus_values) === null) return "Ten valid SUS responses are required.";
   return null;
 }
@@ -199,7 +197,7 @@ function validate(body) {
 function researchPayload(body) {
   const clean = scrubObject(body);
   const base = {
-    schema_version: "research-v1",
+    schema_version: "research-v1.1",
     app_version: "1.0.0",
     synthetic_test: true,
     variant: clean.variant,

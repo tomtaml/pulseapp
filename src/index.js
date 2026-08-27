@@ -1,5 +1,7 @@
+import { validateComprehensionItems } from "./comprehension-contract.js";
+
 const APP_VERSION = "1.0.0";
-const RESEARCH_SCHEMA_VERSION = "research-v1";
+const RESEARCH_SCHEMA_VERSION = "research-v1.1";
 const CHARGING_PROTOCOL_VERSION = "pulse-session-v1";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const JSON_HEADERS = {"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0"};
@@ -105,7 +107,7 @@ function validateCommon(body){
   if(!["fi","en"].includes(body.language))return "Invalid language.";
   if(body.consent_confirmed!==true)return "Research notice/consent acknowledgement is required.";
   if(body.prototype_disclaimer_confirmed!==true)return "Prototype disclaimer acknowledgement is required.";
-  if(!Array.isArray(body.comprehension_items)||body.comprehension_items.length!==3||body.comprehension_items.some(v=>typeof v!=="boolean"))return "Three comprehension items are required.";
+  const comprehensionProblem=validateComprehensionItems(body);if(comprehensionProblem)return comprehensionProblem;
   if(susScore(body.sus_values)===null)return "Ten valid SUS responses are required.";
   return null;
 }

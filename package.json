@@ -17,7 +17,8 @@
     "export:analysis:synthetic": "python3 scripts/export_analysis.py --record-kind synthetic_test",
     "types": "wrangler types",
     "qr": "python3 scripts/make_qr.py",
-    "preview:static": "python3 -m http.server 8080 -d public"
+    "preview:static": "python3 -m http.server 8080 -d public",
+    "test:comprehension": "node scripts/test_comprehension_contract.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.36.0"
