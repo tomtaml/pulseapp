@@ -1,5 +1,5 @@
 import "./js/research-test-browser-shim.js";
-import "./js/main.js?v=1460";
+import "./js/main.js?v=1470";
 import "./js/augment.js";
 import "./js/charging/index.js?v=1420";
 import "./v05.js";
