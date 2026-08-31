@@ -49,6 +49,8 @@ mobileRcStyle.textContent = `
 document.head.appendChild(mobileRcStyle);
 
 function compactPositioningControls() {
+  if (!window.matchMedia("(max-width: 520px)").matches) return;
+
   const wrap = document.querySelector(".v06-positioning");
   if (!wrap) return;
 
