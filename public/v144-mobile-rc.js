@@ -44,6 +44,31 @@ mobileRcStyle.textContent = `
   .v06-dpad {
     margin-top: 0;
   }
+
+  .v07-cycle-top {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .3rem;
+  }
+
+  .v07-cycle-top > div {
+    min-width: 0;
+    padding: .42rem .28rem;
+    gap: .08rem;
+    text-align: center;
+    border-radius: 10px;
+  }
+
+  .v07-cycle-top span {
+    font-size: .66rem;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  .v07-cycle-top strong {
+    font-size: .9rem;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
 }
 `;
 document.head.appendChild(mobileRcStyle);
@@ -80,22 +105,53 @@ function compactPositioningControls() {
   }
 }
 
-function scrollToTopAfterPageChange(event) {
-  const control = event.target.closest?.('[data-action="next"], [data-action="back"]');
-  if (!control) return;
-  const beforeHeading = document.querySelector("#screen h1")?.textContent || "";
-  window.setTimeout(() => {
-    const afterHeading = document.querySelector("#screen h1")?.textContent || "";
-    if (afterHeading && afterHeading !== beforeHeading) {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }
-  }, 30);
+const mobileRcScreen = document.querySelector("#screen");
+let navigationArmed = false;
+let navigationSignature = "";
+let navigationTimer = null;
+
+function pageSignature() {
+  if (!mobileRcScreen) return "";
+  const heading = mobileRcScreen.querySelector("h1")?.textContent?.trim() || "";
+  const step = mobileRcScreen.querySelector(".step-label")?.textContent?.trim() || "";
+  return `${step}|${heading}`;
 }
 
-document.addEventListener("click", scrollToTopAfterPageChange);
+function forcePageTop() {
+  const reset = () => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+  };
+  reset();
+  requestAnimationFrame(() => {
+    reset();
+    requestAnimationFrame(reset);
+  });
+  window.setTimeout(reset, 80);
+}
 
-const mobileRcObserver = new MutationObserver(() => compactPositioningControls());
-const mobileRcScreen = document.querySelector("#screen");
+document.addEventListener("click", event => {
+  const control = event.target.closest?.('[data-action="next"], [data-action="back"]');
+  if (!control || !mobileRcScreen) return;
+  navigationArmed = true;
+  navigationSignature = pageSignature();
+  window.clearTimeout(navigationTimer);
+  navigationTimer = window.setTimeout(() => {
+    navigationArmed = false;
+  }, 1500);
+}, true);
+
+const mobileRcObserver = new MutationObserver(() => {
+  compactPositioningControls();
+  if (!navigationArmed) return;
+  const currentSignature = pageSignature();
+  if (!currentSignature || currentSignature === navigationSignature) return;
+  navigationArmed = false;
+  window.clearTimeout(navigationTimer);
+  forcePageTop();
+});
+
 if (mobileRcScreen) {
   mobileRcObserver.observe(mobileRcScreen, { childList: true, subtree: true });
   compactPositioningControls();
