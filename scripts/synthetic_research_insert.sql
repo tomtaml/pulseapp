@@ -1,0 +1,33 @@
+INSERT INTO submissions (
+  id,
+  app_version,
+  variant,
+  workshop_code,
+  participant_group,
+  language,
+  comprehension_score,
+  sus_completed,
+  sus_score,
+  trust_score,
+  accessibility_understanding,
+  wireless_acceptance,
+  bidirectional_participation,
+  payload_json,
+  record_kind
+) VALUES (
+  'synthetic-' || lower(hex(randomblob(16))),
+  '1.0.0',
+  'fi-fleet',
+  'TEST_PIPELINE',
+  'fleet_driver',
+  'fi',
+  4,
+  1,
+  82.5,
+  4.25,
+  NULL,
+  4,
+  4,
+  '{"schema_version":"research-v1.1","app_version":"1.0.0","variant":"fi-fleet","workshop_code":"TEST_PIPELINE","participant_group":"fleet_driver","language":"fi","winter_condition":"snow","current_soc":55,"minimum_soc":65,"departure_time":"17:00","dwell_minutes":75,"comprehension_items":[true,true,true,true],"sus_values":[4,1,5,1,4,1,5,1,4,1],"alignment_method":"guided","alignment_clarity":4,"constraint_owner":"shared","constraint_clarity":4,"v2g_authorisation":"automatic_override","preuse_v2g_acceptance":4,"cycle_completed":true,"cycle_overridden":false,"cycle_energy_to_vehicle":12.0,"cycle_energy_to_grid":3.0,"cycle_net_energy":9.0,"energy_flow_clarity":5,"fault_decision":"support","fault_owner":"dispatcher","trust_reliability":4,"trust_predictability":4,"control_confidence":5,"failure_recovery_confidence":4,"wireless_use_intention":4,"v2g_acceptance_under_guarantees":4,"synthetic_test":true}',
+  'synthetic_test'
+);

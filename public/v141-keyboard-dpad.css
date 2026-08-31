@@ -1,0 +1,23 @@
+.v06-fi-fleet .v06-dpad > span {
+  display: none;
+}
+
+.v06-fi-fleet .v06-dpad [data-v06-fix-move="forward"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.v06-fi-fleet .v06-dpad [data-v06-fix-move="left"] {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.v06-fi-fleet .v06-dpad [data-v06-fix-move="back"] {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.v06-fi-fleet .v06-dpad [data-v06-fix-move="right"] {
+  grid-column: 3;
+  grid-row: 2;
+}

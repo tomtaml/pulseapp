@@ -16,7 +16,7 @@ The prototype is designed for **anonymous, structured workshop interaction data*
 | `submitted_at` | timestamp | D1 server timestamp |
 | `app_version` | text | Exact prototype version tested |
 | `sus_score` | real | Calculated 0–100 SUS score |
-| `comprehension_score` | integer | Number of correct comprehension items |
+| `comprehension_score` | integer | Number of correct comprehension items; `fi-fleet` uses 0–4 from `research-v1.1`, other current variants use 0–3 |
 | `trust_score` | real | Mean of structured trust items |
 
 ## Participant/session fields
@@ -38,7 +38,7 @@ The JSON payload can include the following structured prototype signals:
 - plan comprehension (1–5);
 - explicit-confirmation preference for V2G/V2H;
 - fault/fallback priority;
-- three comprehension items;
+- four comprehension items for `fi-fleet` (return-to-service, protected reserve, V2G energy direction, winter disruption); current non-fleet variants retain three items;
 - ten SUS responses (1–5);
 - structured trust responses;
 - accessibility/independent-understanding rating;

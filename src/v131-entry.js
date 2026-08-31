@@ -69,7 +69,18 @@ export default {async fetch(request,env,ctx){
   const url=new URL(request.url);
   if(url.pathname==="/api/health"&&request.method==="GET"){
     const response=await sharedWorker.fetch(request,env,ctx);const data=await response.json().catch(()=>({ok:false}));
-    return out({...data,operational_registry:"shared-utility-clock",operational_registry_version:"1.3.11",utility_clock_mode:"operator-started-server-authoritative",utility_slot_real_seconds:15,utility_run_real_seconds:90},response.status);
+    return out({...data,
+      operational_registry:"shared-utility-clock",
+      operational_registry_version:"1.3.11",
+      utility_clock_mode:"operator-started-server-authoritative",
+      utility_slot_real_seconds:15,
+      utility_run_real_seconds:90,
+      research_pipeline_mode:"synthetic-test-locked",
+      research_db_bound:Boolean(env.DB),
+      research_storage:"D1",
+      research_collection_locked:String(env.COLLECTION_ENABLED)!=="true",
+      research_free_text_locked:String(env.FREE_TEXT_ENABLED)!=="true"
+    },response.status);
   }
   if(url.pathname==="/api/charging/utility-summary"&&request.method==="GET"){
     const response=await sharedWorker.fetch(request,env,ctx);

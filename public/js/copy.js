@@ -74,13 +74,13 @@ export const susItems = {
     "Uskon, että haluaisin käyttää tätä järjestelmää usein.",
     "Pidin järjestelmää tarpeettoman monimutkaisena.",
     "Järjestelmää oli mielestäni helppo käyttää.",
-    "Luulen, että tarvitsisin teknisen henkilön tukea pystyäkseni käyttämään tätä järjestelmää.",
-    "Järjestelmän eri toiminnot oli mielestäni integroitu hyvin toisiinsa.",
+    "Luulen, että tarvitsisin teknisen asiantuntijan tukea pystyäkseni käyttämään tätä järjestelmää.",
+    "Järjestelmän eri toiminnot olivat mielestäni hyvin integroituja toisiinsa.",
     "Mielestäni järjestelmässä oli liikaa epäjohdonmukaisuuksia.",
     "Voisin kuvitella, että useimmat ihmiset oppisivat käyttämään tätä järjestelmää erittäin nopeasti.",
     "Pidin järjestelmää erittäin hankalakäyttöisenä.",
     "Tunsin oloni erittäin varmaksi järjestelmää käyttäessäni.",
-    "Minun piti oppia paljon asioita ennen kuin pääsin alkuun tämän järjestelmän kanssa."
+    "Minun piti oppia paljon asioita ennen kuin pääsin alkuun järjestelmän käytössä."
   ],
   el: [
     "Πιστεύω ότι θα ήθελα να χρησιμοποιώ αυτό το σύστημα συχνά.",
