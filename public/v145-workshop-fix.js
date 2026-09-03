@@ -153,3 +153,49 @@ if (v145Screen) {
   });
   v145UpdateSusStatus();
 }
+
+
+function v145SyncFallbackLanguage() {
+  const screen = document.querySelector("#screen");
+  if (!screen) return;
+
+  const fieldset = [...screen.querySelectorAll("fieldset")].find((item) => {
+    const text = item.querySelector("legend")?.textContent || "";
+    return /Kuinka hyväksyttävä tällainen manuaalinen varakohdistus|How acceptable would this type of manual fallback positioning/i.test(text);
+  });
+  if (!fieldset) return;
+
+  const english = document.documentElement.lang !== "fi";
+  const copy = english
+    ? {
+        question: "How acceptable would this type of manual fallback positioning be during a normal delivery stop?",
+        low: "Strongly disagree",
+        high: "Strongly agree"
+      }
+    : {
+        question: "Kuinka hyväksyttävä tällainen manuaalinen varakohdistus olisi tavallisella jakelupysähdyksellä?",
+        low: "Täysin eri mieltä",
+        high: "Täysin samaa mieltä"
+      };
+
+  const legend = fieldset.querySelector("legend");
+  const anchors = fieldset.querySelectorAll(".likert-anchors span");
+  if (legend && legend.textContent !== copy.question) legend.textContent = copy.question;
+  if (anchors[0] && anchors[0].textContent !== copy.low) anchors[0].textContent = copy.low;
+  if (anchors[1] && anchors[1].textContent !== copy.high) anchors[1].textContent = copy.high;
+}
+
+let v145FallbackFrame = 0;
+function v145ScheduleFallbackLanguage() {
+  if (v145FallbackFrame) return;
+  v145FallbackFrame = window.requestAnimationFrame(() => {
+    v145FallbackFrame = 0;
+    v145SyncFallbackLanguage();
+  });
+}
+
+if (v145Screen) {
+  const v145FallbackObserver = new MutationObserver(v145ScheduleFallbackLanguage);
+  v145FallbackObserver.observe(v145Screen, { childList: true, subtree: true });
+  v145SyncFallbackLanguage();
+}
