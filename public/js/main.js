@@ -21,7 +21,7 @@ let state = {
   constraint_owner:"", constraint_clarity:null, v2g_authorisation:"", preuse_v2g_acceptance:null,
   cycle_completed:false, cycle_overridden:false, energy_flow_clarity:null,
   fault_decision:"", fault_owner:"", c1:"", c2:"", c3:"", c4:"", comprehension_items:[],
-  sus_values:[], trust_values:[], optional_note:"",
+  sus_values:[], trust_values:[],
   trust_reliability:null, trust_predictability:null, control_confidence:null, failure_recovery_confidence:null,
   wireless_use_intention:null, v2g_acceptance_under_guarantees:null,
   accessibility_understanding:null, wireless_acceptance:null, bidirectional_participation:null,
@@ -55,7 +55,6 @@ function syncState() {
     else if (["alignment_clarity","constraint_clarity","preuse_v2g_acceptance","energy_flow_clarity","trust_reliability","trust_predictability","control_confidence","failure_recovery_confidence","wireless_use_intention","v2g_acceptance_under_guarantees","accessibility_understanding","wireless_acceptance","bidirectional_participation","trust_1","trust_2","trust_3"].includes(n)) state[n] = Number(v);
     else state[n] = v;
   });
-  if (config.free_text_enabled && document.getElementById("optional_note")) state.optional_note = document.getElementById("optional_note").value.slice(0,500); else state.optional_note = "";
   state.comprehension_items = variant === "fi-fleet"
     ? [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g", state.c4 === "redecision"]
     : [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g"];
