@@ -1,7 +1,7 @@
 import { validateComprehensionItems } from "./comprehension-contract.js";
 
 const APP_VERSION = "1.0.0";
-const RESEARCH_SCHEMA_VERSION = "research-v1.1";
+const RESEARCH_SCHEMA_VERSION = "research-v1.2";
 const CHARGING_PROTOCOL_VERSION = "pulse-session-v1";
 const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const JSON_HEADERS = {"content-type":"application/json; charset=utf-8","cache-control":"no-store, max-age=0"};
@@ -63,7 +63,7 @@ function collectionReadiness(env){
     && !!safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
   return {enabled:ready};
 }
-function freeTextAllowed(env){return collectionReadiness(env).enabled && env.FREE_TEXT_ENABLED==="true" && env.RESEARCH_FREE_TEXT_APPROVED==="true";}
+function freeTextAllowed(){return false;}
 function sameOriginResearchRequest(request,env){
   const configured=safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
   if(!configured)return false;
@@ -132,6 +132,7 @@ function validate(body){
 
 function researchPayload(body,env){
   const clean=scrubObject(body);
+  // Explicit participant-data allow-list: no free text or derived cycle-energy telemetry.
   const base={
     schema_version:RESEARCH_SCHEMA_VERSION,
     app_version:APP_VERSION,
@@ -147,8 +148,7 @@ function researchPayload(body,env){
     alignment_clarity:integerInRange(clean.alignment_clarity,1,5),constraint_owner:clean.constraint_owner,
     constraint_clarity:integerInRange(clean.constraint_clarity,1,5),v2g_authorisation:clean.v2g_authorisation,
     preuse_v2g_acceptance:integerInRange(clean.preuse_v2g_acceptance,1,5),cycle_completed:clean.cycle_completed===true,
-    cycle_overridden:clean.cycle_overridden===true,cycle_energy_to_vehicle:Number(clean.cycle_energy_to_vehicle)||null,
-    cycle_energy_to_grid:Number(clean.cycle_energy_to_grid)||null,cycle_net_energy:Number(clean.cycle_net_energy)||null,
+    cycle_overridden:clean.cycle_overridden===true,
     energy_flow_clarity:integerInRange(clean.energy_flow_clarity,1,5),fault_decision:clean.fault_decision,fault_owner:clean.fault_owner,
     trust_reliability:integerInRange(clean.trust_reliability,1,5),trust_predictability:integerInRange(clean.trust_predictability,1,5),
     control_confidence:integerInRange(clean.control_confidence,1,5),failure_recovery_confidence:integerInRange(clean.failure_recovery_confidence,1,5),
@@ -161,7 +161,6 @@ function researchPayload(body,env){
     accessibility_understanding:integerInRange(clean.accessibility_understanding,1,5),wireless_acceptance:integerInRange(clean.wireless_acceptance,1,5),
     bidirectional_participation:integerInRange(clean.bidirectional_participation,1,5)
   });
-  if(freeTextAllowed(env))base.optional_note=safeString(clean.optional_note,500);
   return base;
 }
 
