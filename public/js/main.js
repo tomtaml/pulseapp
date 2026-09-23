@@ -111,7 +111,7 @@ function runCycle() {
   cycleTimers.push(setTimeout(()=>setCycleDOM({phase:"V2G",soc:66,toVehicle:"12.4",toGrid:"4.8",net:"+7.6",width:68,direction:"export",message:fi?"V2G aktiivinen: energiaa siirtyy ajoneuvosta verkkoon. Ohitus on käytettävissä.":"V2G active: energy is moving from the vehicle to the grid. Override remains available."}),3300));
   cycleTimers.push(setTimeout(()=>{
     setCycleDOM({phase:fi?"Lähtövalmius":"Ready to leave",soc:70,toVehicle:"16.4",toGrid:"4.8",net:"+11.6",width:100,direction:"charge",message:fi?"Jakso valmis: lähtövaraus on suojattu ja auto on valmis seuraavaan toimitukseen.":"Cycle complete: departure reserve is protected and the vehicle is ready for the next delivery."});
-    state.cycle_completed=true; state.cycle_energy_to_vehicle=16.4; state.cycle_energy_to_grid=4.8; state.cycle_net_energy=11.6;
+    state.cycle_completed=true;
     const btn=document.querySelector('[data-action="run-cycle"]'); if(btn){btn.disabled=true;btn.textContent=fi?"Jakso suoritettu":"Cycle completed";}
     if(!document.querySelector('input[name="energy_flow_clarity"]')) render();
   },5200));
