@@ -37,3 +37,4 @@ import "./v141-language-sync.js?v=1412";
 import "./v142-cycle-pacing.js?v=1420";
 import "./v143-market-language.js?v=1430";
 import "./v144-mobile-rc.js?v=1442";
+import "./v145-workshop-fix.js?v=1450";

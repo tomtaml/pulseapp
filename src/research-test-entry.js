@@ -197,7 +197,7 @@ function validate(body) {
 function researchPayload(body) {
   const clean = scrubObject(body);
   const base = {
-    schema_version: "research-v1.1",
+    schema_version: "research-v1.2",
     app_version: "1.0.0",
     synthetic_test: true,
     variant: clean.variant,
@@ -223,9 +223,6 @@ function researchPayload(body) {
       preuse_v2g_acceptance: integerInRange(clean.preuse_v2g_acceptance, 1, 5),
       cycle_completed: clean.cycle_completed === true,
       cycle_overridden: clean.cycle_overridden === true,
-      cycle_energy_to_vehicle: Number(clean.cycle_energy_to_vehicle) || null,
-      cycle_energy_to_grid: Number(clean.cycle_energy_to_grid) || null,
-      cycle_net_energy: Number(clean.cycle_net_energy) || null,
       energy_flow_clarity: integerInRange(clean.energy_flow_clarity, 1, 5),
       fault_decision: clean.fault_decision,
       fault_owner: clean.fault_owner,

@@ -21,7 +21,7 @@ let state = {
   constraint_owner:"", constraint_clarity:null, v2g_authorisation:"", preuse_v2g_acceptance:null,
   cycle_completed:false, cycle_overridden:false, energy_flow_clarity:null,
   fault_decision:"", fault_owner:"", c1:"", c2:"", c3:"", c4:"", comprehension_items:[],
-  sus_values:[], trust_values:[], optional_note:"",
+  sus_values:[], trust_values:[],
   trust_reliability:null, trust_predictability:null, control_confidence:null, failure_recovery_confidence:null,
   wireless_use_intention:null, v2g_acceptance_under_guarantees:null,
   accessibility_understanding:null, wireless_acceptance:null, bidirectional_participation:null,
@@ -55,7 +55,6 @@ function syncState() {
     else if (["alignment_clarity","constraint_clarity","preuse_v2g_acceptance","energy_flow_clarity","trust_reliability","trust_predictability","control_confidence","failure_recovery_confidence","wireless_use_intention","v2g_acceptance_under_guarantees","accessibility_understanding","wireless_acceptance","bidirectional_participation","trust_1","trust_2","trust_3"].includes(n)) state[n] = Number(v);
     else state[n] = v;
   });
-  if (config.free_text_enabled && document.getElementById("optional_note")) state.optional_note = document.getElementById("optional_note").value.slice(0,500); else state.optional_note = "";
   state.comprehension_items = variant === "fi-fleet"
     ? [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g", state.c4 === "redecision"]
     : [state.c1 === "yes", state.c2 === "no", state.c3 === "v2g"];
@@ -112,7 +111,7 @@ function runCycle() {
   cycleTimers.push(setTimeout(()=>setCycleDOM({phase:"V2G",soc:66,toVehicle:"12.4",toGrid:"4.8",net:"+7.6",width:68,direction:"export",message:fi?"V2G aktiivinen: energiaa siirtyy ajoneuvosta verkkoon. Ohitus on käytettävissä.":"V2G active: energy is moving from the vehicle to the grid. Override remains available."}),3300));
   cycleTimers.push(setTimeout(()=>{
     setCycleDOM({phase:fi?"Lähtövalmius":"Ready to leave",soc:70,toVehicle:"16.4",toGrid:"4.8",net:"+11.6",width:100,direction:"charge",message:fi?"Jakso valmis: lähtövaraus on suojattu ja auto on valmis seuraavaan toimitukseen.":"Cycle complete: departure reserve is protected and the vehicle is ready for the next delivery."});
-    state.cycle_completed=true; state.cycle_energy_to_vehicle=16.4; state.cycle_energy_to_grid=4.8; state.cycle_net_energy=11.6;
+    state.cycle_completed=true;
     const btn=document.querySelector('[data-action="run-cycle"]'); if(btn){btn.disabled=true;btn.textContent=fi?"Jakso suoritettu":"Cycle completed";}
     if(!document.querySelector('input[name="energy_flow_clarity"]')) render();
   },5200));
