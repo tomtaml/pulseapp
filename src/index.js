@@ -64,6 +64,12 @@ function collectionReadiness(env){
   return {enabled:ready};
 }
 function freeTextAllowed(){return false;}
+function configuredInstrumentMode(env,collectionEnabled){
+  const requested=safeString(env.RESEARCH_INSTRUMENT_MODE,40).trim();
+  if(requested==="research")return collectionEnabled?"research":"instrument-preview";
+  if(requested==="instrument-preview")return "instrument-preview";
+  return "demo";
+}
 function sameOriginResearchRequest(request,env){
   const configured=safeString(env.RESEARCH_ALLOWED_ORIGIN,500).trim();
   if(!configured)return false;
@@ -222,10 +228,11 @@ export default {async fetch(request,env){
     environment:env.ENVIRONMENT||"unknown",
     app_version:APP_VERSION,
     research_schema_version:RESEARCH_SCHEMA_VERSION,
+    instrument_mode:configuredInstrumentMode(env,readiness.enabled),
     charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock",
     charging_commands_enabled:false
   });
-  if(url.pathname==="/api/health"&&request.method==="GET")return json({ok:true,version:APP_VERSION,collection_enabled:readiness.enabled,charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock"});
+  if(url.pathname==="/api/health"&&request.method==="GET")return json({ok:true,version:APP_VERSION,collection_enabled:readiness.enabled,instrument_mode:configuredInstrumentMode(env,readiness.enabled),charging_backend_mode:env.CHARGING_BACKEND_MODE==="api"?"api":"mock"});
   if((url.pathname==="/api/submit"||url.pathname==="/api/research/submit")&&request.method==="POST")return handleSubmit(request,env);
   if(url.pathname==="/api/charging/capabilities"&&request.method==="GET")return json(chargingCapabilities(env));
   if(url.pathname.startsWith("/api/charging/session/")&&request.method==="GET"){

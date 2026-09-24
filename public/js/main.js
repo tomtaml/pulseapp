@@ -2,13 +2,17 @@ import { APP_VERSION, variants } from "./copy.js";
 import { renderCoreScreen } from "./screens-core.js";
 import { renderEvalScreen } from "./screens-eval.js";
 import { esc, progress, t } from "./ui.js";
+import { modePreset, moduleEnabled, resolveInstrumentMode, routeProfile } from "./variant-registry.js";
 
 const qs = new URLSearchParams(location.search);
 const variant = Object.hasOwn(variants, qs.get("variant")) ? qs.get("variant") : "fi-fleet";
 const workshopCode = (qs.get("workshop") || "DEMO").replace(/[^A-Za-z0-9_-]/g, "").slice(0,32) || "DEMO";
-const isDemo = qs.get("demo") === "1";
+const forceDemo = qs.get("demo") === "1";
 let language = variant.startsWith("fi-") ? "fi" : "en";
-let config = { collection_enabled:false, free_text_enabled:false, turnstile_site_key:null, app_version:APP_VERSION };
+let config = { collection_enabled:false, free_text_enabled:false, turnstile_site_key:null, app_version:APP_VERSION, instrument_mode:"demo" };
+let instrumentMode = resolveInstrumentMode(config,forceDemo);
+let mode = modePreset(instrumentMode);
+let isDemo = instrumentMode === "demo";
 let turnstileWidgetId = null;
 let turnstileLoading = null;
 let cycleTimers = [];
@@ -38,12 +42,28 @@ document.querySelector("#textSizeBtn").addEventListener("click", () => document.
 document.querySelector("#contrastBtn").addEventListener("click", () => document.body.classList.toggle("high-contrast"));
 
 function collectionStatus() {
-  if (isDemo) return language === "fi" ? "Demo · ei tallennusta" : "Demo · no storage";
+  if (instrumentMode === "demo") return language === "fi" ? "Demo · ei tallennusta" : "Demo · no storage";
+  if (instrumentMode === "instrument-preview") return language === "fi" ? "Instrumentin esikatselu · ei tallennusta" : "Instrument preview · no storage";
   if (!config.collection_enabled) return language === "fi" ? "Aineistonkeruu pois päältä" : "Collection disabled";
   return language === "fi" ? "Anonyymi aineistonkeruu käytössä" : "Anonymous collection enabled";
 }
 
-function ctx() { return { language, variant, state, config, workshopCode, isDemo, collectionStatus }; }
+function activeProfile() { return routeProfile(variant,state.participant_group); }
+function enabled(moduleName) { return moduleEnabled(instrumentMode,moduleName,activeProfile()); }
+function ctx() { return { language, variant, state, config, workshopCode, isDemo, instrumentMode, mode, profile:activeProfile(), collectionStatus }; }
+
+function stepEnabled(candidate) {
+  if (candidate === 7) return enabled("comprehension");
+  if (candidate === 8) return enabled("sus");
+  if (candidate === 9) return enabled("outcomes");
+  return candidate >= 0 && candidate <= 10;
+}
+
+function adjacentStep(from,direction) {
+  let candidate = from + direction;
+  while (candidate > 0 && candidate < 10 && !stepEnabled(candidate)) candidate += direction;
+  return Math.max(0,Math.min(10,candidate));
+}
 
 function syncState() {
   const checked = id => !!document.getElementById(id)?.checked;
@@ -63,14 +83,15 @@ function syncState() {
 }
 
 function validStep() {
-  if (step === 0 && (!state.consent_confirmed || !state.prototype_disclaimer_confirmed)) return language === "fi" ? "Valitse molemmat vahvistukset ennen jatkamista." : "Please acknowledge both items before continuing.";
+  if (step === 0 && isDemo && !state.prototype_disclaimer_confirmed) return language === "fi" ? "Vahvista ennen jatkamista, että kyseessä on simulaatio." : "Before continuing, acknowledge that this is a simulation.";
+  if (step === 0 && !isDemo && (!state.consent_confirmed || !state.prototype_disclaimer_confirmed)) return language === "fi" ? "Valitse molemmat vahvistukset ennen jatkamista." : "Please acknowledge both items before continuing.";
   if (step === 1 && !state.participant_group) return language === "fi" ? "Valitse näkökulma." : "Choose a perspective.";
   if (step === 2 && variant === "fi-fleet" && !state.alignment_completed) return language === "fi" ? "Kohdista auto ensin." : "Align the vehicle first.";
-  if (step === 2 && !Number.isInteger(state.alignment_clarity)) return language === "fi" ? "Arvioi kohdistuksen selkeys ennen jatkamista." : "Rate the clarity of alignment before continuing.";
-  if (step === 3 && variant === "fi-fleet" && (!state.constraint_owner || !Number.isInteger(state.constraint_clarity))) return language === "fi" ? "Valitse vastuutaho ja arvioi tiedon riittävyys." : "Choose an owner and rate whether the information is sufficient.";
-  if (step === 4 && variant === "fi-fleet" && (!state.v2g_authorisation || !Number.isInteger(state.preuse_v2g_acceptance))) return language === "fi" ? "Valitse V2G:n hyväksyntätapa ja arvioi järjestelyn hyväksyttävyys." : "Choose a V2G authorisation method and rate the arrangement.";
-  if (step === 4 && variant !== "fi-fleet" && !Number.isInteger(state.preuse_v2g_acceptance)) return language === "fi" ? "Arvioi V2G-luvan ja keskeytyksen selkeys." : "Rate the clarity of V2G permission and override.";
-  if (step === 5 && (!state.cycle_completed || !Number.isInteger(state.energy_flow_clarity))) return language === "fi" ? "Suorita virtuaalinen jakso ja arvioi energian suunnan selkeys." : "Run the virtual cycle and rate the clarity of energy flow.";
+  if (step === 2 && enabled("measurementFields") && !Number.isInteger(state.alignment_clarity)) return language === "fi" ? "Arvioi kohdistuksen selkeys ennen jatkamista." : "Rate the clarity of alignment before continuing.";
+  if (step === 3 && variant === "fi-fleet" && (!state.constraint_owner || (enabled("measurementFields") && !Number.isInteger(state.constraint_clarity)))) return language === "fi" ? "Valitse vastuutaho ja arvioi tiedon riittävyys." : "Choose an owner and rate whether the information is sufficient.";
+  if (step === 4 && variant === "fi-fleet" && (!state.v2g_authorisation || (enabled("measurementFields") && !Number.isInteger(state.preuse_v2g_acceptance)))) return language === "fi" ? "Valitse V2G:n hyväksyntätapa ja arvioi järjestelyn hyväksyttävyys." : "Choose a V2G authorisation method and rate the arrangement.";
+  if (step === 4 && variant !== "fi-fleet" && enabled("measurementFields") && !Number.isInteger(state.preuse_v2g_acceptance)) return language === "fi" ? "Arvioi V2G-luvan ja keskeytyksen selkeys." : "Rate the clarity of V2G permission and override.";
+  if (step === 5 && (!state.cycle_completed || (enabled("measurementFields") && !Number.isInteger(state.energy_flow_clarity)))) return language === "fi" ? "Suorita virtuaalinen jakso ja arvioi energian suunnan selkeys." : "Run the virtual cycle and rate the clarity of energy flow.";
   if (step === 6 && variant === "fi-fleet" && (!state.fault_decision || !state.fault_owner)) return language === "fi" ? "Valitse toimintatapa ja päätösvastuu." : "Choose an action and decision owner.";
   if (step === 6 && variant !== "fi-fleet" && !state.fault_decision) return language === "fi" ? "Valitse tärkein tieto." : "Choose the most important information.";
   if (step === 7 && variant === "fi-fleet" && (!state.c1 || !state.c2 || !state.c3 || !state.c4)) return language === "fi" ? "Vastaa kaikkiin neljään kohtaan." : "Please answer all four items.";
@@ -147,7 +168,7 @@ function loadTurnstile() {
 }
 
 async function renderTurnstile() {
-  if (step !== 9 || !config.collection_enabled || !config.turnstile_site_key) return;
+  if (step !== 9 || !mode.submit || !config.collection_enabled || !config.turnstile_site_key) return;
   try {
     await loadTurnstile();
     if (!window.turnstile || !document.getElementById("turnstile")) return;
@@ -158,7 +179,7 @@ async function renderTurnstile() {
 
 async function submit() {
   syncState();
-  if (isDemo || !config.collection_enabled) return finish(false);
+  if (!mode.submit || isDemo || !config.collection_enabled) return finish(false);
   let token = null;
   if (config.turnstile_site_key) {
     if (!window.turnstile || turnstileWidgetId === null) throw new Error(language === "fi" ? "Suorita ihmistarkistus ennen lähettämistä." : "Complete human verification before submitting.");
@@ -181,14 +202,17 @@ function showError(msg) {
 }
 
 function attach() {
-  screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { syncState(); clearCycleTimers(); step = Math.max(0,step - 1); render(); });
+  screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { syncState(); clearCycleTimers(); step = adjacentStep(step,-1); render(); });
   screen.querySelector('[data-action="next"]')?.addEventListener("click", async () => {
     syncState(); const err = validStep(); if (err) return showError(err);
     if (step === 9) {
       try { await submit(); } catch (e) { showError(e.message); if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId); }
       return;
     }
-    clearCycleTimers(); step = Math.min(10,step + 1); render();
+    clearCycleTimers();
+    const next = adjacentStep(step,1);
+    if (next === 10) return finish(false);
+    step = next; render();
   });
   screen.querySelector('[data-align="guided"]')?.addEventListener("click", () => applyAlignment("guided"));
   screen.querySelector('[data-align="auto"]')?.addEventListener("click", () => applyAlignment("auto"));
@@ -203,7 +227,7 @@ function render() {
   languageBtn.textContent = language === "fi" ? "FI / EN" : "EN / FI";
   variantBadge.textContent = variants[variant].badge;
   collectionBadge.textContent = collectionStatus();
-  collectionBadge.classList.toggle("live",config.collection_enabled && !isDemo);
+  collectionBadge.classList.toggle("live",mode.submit && config.collection_enabled && !isDemo);
   screen.classList.toggle("sus-step",step === 8);
   if (step <= 4) screen.innerHTML = renderCoreScreen(step,ctx());
   else if (step <= 9) screen.innerHTML = renderEvalScreen(step,ctx());
@@ -211,5 +235,5 @@ function render() {
   attach(); screen.focus({preventScroll:true});
 }
 
-fetch("/api/config",{cache:"no-store"}).then(r => r.json()).then(c => { config = {...config,...c}; state.app_version = config.app_version || APP_VERSION; render(); }).catch(() => render());
+fetch("/api/config",{cache:"no-store"}).then(r => r.json()).then(c => { config = {...config,...c}; instrumentMode = resolveInstrumentMode(config,forceDemo); mode = modePreset(instrumentMode); isDemo = instrumentMode === "demo"; state.app_version = config.app_version || APP_VERSION; render(); }).catch(() => render());
 render();

@@ -101,6 +101,7 @@ if (syntheticModeRequested) {
       return new Response(JSON.stringify({
         ...base,
         collection_enabled: syntheticReady,
+        instrument_mode: "instrument-preview",
         free_text_enabled: false,
         turnstile_site_key: syntheticReady ? TURNSTILE_TEST_SITE_KEY : null,
         synthetic_browser_test: true,
