@@ -1,7 +1,7 @@
 export const SITES = Object.freeze({
   "fi-fleet": {
     title: "Tampere fleet charging", badge: "Finland · fleet · V2G", languages: ["en", "fi"],
-    intro: "A delivery van charges wirelessly during a Tampere stop. Its next departure and minimum reserve stay protected while the fleet considers a short V2G window.",
+    intro: "A delivery van charges wirelessly during a Tampere stop. Its next departure and minimum reserve stay protected while the fleet considers a short V2G window. In this proposed service, the driver could leave early and stop energy sharing at any time.",
     scenario: "The next delivery leaves soon. Choose how the service should proceed before the V2G window.",
     scenarioOptions: [
       ["charge_now", "Charge now without exporting energy"],
@@ -16,7 +16,7 @@ export const SITES = Object.freeze({
     roleScenario: {
       fleet_driver: "You are driving the next delivery. Review the protected departure reserve before any V2G window.",
       dispatcher: "You are watching fleet availability. One vehicle has a delivery due soon; decide how its charging and V2G window should be handled.",
-      fleet_manager: "You are reviewing a proposed fleet energy agreement. Decide what operational guarantee should govern charging and V2G before adoption."
+      fleet_manager: "You are reviewing a proposed fleet energy agreement. Choose which charging and V2G behavior the service must support before adoption."
     },
     roleRecovery: {
       fleet_driver: "Snow and slush interrupt alignment. Your next delivery is due in 25 minutes. What would you do?",
@@ -29,7 +29,7 @@ export const SITES = Object.freeze({
   },
   "gr-prosumer": {
     title: "Trikala passenger charging", badge: "Greece · passenger · tariff and RES", languages: ["en", "el"],
-    intro: "A passenger car is parked in Trikala. Compare a current charging option with a lower tariff and a renewable energy surplus, then decide whether to shift the session. A separate V2G offer would need your permission and a protected reserve.",
+    intro: "A passenger car is parked in Trikala. Compare charging now with a lower tariff and a renewable energy surplus, then decide whether to shift the session. In this proposed service, you could leave early. A separate V2G offer would need your permission and a protected reserve; you could stop energy sharing at any time.",
     scenario: "The app shows a cheaper later tariff and a renewable surplus period. The next trip still needs a protected reserve. With permission, V2G would return energy to the grid. Which charging option would you choose?",
     scenarioOptions: [
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
@@ -44,7 +44,7 @@ export const SITES = Object.freeze({
   },
   "uk-v2h": {
     title: "Accessible home energy", badge: "UK · accessible driver · V2H", languages: ["en"],
-    intro: "An accessible vehicle charges wirelessly at home. It may support home demand while protecting the charge needed for the next trip. A conductive gully is available as a fallback.",
+    intro: "An accessible vehicle charges wirelessly at home. It may support home demand while protecting the charge needed for the next trip. In this proposed service, you could leave early and stop home energy sharing at any time. A conductive gully is available as a fallback.",
     scenario: "Home demand rises before the next trip. Choose how the vehicle and home should share energy.",
     scenarioOptions: [
       ["charge_now", "Charge the vehicle now"], ["support_home", "Support the home within the protected reserve"],

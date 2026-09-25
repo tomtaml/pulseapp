@@ -19,7 +19,8 @@
     "qr": "python3 scripts/make_qr.py",
     "preview:static": "python3 -m http.server 8080 -d public",
     "test:comprehension": "node scripts/test_comprehension_contract.mjs",
-    "test:v13": "node scripts/test_research_v13.mjs"
+    "test:v13": "node scripts/test_research_v13.mjs",
+    "test:v13:sqlite": "node scripts/test_research_v13_sqlite.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.36.0"

@@ -26,6 +26,9 @@ large text, high contrast, native controls and a browser speech option. Check
 it with assistive technology and participants before calling it accessible or
 field-ready. Scenario, response wording and the two-item service-confidence
 score require research sign-off. T0 items are absent pending a matched protocol.
+The English draft now explicitly describes early departure and driver override,
+which the comprehension questions ask about; site teams must confirm those
+promises match their proposed service before translation or field use.
 
 ## Collection and data
 
@@ -43,10 +46,14 @@ server-side; actor trust, fairness and accessibility remain individual items.
 The operator-side exporter selects `--schema-version research-v1.3`; no public
 export endpoint is added. Apply the migration to an isolated test D1 and verify
 synthetic persistence and export before considering collection readiness.
+`npm run test:v13:sqlite` exercises the actual migration, submission handler
+and exporter query with five synthetic profiles in an in-memory SQLite database
+(Node 22+ and Python 3). It also checks that synthetic and research records
+stay separate. This local round trip does not replace an isolated D1 test.
 
 ## Verification and next gates
 
-Run `npm run test:v13`, `npm run test:comprehension`,
+Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and
 `npx wrangler deploy --dry-run --config variant-preview/wrangler.jsonc`.
 The tests cover five profiles, mismatched and hidden fields, scoring, persistence
