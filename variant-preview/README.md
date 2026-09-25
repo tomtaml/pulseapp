@@ -11,8 +11,8 @@ It is deliberately storage-free:
 - `RESEARCH_INSTRUMENT_MODE=instrument-preview`;
 - free text and real charging commands disabled.
 
-The default URL shows the complete instrument for WP1, site and ethics review.
-Adding `demo=1` downgrades the same build to the shorter participant demonstration.
+The `/v13.html` route shows the complete instrument for WP1, site and ethics
+review. Adding `demo=1` downgrades it to the shorter participant demonstration.
 
 ## Deploy
 
@@ -45,6 +45,7 @@ PREVIEW_WORKER="https://pulse-srf-variant-preview.tom-tamlander.workers.dev"
 
 curl -s "$PREVIEW_WORKER/api/health" | jq .
 curl -s "$PREVIEW_WORKER/api/config" | jq .
+curl -s "$PREVIEW_WORKER/api/v13/config" | jq .
 ```
 
 Expected configuration:
@@ -55,6 +56,8 @@ instrument_mode: instrument-preview
 free_text_enabled: false
 charging_backend_mode: mock
 charging_commands_enabled: false
+V1.3 collection_enabled: false
+V1.3 research_schema_version: research-v1.3
 ```
 
 ## Review and demonstration URLs
