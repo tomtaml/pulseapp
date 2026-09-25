@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { V13_PROFILES, V13_CHOICES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
-import { SITES, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "../public/js/v13-questions.js";
+import { SITES, resolveWorkshopView, workshopPages, resolveWorkshopMode, rc1FleetWorkshopMode } from "../public/js/v13-questions.js";
+import { routeProfile } from "../public/js/variant-registry.js";
 import { submitV13 } from "../src/research-v13.js";
 import baseWorker from "../src/index.js";
 import syntheticWorker from "../src/research-test-entry.js";
@@ -32,7 +34,8 @@ assert.deepEqual(customView.modules, { questions: false, sus: false, scales: tru
 assert.deepEqual(view("demo=1&questions=1").modules, demoView.modules);
 assert.equal(view("view=unknown").workshopOnly, true);
 assert.equal(view("").workshopOnly, false);
-assert.deepEqual(workshopPages("fi-fleet", "fleet_driver", demoView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "done"]);
+assert.equal(routeProfile("fi-fleet", "dispatcher").sus, false);
+assert.equal(routeProfile("fi-fleet", "fleet_manager").sus, false);
 assert.deepEqual(workshopPages("gr-prosumer", "passenger_prosumer", questionView.modules, V13_PROFILES), ["intro", "scenario", "energy", "recovery", "comprehension", "done"]);
 assert.deepEqual(workshopPages("fi-fleet", "dispatcher", fullView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "comprehension", "outcomes", "done"]);
 assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", fullView.modules, V13_PROFILES), ["intro", "scenario", "energy", "recovery", "comprehension", "sus", "outcomes", "done"]);
@@ -40,6 +43,21 @@ assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabl
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, fullView), "instrument-preview");
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, view("")), "research");
 assert.equal(resolveWorkshopMode({ instrument_mode: "instrument-preview", collection_enabled: false }, view("")), "instrument-preview");
+for (const preset of [demoView, questionView, fullView, customView]) {
+  const rc1 = rc1FleetWorkshopMode(preset);
+  assert.equal(rc1.submit, false);
+  assert.equal(rc1.constructPayload, false);
+  assert.equal(rc1.modules.measurementFields, false);
+  assert.equal(rc1.modules.comprehension, preset.modules.questions);
+  assert.equal(rc1.modules.sus, preset.modules.sus);
+  assert.equal(rc1.modules.outcomes, preset.modules.scales);
+}
+const publicFile = name => readFileSync(new URL(`../public/${name}`, import.meta.url), "utf8");
+const styleHrefs = html => [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(match => match[1]);
+const imports = js => [...js.matchAll(/^import "([^"]+)";/gm)].map(match => match[1]);
+assert.deepEqual(styleHrefs(publicFile("v13-fleet.html")), styleHrefs(publicFile("index.html")), "Finnish V1.3 must retain the RC1 mobile styles.");
+assert.deepEqual(imports(publicFile("v13-fleet-app.js")), imports(publicFile("app.js")).filter(name => !name.includes("research-test-browser-shim")), "Finnish V1.3 must retain the RC1 animations and overlays.");
+assert.match(publicFile("v13.html"), /v13-router\.js/);
 assert.deepEqual(SITES["fi-fleet"].demoFi.scenarioOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].scenario);
 assert.deepEqual(SITES["fi-fleet"].demoFi.recoveryOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].recovery);
 

@@ -8,8 +8,7 @@ const openPreview = document.querySelector("#openPreview");
 const copyStatus = document.querySelector("#copyStatus");
 
 function updateLanguage() {
-  const canUseFinnish = form.elements.site.value === "fi-fleet"
-    && ["questions", "sus", "scales"].every(key => !form.elements[key].checked);
+  const canUseFinnish = form.elements.site.value === "fi-fleet";
   form.elements.language.querySelector('option[value="fi"]').disabled = !canUseFinnish;
   if (!canUseFinnish) form.elements.language.value = "en";
 }
@@ -30,7 +29,7 @@ form.addEventListener("input", () => { generated.hidden = true; });
 form.addEventListener("submit", event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
-  const url = new URL("/v13.html", location.origin);
+  const url = new URL(form.elements.site.value === "fi-fleet" ? "/v13-fleet.html" : "/v13.html", location.origin);
   url.searchParams.set("variant", form.elements.site.value);
   url.searchParams.set("workshop", form.elements.workshop.value);
   url.searchParams.set("lang", form.elements.language.value);

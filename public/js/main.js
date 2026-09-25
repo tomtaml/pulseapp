@@ -3,16 +3,25 @@ import { renderCoreScreen } from "./screens-core.js";
 import { renderEvalScreen } from "./screens-eval.js";
 import { esc, progress, t } from "./ui.js";
 import { modePreset, moduleEnabled, resolveInstrumentMode, routeProfile } from "./variant-registry.js";
+import { resolveWorkshopView, rc1FleetWorkshopMode } from "./v13-questions.js";
 
 const qs = new URLSearchParams(location.search);
-const variant = Object.hasOwn(variants, qs.get("variant")) ? qs.get("variant") : "fi-fleet";
+const isV13Fleet = location.pathname === "/v13-fleet.html";
+const v13FleetView = isV13Fleet ? resolveWorkshopView(qs) : null;
+if (isV13Fleet && (qs.get("variant") !== "fi-fleet" || ["ops", "dev", "synthetic"].some(key => qs.has(key)))) {
+  const safeUrl = new URL(location.href);
+  safeUrl.searchParams.set("variant", "fi-fleet");
+  for (const key of ["ops", "dev", "synthetic"]) safeUrl.searchParams.delete(key);
+  history.replaceState({}, "", safeUrl);
+}
+const variant = isV13Fleet ? "fi-fleet" : Object.hasOwn(variants, qs.get("variant")) ? qs.get("variant") : "fi-fleet";
 const workshopCode = (qs.get("workshop") || "DEMO").replace(/[^A-Za-z0-9_-]/g, "").slice(0,32) || "DEMO";
 const forceDemo = qs.get("demo") === "1";
 let language = variant.startsWith("fi-") ? "fi" : "en";
 let config = { collection_enabled:false, free_text_enabled:false, turnstile_site_key:null, app_version:APP_VERSION, instrument_mode:"demo" };
-let instrumentMode = resolveInstrumentMode(config,forceDemo);
-let mode = modePreset(instrumentMode);
-let isDemo = instrumentMode === "demo";
+let instrumentMode = isV13Fleet ? "instrument-preview" : resolveInstrumentMode(config,forceDemo);
+let mode = isV13Fleet ? rc1FleetWorkshopMode(v13FleetView) : modePreset(instrumentMode);
+let isDemo = isV13Fleet || instrumentMode === "demo";
 let turnstileWidgetId = null;
 let turnstileLoading = null;
 let cycleTimers = [];
@@ -42,6 +51,7 @@ document.querySelector("#textSizeBtn").addEventListener("click", () => document.
 document.querySelector("#contrastBtn").addEventListener("click", () => document.body.classList.toggle("high-contrast"));
 
 function collectionStatus() {
+  if (isV13Fleet) return language === "fi" ? "V1.3-työpajan esikatselu · ei tallennusta" : "V1.3 workshop preview · no storage";
   if (instrumentMode === "demo") return language === "fi" ? "Demo · ei tallennusta" : "Demo · no storage";
   if (instrumentMode === "instrument-preview") return language === "fi" ? "Instrumentin esikatselu · ei tallennusta" : "Instrument preview · no storage";
   if (!config.collection_enabled) return language === "fi" ? "Aineistonkeruu pois päältä" : "Collection disabled";
@@ -49,7 +59,10 @@ function collectionStatus() {
 }
 
 function activeProfile() { return routeProfile(variant,state.participant_group); }
-function enabled(moduleName) { return moduleEnabled(instrumentMode,moduleName,activeProfile()); }
+function enabled(moduleName) {
+  if (!isV13Fleet) return moduleEnabled(instrumentMode,moduleName,activeProfile());
+  return mode.modules[moduleName] === true && (moduleName !== "sus" || activeProfile().sus === true);
+}
 function ctx() { return { language, variant, state, config, workshopCode, isDemo, instrumentMode, mode, profile:activeProfile(), collectionStatus }; }
 
 function stepEnabled(candidate) {
@@ -232,8 +245,19 @@ function render() {
   if (step <= 4) screen.innerHTML = renderCoreScreen(step,ctx());
   else if (step <= 9) screen.innerHTML = renderEvalScreen(step,ctx());
   else screen.innerHTML = `${progress(10)}<div class="finish-icon">✓</div><h1>${state.submitted ? esc(t(language,"done")) : esc(t(language,"demoDone"))}</h1><p>${language === "fi" ? "Tämän mobiilitehtävän havainnot voidaan yhdistää työpajan SRF-jäljitettävyysketjuun. Teknisiä suorituskykymittareita käsitellään erillään." : "Observations from this mobile task can be linked to the workshop SRF traceability chain. Technical performance metrics are handled separately."}</p><p class="status">${state.submission_id ? `Submission ID: ${esc(state.submission_id)}` : ""}</p>`;
+  if (isV13Fleet && step >= 7 && step <= 9) {
+    screen.insertAdjacentHTML("afterbegin", `<p class="notice">${language === "fi" ? "V1.2:n kysymysten työversio kognitiiviseen testaukseen; ei hyväksytty tutkimusmittari. Vastauksia ei lähetetä eikä tallenneta." : "Working RC1 question wording for cognitive testing; not an approved research instrument. Responses are not sent or stored."}</p>`);
+  }
   attach(); screen.focus({preventScroll:true});
 }
 
-fetch("/api/config",{cache:"no-store"}).then(r => r.json()).then(c => { config = {...config,...c}; instrumentMode = resolveInstrumentMode(config,forceDemo); mode = modePreset(instrumentMode); isDemo = instrumentMode === "demo"; state.app_version = config.app_version || APP_VERSION; render(); }).catch(() => render());
+fetch("/api/config",{cache:"no-store"}).then(r => r.json()).then(c => {
+  config = isV13Fleet
+    ? { ...config, ...c, collection_enabled: false, free_text_enabled: false, turnstile_site_key: null, instrument_mode: "instrument-preview", charging_backend_mode: "mock", charging_commands_enabled: false }
+    : { ...config, ...c };
+  instrumentMode = isV13Fleet ? "instrument-preview" : resolveInstrumentMode(config,forceDemo);
+  mode = isV13Fleet ? rc1FleetWorkshopMode(v13FleetView) : modePreset(instrumentMode);
+  isDemo = isV13Fleet || instrumentMode === "demo";
+  state.app_version = config.app_version || APP_VERSION; render();
+}).catch(() => render());
 render();

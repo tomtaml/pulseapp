@@ -22,14 +22,17 @@ role-specific outcome items without submitting. The five allowed profiles are
 The facilitator setup route `/v13-setup.html` generates preview links for demo
 only, demo plus understanding questions, or the full instrument. Individual
 `questions`, `sus` and `scales` switches support shorter workshop paths; these
-links cannot submit responses. The FI route now reuses the RC1 alignment,
-departure-reserve and illustrative V2G visuals. GR and UK keep their own tariff,
-renewable-surplus and home-support scenarios. See `docs/V13_WORKSHOP_VIEWS.md`.
+links cannot submit responses. The FI route `/v13-fleet.html` uses the full RC1 mobile script and stylesheet
+stack, including alignment, an animated charging/V2G cycle, override, recovery
+and mobile layout. `/v13.html?variant=fi-fleet` redirects to it. GR and UK keep
+their site-specific tariff, renewable-surplus and home-support scenarios. See
+`docs/V13_WORKSHOP_VIEWS.md`.
 
-This instrument is a **draft for site and ethics review**. The Finnish fleet
-*demo-only* route may display working RC1 Finnish scenario wording. Finnish and
-Greek research questions and scales remain unapproved and are shown in English
-even if `lang=fi` or `lang=el` is requested. The UK route includes
+These instruments are **drafts for site and ethics review**. The Finnish
+fleet page can show the RC1 Finnish working questions, SUS and trust wording for
+cognitive testing; these are not approved V1.3 research fields and cannot be
+submitted through this route. Greek research questions and scales remain
+unapproved and are shown in English even if `lang=el` is requested. The UK route includes
 large text, high contrast, native controls and a browser speech option. Check
 it with assistive technology and participants before calling it accessible or
 field-ready. Scenario, response wording and the two-item service-confidence
@@ -40,7 +43,9 @@ promises match their proposed service before translation or field use.
 
 ## Collection and data
 
-`/api/v13/config` reports `research-v1.3`. The V1.3 submit endpoint is separately
+`/api/v13/config` reports `research-v1.3`. The Finnish RC1-based workshop
+page is a preview-only demonstration and does not construct or submit a V1.3
+research payload. The V1.3 submit endpoint is separately
 locked by `V13_COLLECTION_ENABLED=true`, production readiness and
 `RESEARCH_INSTRUMENT_MODE=research`. The preview config keeps it false and has no
 D1 binding. The synthetic endpoint requires the existing test-only Turnstile,

@@ -66,16 +66,17 @@ For a clickable site and module selector, open
 `https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13-setup.html`.
 The generated links include `view=demo`, `view=questions` or `view=full` and
 optional `questions=0|1`, `sus=0|1` and `scales=0|1` switches. For the Finnish
-fleet demo only, the setup page can use working RC1 scenario wording with
-`lang=fi`; question and scale views remain in English. SUS appears only
+fleet route, the setup page opens the full mobile RC1 flow with `lang=fi` and
+optionally shows its working comprehension, SUS and trust wording. These
+responses are preview-only and must not be treated as approved V1.3 research. SUS appears only
 for a role that used the interface directly; the facilitator can turn it off.
 All these links stay in preview mode with no submission. See
 `docs/V13_WORKSHOP_VIEWS.md` for the workshop matrix.
 
-Full instrument preview:
+Workshop and instrument previews:
 
 ```text
-https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=fi-fleet&workshop=WP1-PREVIEW&lang=en
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13-fleet.html?variant=fi-fleet&workshop=WP1-PREVIEW&view=full&lang=fi
 https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=gr-prosumer&workshop=WP1-PREVIEW&lang=en
 https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=uk-v2h&workshop=WP1-PREVIEW&lang=en
 ```
@@ -83,7 +84,7 @@ https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=uk-
 Reduced no-survey demonstration:
 
 ```text
-https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=fi-fleet&workshop=WP1-DEMO&lang=en&demo=1
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13-fleet.html?variant=fi-fleet&workshop=WP1-DEMO&view=demo&lang=fi
 ```
 
 These URLs cannot store or submit participant research data under this configuration.
