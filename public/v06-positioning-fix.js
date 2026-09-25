@@ -105,6 +105,8 @@ if (v06FixVariant === "fi-fleet") {
     if (!next || next.dataset.v06FallbackValidation === "1") return;
     next.dataset.v06FallbackValidation = "1";
     next.addEventListener("click", event => {
+      // A rerender can remove the rating after this listener was installed.
+      if (!document.querySelector('input[name="alignment_fallback_acceptability"]')) return;
       const selected = document.querySelector('input[name="alignment_fallback_acceptability"]:checked');
       if (selected) return;
       event.preventDefault();
