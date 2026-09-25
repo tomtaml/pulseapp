@@ -1,7 +1,7 @@
 import { variants, roleLabel } from "./copy.js";
 import { actions, esc, likert, progress, radioGroup, t } from "./ui.js";
 
-function alignmentVisual(language, state, citizen=false) {
+export function alignmentVisual(language, state, citizen=false) {
   const aligned = !!state.alignment_completed;
   const guided = state.alignment_stage === "guided";
   const offset = aligned ? 0 : guided ? -18 : -42;
@@ -22,7 +22,7 @@ function alignmentVisual(language, state, citizen=false) {
   </div>`;
 }
 
-function fleetScenarioCard(language, state) {
+export function fleetScenarioCard(language, state) {
   return `<div class="route-card" aria-label="${language === "fi" ? "Seuraavan toimituksen työpajaskenaario" : "Workshop scenario for the next delivery"}">
     <div class="scenario-badge">${language === "fi" ? "Työpajaskenaario · kuvitteelliset arvot" : "Workshop scenario · illustrative values"}</div>
     <div class="route-head"><span>📦</span><div><strong>${language === "fi" ? "Seuraava toimitus" : "Next delivery"}</strong><small>${language === "fi" ? "14 km · lähtö viimeistään 17:00" : "14 km · leave by 17:00"}</small></div></div>
@@ -36,7 +36,7 @@ function fleetScenarioCard(language, state) {
   </div>`;
 }
 
-function v2gOffer(language, state, citizen=false) {
+export function v2gOffer(language, state, citizen=false) {
   return `<div class="v2g-card offer-card">
     <div class="scenario-badge">${language === "fi" ? "Työpajaskenaario · ei oikea tarjous" : "Workshop scenario · not a real offer"}</div>
     <div class="v2g-flow"><span class="flow-node">🚐<small>${language === "fi" ? "ajoneuvo" : "vehicle"}</small></span><span class="flow-arrow">→</span><span class="flow-node">⚡<small>${language === "fi" ? "sähköverkko" : "grid"}</small></span></div>

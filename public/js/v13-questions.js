@@ -1,3 +1,36 @@
+// URL presets only control which preview pages appear. They never unlock
+// collection; production submissions continue to use the complete schema.
+export const WORKSHOP_PRESETS = Object.freeze({
+  demo: Object.freeze({ questions: false, sus: false, scales: false }),
+  questions: Object.freeze({ questions: true, sus: false, scales: false }),
+  full: Object.freeze({ questions: true, sus: true, scales: true })
+});
+
+export function resolveWorkshopView(params) {
+  const legacyDemo = params.get("demo") === "1";
+  const workshopOnly = legacyDemo || params.has("view") || ["questions", "sus", "scales"].some(key => params.has(key));
+  const preset = legacyDemo ? "demo" : Object.hasOwn(WORKSHOP_PRESETS, params.get("view")) ? params.get("view") : "full";
+  const modules = { ...WORKSHOP_PRESETS[preset] };
+  if (!legacyDemo) for (const key of ["questions", "sus", "scales"]) {
+    if (["0", "1"].includes(params.get(key))) modules[key] = params.get(key) === "1";
+  }
+  return { modules, workshopOnly };
+}
+
+export function workshopPages(variant, participantGroup, modules, profiles) {
+  const pages = ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
+  if (modules.questions) pages.push("comprehension");
+  if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
+  if (modules.scales) pages.push("outcomes");
+  return [...pages, "done"];
+}
+
+export function resolveWorkshopMode(config, { modules, workshopOnly }) {
+  if (!modules.questions && !modules.sus && !modules.scales) return "demo";
+  if (!workshopOnly && config.instrument_mode === "research" && config.collection_enabled === true) return "research";
+  return "instrument-preview";
+}
+
 export const SITES = Object.freeze({
   "fi-fleet": {
     title: "Tampere fleet charging", badge: "Finland · fleet · V2G", languages: ["en", "fi"],

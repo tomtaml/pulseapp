@@ -19,6 +19,13 @@ role-specific outcome items without submitting. The five allowed profiles are
 `fleet_driver`, `dispatcher`, `fleet_manager`, `passenger_prosumer`, and
 `accessible_driver`. The existing root path remains available for comparison.
 
+The facilitator setup route `/v13-setup.html` generates preview links for demo
+only, demo plus understanding questions, or the full instrument. Individual
+`questions`, `sus` and `scales` switches support shorter workshop paths; these
+links cannot submit responses. The FI route now reuses the RC1 alignment,
+departure-reserve and illustrative V2G visuals. GR and UK keep their own tariff,
+renewable-surplus and home-support scenarios. See `docs/V13_WORKSHOP_VIEWS.md`.
+
 This instrument is a **draft for site and ethics review**. Finnish and Greek
 instrument wording is not approved or rendered; the review route explicitly
 uses English even if `lang=fi` or `lang=el` is requested. The UK route includes

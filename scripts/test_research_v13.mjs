@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { V13_PROFILES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
+import { resolveWorkshopView, workshopPages, resolveWorkshopMode } from "../public/js/v13-questions.js";
 import { submitV13 } from "../src/research-v13.js";
 import baseWorker from "../src/index.js";
 import syntheticWorker from "../src/research-test-entry.js";
@@ -18,6 +19,27 @@ const fixtures = Object.entries(V13_PROFILES).flatMap(([variant, profiles]) =>
     turnstile_token: "test-token", synthetic_test: true
   }))
 );
+
+const view = query => resolveWorkshopView(new URLSearchParams(query));
+const demoView = view("view=demo");
+const questionView = view("view=questions");
+const fullView = view("view=full");
+const customView = view("view=full&questions=0&sus=0&scales=1");
+assert.deepEqual(demoView.modules, { questions: false, sus: false, scales: false });
+assert.deepEqual(questionView.modules, { questions: true, sus: false, scales: false });
+assert.deepEqual(fullView.modules, { questions: true, sus: true, scales: true });
+assert.deepEqual(customView.modules, { questions: false, sus: false, scales: true });
+assert.deepEqual(view("demo=1&questions=1").modules, demoView.modules);
+assert.equal(view("view=unknown").workshopOnly, true);
+assert.equal(view("").workshopOnly, false);
+assert.deepEqual(workshopPages("fi-fleet", "fleet_driver", demoView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "done"]);
+assert.deepEqual(workshopPages("gr-prosumer", "passenger_prosumer", questionView.modules, V13_PROFILES), ["intro", "scenario", "energy", "recovery", "comprehension", "done"]);
+assert.deepEqual(workshopPages("fi-fleet", "dispatcher", fullView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "comprehension", "outcomes", "done"]);
+assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", fullView.modules, V13_PROFILES), ["intro", "scenario", "energy", "recovery", "comprehension", "sus", "outcomes", "done"]);
+assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, questionView), "instrument-preview");
+assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, fullView), "instrument-preview");
+assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, view("")), "research");
+assert.equal(resolveWorkshopMode({ instrument_mode: "instrument-preview", collection_enabled: false }, view("")), "instrument-preview");
 
 const stored = [];
 const db = { prepare(sql) { assert.match(sql, /research_v13_submissions/); return {

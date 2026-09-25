@@ -62,6 +62,14 @@ V1.3 research_schema_version: research-v1.3
 
 ## Review and demonstration URLs
 
+For a clickable site and module selector, open
+`https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13-setup.html`.
+The generated links include `view=demo`, `view=questions` or `view=full` and
+optional `questions=0|1`, `sus=0|1` and `scales=0|1` switches. SUS appears only
+for a role that used the interface directly; the facilitator can turn it off.
+All these links stay in preview mode with no submission. See
+`docs/V13_WORKSHOP_VIEWS.md` for the workshop matrix.
+
 Full instrument preview:
 
 ```text

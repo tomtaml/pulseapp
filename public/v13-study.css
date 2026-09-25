@@ -20,4 +20,9 @@ body.high-contrast .study-status { background: #111; color: #fff; border-color: 
 body.high-contrast .study-error { color: #ff9292; }
 body.high-contrast .study-option { border-color: currentColor; }
 body.high-contrast .study-option:has(input:checked) { background: #111; color: #fff; }
+#workshopSetup > label, #generated > label { display: block; font-weight: 650; margin: 1rem 0 .35rem; }
+#workshopSetup > select, #workshopSetup > input, #generated > input { box-sizing: border-box; width: 100%; padding: .65rem; border: 2px solid #aebfba; border-radius: .5rem; }
+#workshopSetup .study-option input { min-height: 1.25rem; }
+#generated { margin-top: 1.5rem; }
+#copyStatus { min-height: 1.5rem; }
 @media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } }

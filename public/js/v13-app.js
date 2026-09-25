@@ -1,5 +1,6 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
-import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION } from "./v13-questions.js";
+import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "./v13-questions.js";
+import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -7,13 +8,21 @@ const params = new URLSearchParams(location.search);
 const variant = Object.hasOwn(SITES, params.get("variant")) ? params.get("variant") : "fi-fleet";
 const site = SITES[variant];
 const workshop = /^[A-Za-z0-9_-]{1,32}$/.test(params.get("workshop") || "") ? params.get("workshop") : "PREVIEW";
-const demo = params.get("demo") === "1";
+const view = resolveWorkshopView(params);
+const { modules } = view;
+const demo = !modules.questions && !modules.sus && !modules.scales;
 const requestedLanguage = params.get("lang") || "en";
 // Wording is currently English for instrument review. Language-coded research
 // submissions require approved translated wording before field use.
 const language = "en";
 const screen = document.querySelector("#screen");
 const values = {};
+// The illustrative fleet state and visuals come from the existing RC1 screens.
+// No vehicle, charger or participant data is fetched for this workshop route.
+const fleetState = {
+  alignment_stage: "approach", alignment_completed: false,
+  current_soc: 55, minimum_soc: 65, dwell_minutes: 90, departure_time: "17:00"
+};
 let stage = 0;
 // Do not expose the demo route while the collection configuration is pending.
 // A fast click could otherwise skip the preview/research acknowledgement.
@@ -44,8 +53,20 @@ if (variant === "uk-v2h" && "speechSynthesis" in window) {
 }
 
 function profile() { return V13_PROFILES[variant][values.participant_group]; }
-function pages() { return mode === "demo" ? ["intro", "scenario", "recovery", "done"] : ["intro", "scenario", "recovery", "comprehension", ...(profile()?.sus ? ["sus"] : []), "outcomes", "done"]; }
+function pages() { return workshopPages(variant, values.participant_group, modules, V13_PROFILES); }
 function currentPage() { return pages()[stage] || "done"; }
+function nextLabel() { return pages()[stage + 1] === "done" ? "Finish preview" : "Continue"; }
+
+function energyPreview() {
+  if (variant === "fi-fleet") {
+    return `<p class="study-note">This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.</p>${v2gOffer("en", fleetState)}`;
+  }
+  if (variant === "gr-prosumer") {
+    return `<div class="v2g-card offer-card"><div class="scenario-badge">Illustrative workshop scenario</div><div class="v2g-flow"><span class="flow-node">⚡<small>grid</small></span><span class="flow-arrow">→</span><span class="flow-node">🚗<small>vehicle</small></span></div><p>A lower tariff or renewable surplus changes when the vehicle charges. Returning energy to the grid would require separate V2G permission and a protected reserve.</p></div>`;
+  }
+  const supportingHome = values.scenario_choice === "support_home";
+  return `<div class="v2g-card offer-card"><div class="scenario-badge">Illustrative workshop scenario</div><div class="v2g-flow"><span class="flow-node">${supportingHome ? "🚗<small>vehicle</small>" : "⚡<small>grid</small>"}</span><span class="flow-arrow">→</span><span class="flow-node">${supportingHome ? "🏠<small>home</small>" : "🚗<small>vehicle</small>"}</span></div><p>${supportingHome ? "Home support is limited by the protected charge for the next trip. The driver may stop sharing." : "The vehicle charges for the next trip. Home energy sharing is not selected."}</p></div>`;
+}
 
 function options(name, choices, selected = values[name]) {
   return `<div class="study-options">${choices.map(([value, label]) => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${selected === value ? "checked" : ""}><span>${esc(label)}</span></label>`).join("")}</div>`;
@@ -65,39 +86,56 @@ function render() {
   }
   const page = currentPage();
   const count = pages().length - 1;
-  const status = mode === "demo" ? "Demo · no survey or submission" : mode === "research" ? "Research · collection enabled" : "Instrument preview · no submission";
+  const status = mode === "demo" ? "Demo · no survey or submission" : mode === "research" ? "Research · collection enabled" : "Workshop preview · no submission";
   document.querySelector("#modeBadge").textContent = status;
   let body = `<p class="study-progress">${page === "done" ? "Complete" : `Step ${stage + 1} of ${count}`}</p><p class="study-status">${status}</p>`;
   if (page === "intro") {
     body += `<h1>${esc(site.title)}</h1><p class="lead">${esc(site.intro)}</p>`;
-    if (requestedLanguage !== "en") body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : "Greek"} instrument wording is awaiting review. This preview uses English.</p>`;
+    if (requestedLanguage !== "en") body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : requestedLanguage === "el" ? "Greek" : "requested"} instrument wording is awaiting review. This preview uses English.</p>`;
     body += `<fieldset class="study-question"><legend>Your perspective</legend>${options("participant_group", Object.entries(site.roles))}</fieldset>`;
-    if (mode !== "demo") body += `<label class="study-option"><input type="checkbox" name="consent_confirmed" ${values.consent_confirmed ? "checked" : ""}><span>I have read the study information provided by the facilitator and agree to continue.</span></label>`;
+    if (mode === "research") body += `<label class="study-option"><input type="checkbox" name="consent_confirmed" ${values.consent_confirmed ? "checked" : ""}><span>I have read the study information provided by the facilitator and agree to continue.</span></label>`;
     body += `<label class="study-option"><input type="checkbox" name="prototype_disclaimer_confirmed" ${values.prototype_disclaimer_confirmed ? "checked" : ""}><span>I understand this is a simulation, not a real charging service.</span></label>${buttonRow()}`;
+  } else if (page === "alignment") {
+    body += `<h1>Approach the wireless charging bay</h1><p class="lead">A snowbank narrows the space. Use the guidance to align the van with the wireless pad before the next delivery.</p>${alignmentVisual("en", fleetState)}`;
+    if (values.participant_group === "fleet_driver") {
+      body += `<div class="alignment-controls"><button type="button" class="secondary" data-align="guided">Show manoeuvre guidance</button><button type="button" class="primary" data-align="auto">Try automatic alignment</button></div>`;
+    } else {
+      body += `<p class="study-note">Review how alignment is shown to the driver. The driver would make the manoeuvre.</p>`;
+    }
+    body += buttonRow();
   } else if (page === "scenario") {
-    body += `<h1>Plan the energy session</h1><p class="lead">${esc(site.roleScenario?.[values.participant_group] || site.scenario)}</p><fieldset class="study-question"><legend>Choose one action</legend>${options("scenario_choice",site.scenarioOptions)}</fieldset>${buttonRow()}`;
+    body += `<h1>Plan the energy session</h1><p class="lead">${esc(site.roleScenario?.[values.participant_group] || site.scenario)}</p>`;
+    if (variant === "fi-fleet") body += fleetScenarioCard("en", fleetState);
+    body += `<fieldset class="study-question"><legend>Choose one action</legend>${options("scenario_choice",site.scenarioOptions)}</fieldset>${buttonRow()}`;
+  } else if (page === "energy") {
+    body += `<h1>Follow the energy flow</h1><p class="lead">See where energy would move in this simulated service and what remains protected.</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
-    body += `<h1>Handle an interruption</h1><p class="lead">${esc(site.roleRecovery?.[values.participant_group] || site.recovery)}</p><fieldset class="study-question"><legend>Choose one recovery action</legend>${options("recovery_choice",site.recoveryOptions)}</fieldset>${buttonRow(mode === "demo" ? "Finish demo" : "Continue")}`;
+    body += `<h1>Handle an interruption</h1><p class="lead">${esc(site.roleRecovery?.[values.participant_group] || site.recovery)}</p><fieldset class="study-question"><legend>Choose one recovery action</legend>${options("recovery_choice",site.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
     body += `<h1>Understanding check</h1><p class="lead">These questions test whether the prototype explained the scenario clearly.</p>`;
     body += COMPREHENSION.map(([question, choices], index) => {
       const label = index === 2 && variant === "uk-v2h" ? "Where does shared energy go in this home scenario?" : question;
       return `<fieldset class="study-question"><legend>${index + 1}. ${esc(label)}</legend>${options(`comprehension_${index + 1}`,choices)}</fieldset>`;
-    }).join("") + buttonRow();
+    }).join("") + buttonRow(nextLabel());
   } else if (page === "sus") {
     body += `<h1>Usability (SUS)</h1><p class="lead">Rate the interface you just used.</p>`;
-    body += susItems.en.map((label,index) => scale(`sus_${String(index + 1).padStart(2,"0")}`,`${index + 1}. ${label}`)).join("") + buttonRow();
+    body += susItems.en.map((label,index) => scale(`sus_${String(index + 1).padStart(2,"0")}`,`${index + 1}. ${label}`)).join("") + buttonRow(nextLabel());
   } else if (page === "outcomes") {
-    body += `<h1>Confidence and intention</h1><p class="lead">Rate the service shown in this scenario.</p>`;
+    body += `<h1>Confidence, trust and intention</h1><p class="lead">Rate the service shown in this scenario. Confidence in the service and trust in its operator are separate items.</p>`;
     body += [...COMMON_QUESTIONS, ...profile().outcomes.map(key => [key,OUTCOME_QUESTIONS[key]])].map(([key,label]) => scale(key,label)).join("");
     if (mode === "research" && config.collection_enabled) body += `<div id="turnstile" aria-label="Human verification"></div>`;
     body += buttonRow(mode === "research" && config.collection_enabled ? "Submit response" : "Finish preview");
   } else {
-    body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? "Demo complete" : "Instrument preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : "No research response was sent or stored."}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
+    body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? "Demo complete" : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : "No research response was sent or stored."}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
   }
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { collect(); stage -= 1; render(); });
   screen.querySelector('[data-action="next"]')?.addEventListener("click", next);
+  screen.querySelectorAll("[data-align]").forEach(button => button.addEventListener("click", () => {
+    fleetState.alignment_stage = button.dataset.align === "guided" ? "guided" : "aligned";
+    fleetState.alignment_completed = button.dataset.align === "auto";
+    render();
+  }));
   if (page === "outcomes" && mode === "research" && config.collection_enabled) renderTurnstile();
   screen.focus({ preventScroll: true });
 }
@@ -124,7 +162,8 @@ function error(message) {
 
 function valid() {
   const page = currentPage();
-  if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode !== "demo" && !values.consent_confirmed))) return "Choose a role and acknowledge the information above.";
+  if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return "Choose a role and acknowledge the information above.";
+  if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return "Align the vehicle before continuing.";
   if (page === "scenario" && !values.scenario_choice) return "Choose a session action.";
   if (page === "recovery" && !values.recovery_choice) return "Choose a recovery action.";
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
@@ -180,7 +219,7 @@ function renderTurnstile() {
 
 fetch("/api/v13/config", { cache: "no-store" }).then(response => response.json()).then(result => {
   config = result;
-  mode = demo ? "demo" : result.instrument_mode === "research" && result.collection_enabled === true ? "research" : "instrument-preview";
+  mode = resolveWorkshopMode(result, view);
   render();
 }).catch(() => { mode = demo ? "demo" : "instrument-preview"; render(); });
 render();

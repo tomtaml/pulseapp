@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>PULSE workshop view setup</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/v13-study.css">
+</head>
+<body>
+  <a class="skip-link" href="#setup">Skip to workshop setup</a>
+  <header class="topbar"><div class="brand-block"><strong>PULSE</strong><span class="badge">Workshop setup</span></div></header>
+  <main id="setup" class="shell"><section class="card">
+    <h1>Choose a workshop view</h1>
+    <p class="lead">Set up a site demonstration or a discussion with selected questions. The generated link previews responses on screen; it does not submit them.</p>
+    <form id="workshopSetup">
+      <label for="site">Site</label>
+      <select id="site" name="site">
+        <option value="fi-fleet">Tampere fleet</option>
+        <option value="gr-prosumer">Trikala passenger</option>
+        <option value="uk-v2h">UK home energy</option>
+      </select>
+      <label for="workshop">Workshop code (optional)</label>
+      <input id="workshop" name="workshop" value="PREVIEW" maxlength="32" pattern="[A-Za-z0-9_-]{1,32}" required>
+      <label for="preset">Starting view</label>
+      <select id="preset" name="preset">
+        <option value="demo">Demo only</option>
+        <option value="questions">Demo plus understanding questions</option>
+        <option value="full">Questions, SUS and trust/outcome scales</option>
+      </select>
+      <fieldset class="study-question">
+        <legend>Modules to show after the scenario</legend>
+        <label class="study-option"><input type="checkbox" name="questions"><span>Understanding questions</span></label>
+        <label class="study-option"><input type="checkbox" name="sus"><span>SUS (only for a participant who used the interface)</span></label>
+        <label class="study-option"><input type="checkbox" name="scales"><span>Service confidence, trust and outcome scales</span></label>
+      </fieldset>
+      <p class="study-note">Finnish and Greek question wording awaits approval. These links show the English draft. Record workshop observations through your approved procedure.</p>
+      <button class="primary" type="submit">Create preview link</button>
+    </form>
+    <div id="generated" hidden>
+      <h2>Preview link</h2>
+      <p><a id="openPreview" href="#">Open workshop view</a></p>
+      <label for="previewUrl">Link to share with the facilitator</label>
+      <input id="previewUrl" type="text" readonly>
+      <button id="copyPreview" class="secondary" type="button">Copy link</button>
+      <p id="copyStatus" role="status"></p>
+    </div>
+  </section></main>
+  <footer class="footer">Research prototype · simulated charging · no participant responses submitted</footer>
+  <script type="module" src="/js/v13-setup.js"></script>
+</body>
+</html>
