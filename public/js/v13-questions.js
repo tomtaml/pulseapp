@@ -34,6 +34,25 @@ export function resolveWorkshopMode(config, { modules, workshopOnly }) {
 export const SITES = Object.freeze({
   "fi-fleet": {
     title: "Tampere fleet charging", badge: "Finland · fleet · V2G", languages: ["en", "fi"],
+    // Working RC1 Finnish scenario wording for the storage-free demo only.
+    demoFi: {
+      title: "Langaton lataus + V2G jakelukalustolle", badge: "Suomi · jakelukalusto · V2G",
+      intro: "Käy läpi kuvitteellinen Tampereen jakelupysähdys: kohdista auto, turvaa seuraava toimitus, tarkastele V2G-mahdollisuutta ja ratkaise talvihäiriö. Testaamme palvelua, emme teknistä osaamistasi.",
+      roles: { fleet_driver: "Kuljettaja", dispatcher: "Ajojärjestelijä / operointi", fleet_manager: "Kalustopäällikkö" },
+      roleScenario: null, roleRecovery: null,
+      scenario: "Seuraava toimitus lähtee pian. Miten lataus ja mahdollinen V2G-jakso pitäisi järjestää?",
+      scenarioOptions: [
+        ["charge_now", "Lataa nyt palauttamatta sähköä verkkoon"],
+        ["protect_departure", "Turvaa lähtövaraus ja näytä käytettävissä oleva latausaika"],
+        ["authorise_v2g", "Salli V2G suojatun lähtövarauksen rajoissa"]
+      ],
+      recovery: "Lumi ja loska häiritsevät kohdistusta. Seuraava toimitus lähtee 25 minuutin kuluttua. Mitä tekisit?",
+      recoveryOptions: [
+        ["retry_alignment", "Kohdista uudelleen ja yritä latausta"],
+        ["stop_and_leave", "Keskeytä lataus ja jatka suojatulla lähtövarauksella"],
+        ["contact_dispatch", "Ota yhteys ajojärjestelyyn"]
+      ]
+    },
     intro: "A delivery van charges wirelessly during a Tampere stop. Its next departure and minimum reserve stay protected while the fleet considers a short V2G window. In this proposed service, the driver could leave early and stop energy sharing at any time.",
     scenario: "The next delivery leaves soon. Choose how the service should proceed before the V2G window.",
     scenarioOptions: [

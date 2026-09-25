@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { V13_PROFILES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
-import { resolveWorkshopView, workshopPages, resolveWorkshopMode } from "../public/js/v13-questions.js";
+import { V13_PROFILES, V13_CHOICES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
+import { SITES, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "../public/js/v13-questions.js";
 import { submitV13 } from "../src/research-v13.js";
 import baseWorker from "../src/index.js";
 import syntheticWorker from "../src/research-test-entry.js";
@@ -40,6 +40,8 @@ assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabl
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, fullView), "instrument-preview");
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, view("")), "research");
 assert.equal(resolveWorkshopMode({ instrument_mode: "instrument-preview", collection_enabled: false }, view("")), "instrument-preview");
+assert.deepEqual(SITES["fi-fleet"].demoFi.scenarioOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].scenario);
+assert.deepEqual(SITES["fi-fleet"].demoFi.recoveryOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].recovery);
 
 const stored = [];
 const db = { prepare(sql) { assert.match(sql, /research_v13_submissions/); return {

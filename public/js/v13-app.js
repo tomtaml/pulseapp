@@ -12,6 +12,10 @@ const view = resolveWorkshopView(params);
 const { modules } = view;
 const demo = !modules.questions && !modules.sus && !modules.scales;
 const requestedLanguage = params.get("lang") || "en";
+const finnishDemo = variant === "fi-fleet" && requestedLanguage === "fi" && demo;
+const siteCopy = finnishDemo ? { ...site, ...site.demoFi } : site;
+const demoText = (en, fi) => finnishDemo ? fi : en;
+if (finnishDemo) document.documentElement.lang = "fi";
 // Wording is currently English for instrument review. Language-coded research
 // submissions require approved translated wording before field use.
 const language = "en";
@@ -32,7 +36,7 @@ let tokenWidget = null;
 let submitted = false;
 let submissionId = "";
 
-document.querySelector("#siteBadge").textContent = site.badge;
+document.querySelector("#siteBadge").textContent = siteCopy.badge;
 document.querySelector("#textButton").addEventListener("click", event => {
   const pressed = document.body.classList.toggle("large-text");
   event.currentTarget.setAttribute("aria-pressed", String(pressed));
@@ -55,11 +59,11 @@ if (variant === "uk-v2h" && "speechSynthesis" in window) {
 function profile() { return V13_PROFILES[variant][values.participant_group]; }
 function pages() { return workshopPages(variant, values.participant_group, modules, V13_PROFILES); }
 function currentPage() { return pages()[stage] || "done"; }
-function nextLabel() { return pages()[stage + 1] === "done" ? "Finish preview" : "Continue"; }
+function nextLabel() { return pages()[stage + 1] === "done" ? demoText("Finish preview", "Viimeistele esittely") : demoText("Continue", "Jatka"); }
 
 function energyPreview() {
   if (variant === "fi-fleet") {
-    return `<p class="study-note">This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.</p>${v2gOffer("en", fleetState)}`;
+    return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
     return `<div class="v2g-card offer-card"><div class="scenario-badge">Illustrative workshop scenario</div><div class="v2g-flow"><span class="flow-node">⚡<small>grid</small></span><span class="flow-arrow">→</span><span class="flow-node">🚗<small>vehicle</small></span></div><p>A lower tariff or renewable surplus changes when the vehicle charges. Returning energy to the grid would require separate V2G permission and a protected reserve.</p></div>`;
@@ -74,8 +78,8 @@ function options(name, choices, selected = values[name]) {
 function scale(name, label) {
   return `<fieldset class="study-question"><legend>${esc(label)}</legend><p class="study-note">1 = strongly disagree · 5 = strongly agree</p><div class="study-scale">${[1,2,3,4,5].map(number => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${number}" ${values[name] === number ? "checked" : ""}><span>${number}</span></label>`).join("")}</div></fieldset>`;
 }
-function buttonRow(label = "Continue") {
-  return `<div class="study-actions">${stage ? `<button type="button" class="secondary" data-action="back">Back</button>` : ""}<button type="button" class="primary" data-action="next">${esc(label)}</button></div>`;
+function buttonRow(label = demoText("Continue", "Jatka")) {
+  return `<div class="study-actions">${stage ? `<button type="button" class="secondary" data-action="back">${demoText("Back", "Takaisin")}</button>` : ""}<button type="button" class="primary" data-action="next">${esc(label)}</button></div>`;
 }
 
 function render() {
@@ -86,31 +90,31 @@ function render() {
   }
   const page = currentPage();
   const count = pages().length - 1;
-  const status = mode === "demo" ? "Demo · no survey or submission" : mode === "research" ? "Research · collection enabled" : "Workshop preview · no submission";
+  const status = mode === "demo" ? demoText("Demo · no survey or submission", "Esittely · ei kyselyä eikä lähetystä") : mode === "research" ? "Research · collection enabled" : "Workshop preview · no submission";
   document.querySelector("#modeBadge").textContent = status;
-  let body = `<p class="study-progress">${page === "done" ? "Complete" : `Step ${stage + 1} of ${count}`}</p><p class="study-status">${status}</p>`;
+  let body = `<p class="study-progress">${page === "done" ? demoText("Complete", "Valmis") : demoText(`Step ${stage + 1} of ${count}`, `Vaihe ${stage + 1} / ${count}`)}</p><p class="study-status">${status}</p>`;
   if (page === "intro") {
-    body += `<h1>${esc(site.title)}</h1><p class="lead">${esc(site.intro)}</p>`;
-    if (requestedLanguage !== "en") body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : requestedLanguage === "el" ? "Greek" : "requested"} instrument wording is awaiting review. This preview uses English.</p>`;
-    body += `<fieldset class="study-question"><legend>Your perspective</legend>${options("participant_group", Object.entries(site.roles))}</fieldset>`;
+    body += `<h1>${esc(siteCopy.title)}</h1><p class="lead">${esc(siteCopy.intro)}</p>`;
+    if (requestedLanguage !== "en" && !finnishDemo) body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : requestedLanguage === "el" ? "Greek" : "requested"} instrument wording is awaiting review. This preview uses English.</p>`;
+    body += `<fieldset class="study-question"><legend>${demoText("Your perspective", "Oma näkökulmasi")}</legend>${options("participant_group", Object.entries(siteCopy.roles))}</fieldset>`;
     if (mode === "research") body += `<label class="study-option"><input type="checkbox" name="consent_confirmed" ${values.consent_confirmed ? "checked" : ""}><span>I have read the study information provided by the facilitator and agree to continue.</span></label>`;
-    body += `<label class="study-option"><input type="checkbox" name="prototype_disclaimer_confirmed" ${values.prototype_disclaimer_confirmed ? "checked" : ""}><span>I understand this is a simulation, not a real charging service.</span></label>${buttonRow()}`;
+    body += `<label class="study-option"><input type="checkbox" name="prototype_disclaimer_confirmed" ${values.prototype_disclaimer_confirmed ? "checked" : ""}><span>${demoText("I understand this is a simulation, not a real charging service.", "Ymmärrän, että tämä on simulaatio eikä oikea latauspalvelu.")}</span></label>${buttonRow()}`;
   } else if (page === "alignment") {
-    body += `<h1>Approach the wireless charging bay</h1><p class="lead">A snowbank narrows the space. Use the guidance to align the van with the wireless pad before the next delivery.</p>${alignmentVisual("en", fleetState)}`;
+    body += `<h1>${demoText("Approach the wireless charging bay", "Aja langattomalle latauspaikalle")}</h1><p class="lead">${demoText("A snowbank narrows the space. Use the guidance to align the van with the wireless pad before the next delivery.", "Lumivalli kaventaa ruutua. Kohdista auto latausalustaan ennen seuraavaa toimitusta.")}</p>${alignmentVisual(finnishDemo ? "fi" : "en", fleetState)}`;
     if (values.participant_group === "fleet_driver") {
-      body += `<div class="alignment-controls"><button type="button" class="secondary" data-align="guided">Show manoeuvre guidance</button><button type="button" class="primary" data-align="auto">Try automatic alignment</button></div>`;
+      body += `<div class="alignment-controls"><button type="button" class="secondary" data-align="guided">${demoText("Show manoeuvre guidance", "Näytä ajo-ohje")}</button><button type="button" class="primary" data-align="auto">${demoText("Try automatic alignment", "Kokeile automaattista kohdistusta")}</button></div>`;
     } else {
-      body += `<p class="study-note">Review how alignment is shown to the driver. The driver would make the manoeuvre.</p>`;
+      body += `<p class="study-note">${demoText("Review how alignment is shown to the driver. The driver would make the manoeuvre.", "Tarkastele, miten kohdistus näkyy kuljettajalle. Kuljettaja tekisi varsinaisen ajoliikkeen.")}</p>`;
     }
     body += buttonRow();
   } else if (page === "scenario") {
-    body += `<h1>Plan the energy session</h1><p class="lead">${esc(site.roleScenario?.[values.participant_group] || site.scenario)}</p>`;
-    if (variant === "fi-fleet") body += fleetScenarioCard("en", fleetState);
-    body += `<fieldset class="study-question"><legend>Choose one action</legend>${options("scenario_choice",site.scenarioOptions)}</fieldset>${buttonRow()}`;
+    body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
+    if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
+    body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>${buttonRow()}`;
   } else if (page === "energy") {
-    body += `<h1>Follow the energy flow</h1><p class="lead">See where energy would move in this simulated service and what remains protected.</p>${energyPreview()}${buttonRow()}`;
+    body += `<h1>${demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
-    body += `<h1>Handle an interruption</h1><p class="lead">${esc(site.roleRecovery?.[values.participant_group] || site.recovery)}</p><fieldset class="study-question"><legend>Choose one recovery action</legend>${options("recovery_choice",site.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
+    body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p><fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
     body += `<h1>Understanding check</h1><p class="lead">These questions test whether the prototype explained the scenario clearly.</p>`;
     body += COMPREHENSION.map(([question, choices], index) => {
@@ -126,7 +130,7 @@ function render() {
     if (mode === "research" && config.collection_enabled) body += `<div id="turnstile" aria-label="Human verification"></div>`;
     body += buttonRow(mode === "research" && config.collection_enabled ? "Submit response" : "Finish preview");
   } else {
-    body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? "Demo complete" : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : "No research response was sent or stored."}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
+    body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? demoText("Demo complete", "Esittely valmis") : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : demoText("No research response was sent or stored.", "Tutkimusvastauksia ei lähetetty eikä tallennettu." )}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
   }
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { collect(); stage -= 1; render(); });
@@ -162,10 +166,10 @@ function error(message) {
 
 function valid() {
   const page = currentPage();
-  if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return "Choose a role and acknowledge the information above.";
-  if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return "Align the vehicle before continuing.";
-  if (page === "scenario" && !values.scenario_choice) return "Choose a session action.";
-  if (page === "recovery" && !values.recovery_choice) return "Choose a recovery action.";
+  if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return demoText("Choose a role and acknowledge the information above.", "Valitse rooli ja vahvista, että kyseessä on simulaatio.");
+  if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
+  if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
+  if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
   if (page === "sus" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
   if (page === "outcomes" && [...COMMON_QUESTIONS.map(([key])=>key),...profile().outcomes].some(key => !values[key])) return "Rate all statements before continuing.";

@@ -26,9 +26,10 @@ links cannot submit responses. The FI route now reuses the RC1 alignment,
 departure-reserve and illustrative V2G visuals. GR and UK keep their own tariff,
 renewable-surplus and home-support scenarios. See `docs/V13_WORKSHOP_VIEWS.md`.
 
-This instrument is a **draft for site and ethics review**. Finnish and Greek
-instrument wording is not approved or rendered; the review route explicitly
-uses English even if `lang=fi` or `lang=el` is requested. The UK route includes
+This instrument is a **draft for site and ethics review**. The Finnish fleet
+*demo-only* route may display working RC1 Finnish scenario wording. Finnish and
+Greek research questions and scales remain unapproved and are shown in English
+even if `lang=fi` or `lang=el` is requested. The UK route includes
 large text, high contrast, native controls and a browser speech option. Check
 it with assistive technology and participants before calling it accessible or
 field-ready. Scenario, response wording and the two-item service-confidence
