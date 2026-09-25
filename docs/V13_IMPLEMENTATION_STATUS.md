@@ -51,6 +51,16 @@ and exporter query with five synthetic profiles in an in-memory SQLite database
 (Node 22+ and Python 3). It also checks that synthetic and research records
 stay separate. This local round trip does not replace an isolated D1 test.
 
+For a newly created, **empty** isolated D1 with `0003_research_v13.sql` already
+applied, run `node scripts/verify_v13_remote_d1.mjs <isolated-database-name>
+<database-UUID>`. The helper checks the exact database UUID and name, rejects
+non-isolated names and existing rows, then stores one synthetic contract-shaped
+row and verifies the operator export query on remote D1. It never binds a Worker,
+enables collection or writes a research row. The synthetic row remains in this
+throwaway database for inspection. This verifies D1 storage and export SQL;
+the shared Worker handler still needs its own isolated D1 integration check
+before collection readiness.
+
 ## Verification and next gates
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
