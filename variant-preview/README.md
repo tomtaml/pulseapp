@@ -19,11 +19,24 @@ Adding `demo=1` downgrades the same build to the shorter participant demonstrati
 From the repository root on the feature branch:
 
 ```bash
-npx wrangler deploy --config variant-preview/wrangler.jsonc
+node scripts/check_preview_isolation.mjs && npx wrangler deploy --config variant-preview/wrangler.jsonc
 ```
 
-This creates or updates only `pulse-srf-variant-preview`. It does not deploy
-`pulse-srf-research-test`.
+The check stops if the preview target, storage bindings or collection lock change,
+or if `research-test/wrangler.jsonc` differs from the public v1.2 baseline.
+This command creates or updates only `pulse-srf-variant-preview`.
+
+## Keep the public v1.2 demo running
+
+The existing public demo uses `pulse-srf-research-test` at
+`https://pulse-srf-research-test.tom-tamlander.workers.dev/`.
+Its source remains on `fix/tampere-english-navigation-sus-2026-09-03`
+(commit `caa48d919292ede1353178be5b2797ab55dbae7b`).
+Do not deploy `research-test/wrangler.jsonc` from this feature branch; that
+command would upload this branch's newer assets to the public demo Worker.
+Do not repoint its existing QR code to the preview Worker. The QR target must
+be checked from the actual QR image or its encoded URL; the QR generator takes
+the target URL as an input, so the repository does not prove what was printed.
 
 ## Verify before sharing
 
