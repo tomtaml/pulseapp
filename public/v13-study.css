@@ -8,13 +8,16 @@
 .study-scale .study-option { min-width: 3.4rem; justify-content: center; }
 .study-question { margin-block: 1.4rem; }
 .study-question legend { font-weight: 650; line-height: 1.5; }
-.study-progress { font-size: .9rem; color: #244b41; margin-bottom: 1rem; }
+.study-progress { font-size: .9rem; color: var(--muted); margin-bottom: 1rem; }
 .study-status { padding: .8rem 1rem; background: #e8f3ef; border-left: .3rem solid #0b5d4b; margin: 1rem 0; }
 .study-error { color: #9d2323; font-weight: 650; }
 .study-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.5rem; }
 .study-actions button { min-height: 44px; }
 .study-note { font-size: .95rem; line-height: 1.5; }
 body.large-text .card { font-size: 1.3rem; }
+body.high-contrast { color: var(--text); }
+body.high-contrast .study-status { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .study-error { color: #ff9292; }
 body.high-contrast .study-option { border-color: currentColor; }
 body.high-contrast .study-option:has(input:checked) { background: #111; color: #fff; }
 @media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } }

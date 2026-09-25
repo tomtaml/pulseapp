@@ -35,7 +35,7 @@ export const SITES = Object.freeze({
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
       ["wait_for_res_surplus", "Wait for the renewable surplus"]
     ],
-    recovery: "The planned lower tariff session cannot start. How should the app recover?",
+    recovery: "The chosen charging session cannot start. How should the app recover?",
     recoveryOptions: [
       ["retry", "Retry the planned session"], ["charge_now", "Charge now for the next trip"],
       ["contact_provider", "Contact the service provider"]

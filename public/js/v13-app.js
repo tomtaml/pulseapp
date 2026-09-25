@@ -15,7 +15,9 @@ const language = "en";
 const screen = document.querySelector("#screen");
 const values = {};
 let stage = 0;
-let mode = "demo";
+// Do not expose the demo route while the collection configuration is pending.
+// A fast click could otherwise skip the preview/research acknowledgement.
+let mode = demo ? "demo" : "loading";
 let config = { collection_enabled: false, turnstile_site_key: null };
 let tokenWidget = null;
 let submitted = false;
@@ -56,6 +58,11 @@ function buttonRow(label = "Continue") {
 }
 
 function render() {
+  if (mode === "loading") {
+    document.querySelector("#modeBadge").textContent = "Loading instrument";
+    screen.innerHTML = `<h1>${esc(site.title)}</h1><p class="study-status" role="status">Loading the study instrument…</p>`;
+    return;
+  }
   const page = currentPage();
   const count = pages().length - 1;
   const status = mode === "demo" ? "Demo · no survey or submission" : mode === "research" ? "Research · collection enabled" : "Instrument preview · no submission";
