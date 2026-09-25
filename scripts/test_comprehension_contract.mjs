@@ -50,8 +50,8 @@ assert.match(main, /state\.c4 === "redecision"/);
 assert.match(main, /Please answer all four items/);
 assert.match(production, /validateComprehensionItems\(body\)/);
 assert.match(researchTest, /validateComprehensionItems\(body\)/);
-assert.match(production, /research-v1\.1/);
-assert.match(researchTest, /research-v1\.1/);
+assert.match(production, /research-v1\.2/);
+assert.match(researchTest, /research-v1\.2/);
 assert.match(syntheticSql, /"comprehension_items":\[true,true,true,true\]/);
 
 console.log("Comprehension contract: PASS — fi-fleet 4 items, other variants 3 items");

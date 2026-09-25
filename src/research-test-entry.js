@@ -1,5 +1,6 @@
 import baseWorker from "./index.js";
 import { validateComprehensionItems } from "./comprehension-contract.js";
+import { submitV13 } from "./research-v13.js";
 
 const RESEARCH_TEST_BUILD = "1.4.5-test";
 const SYNTHETIC_WORKSHOP = "TEST_PIPELINE";
@@ -319,6 +320,16 @@ async function handleSyntheticSubmit(request, env) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/v13/synthetic-submit" && request.method === "POST") {
+      return securityHeaders(await submitV13(request, env, {
+        ready: syntheticReadiness(env).enabled,
+        synthetic: true,
+        expectedOrigin: url.origin,
+        rateLimiter: env.SYNTHETIC_RATE_LIMITER,
+        verifyHuman: token => verifyTestTurnstile(env, token)
+      }));
+    }
 
     if (url.pathname === "/api/health" && request.method === "GET") {
       const response = await baseWorker.fetch(request, env, ctx);

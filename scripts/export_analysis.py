@@ -62,6 +62,33 @@ ANALYSIS_COLUMNS = [
     "trust_3",
 ]
 
+V13_COLUMNS = [
+    "record_kind", "schema_version", "variant", "workshop_code", "participant_group",
+    "language", "comprehension_score", "sus_score", "service_confidence_score",
+    "wpt_intention_t1", "v2g_intention_t1", "v2h_intention_t1",
+    "scenario_choice", "recovery_choice", "comprehension_01", "comprehension_02",
+    "comprehension_03", "comprehension_04", "service_confidence_1",
+    "service_confidence_2", "actor_trust_item", "fairness_item", "accessibility_item",
+    *[f"sus_{index:02d}" for index in range(1, 11)],
+]
+
+
+def v13_query(record_kind: str) -> str:
+    if record_kind not in ALLOWED_RECORD_KINDS:
+        raise ValueError("Unsupported record kind")
+    fields = [
+        "record_kind", "schema_version", "variant", "workshop_code", "participant_group",
+        "language", "comprehension_score", "sus_score", "service_confidence_score",
+        "wpt_intention_t1", "v2g_intention_t1", "v2h_intention_t1",
+    ]
+    extracted = {
+        "scenario_choice": "$.scenario_choice", "recovery_choice": "$.recovery_choice",
+        **{f"comprehension_{i:02d}": f"$.comprehension_answers[{i-1}]" for i in range(1, 5)},
+        **{key: f"$.{key}" for key in V13_COLUMNS[18:]},
+    }
+    fields.extend(f"json_extract(payload_json, '{path}') AS {key}" for key, path in extracted.items())
+    return f"SELECT {', '.join(fields)} FROM research_v13_submissions WHERE record_kind = '{record_kind}' ORDER BY submitted_at ASC;"
+
 
 def analysis_query(record_kind: str) -> str:
     if record_kind not in ALLOWED_RECORD_KINDS:
@@ -134,11 +161,13 @@ def main() -> int:
         help="research is the safe default; synthetic_test must be requested explicitly",
     )
     parser.add_argument("--database", default=DATABASE)
+    parser.add_argument("--schema-version", choices=("research-v1.2", "research-v1.3"), default="research-v1.2")
     parser.add_argument("--config", default=CONFIG)
     parser.add_argument("--output-dir", default="exports")
     args = parser.parse_args()
 
-    query = analysis_query(args.record_kind)
+    query = v13_query(args.record_kind) if args.schema_version == "research-v1.3" else analysis_query(args.record_kind)
+    columns = V13_COLUMNS if args.schema_version == "research-v1.3" else ANALYSIS_COLUMNS
     cmd = [
         "npx", "wrangler@latest", "d1", "execute", args.database,
         "--remote", "--config", args.config, "--json", "--command", query,
@@ -160,7 +189,7 @@ def main() -> int:
 
     rows = extract_rows(payload)
     for row in rows:
-        unexpected = set(row) - set(ANALYSIS_COLUMNS)
+        unexpected = set(row) - set(columns)
         if unexpected:
             print(f"Refusing export: unexpected columns returned: {sorted(unexpected)}", file=sys.stderr)
             return 3
@@ -168,15 +197,15 @@ def main() -> int:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    stem = f"pulse_analysis_{args.record_kind}_{timestamp}"
+    stem = f"pulse_analysis_{args.schema_version}_{args.record_kind}_{timestamp}"
     csv_path = output_dir / f"{stem}.csv"
     metadata_path = output_dir / f"{stem}.metadata.json"
 
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=ANALYSIS_COLUMNS, extrasaction="raise")
+        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="raise")
         writer.writeheader()
         for row in rows:
-            writer.writerow({column: row.get(column) for column in ANALYSIS_COLUMNS})
+            writer.writerow({column: row.get(column) for column in columns})
 
     metadata = {
         "export_version": "analysis-export-v1",
@@ -184,7 +213,7 @@ def main() -> int:
         "source_database": args.database,
         "record_kind": args.record_kind,
         "row_count": len(rows),
-        "columns": ANALYSIS_COLUMNS,
+        "columns": columns,
         "excluded_by_design": [
             "payload_json",
             "id",

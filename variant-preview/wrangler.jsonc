@@ -15,6 +15,7 @@
     "TURNSTILE_EXPECTED_HOSTNAME": "",
     "RESEARCH_ALLOWED_ORIGIN": "",
     "COLLECTION_ENABLED": "false",
+    "V13_COLLECTION_ENABLED": "false",
     "RESEARCH_INSTRUMENT_MODE": "instrument-preview",
     "FREE_TEXT_ENABLED": "false",
     "RESEARCH_FREE_TEXT_APPROVED": "false",

@@ -1,4 +1,6 @@
 import { validateComprehensionItems } from "./comprehension-contract.js";
+import { submitV13 } from "./research-v13.js";
+import { SCHEMA_VERSION as V13_SCHEMA_VERSION } from "../public/js/research-v13-contract.js";
 
 const APP_VERSION = "1.0.0";
 const RESEARCH_SCHEMA_VERSION = "research-v1.2";
@@ -221,6 +223,20 @@ function handleChargingCommand(env){
 export default {async fetch(request,env){
   const url=new URL(request.url);
   const readiness=collectionReadiness(env);
+  const v13Ready=readiness.enabled && env.V13_COLLECTION_ENABLED==="true" && env.RESEARCH_INSTRUMENT_MODE==="research";
+  if(url.pathname==="/api/v13/config"&&request.method==="GET")return json({
+    collection_enabled:v13Ready, instrument_mode:configuredInstrumentMode(env,v13Ready),
+    research_schema_version:V13_SCHEMA_VERSION, turnstile_site_key:v13Ready?env.TURNSTILE_SITE_KEY:null,
+    charging_backend_mode:"mock", charging_commands_enabled:false
+  });
+  if(url.pathname==="/api/v13/submit"&&request.method==="POST"){
+    let expectedOrigin="";
+    try{expectedOrigin=new URL(env.RESEARCH_ALLOWED_ORIGIN).origin;}catch{}
+    return securityHeaders(await submitV13(request,env,{
+      ready:v13Ready, expectedOrigin, rateLimiter:env.RESEARCH_RATE_LIMITER,
+      verifyHuman:token=>verifyTurnstile(env,token)
+    }));
+  }
   if(url.pathname==="/api/config"&&request.method==="GET")return json({
     collection_enabled:readiness.enabled,
     free_text_enabled:freeTextAllowed(env),
