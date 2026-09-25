@@ -2,6 +2,7 @@ node_modules/
 .wrangler/
 .dev.vars
 .env*
+v13-isolated/wrangler.local.jsonc
 .DS_Store
 qr/*.png
 exports/
