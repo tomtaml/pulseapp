@@ -99,6 +99,8 @@ if (v06FixVariant === "fi-fleet") {
 
   function installFallbackValidation() {
     if (!isPositioningScreen() || manualStep() < 3) return;
+    // The demo omits measurement fields, including the fallback rating.
+    if (!document.querySelector('input[name="alignment_clarity"]')) return;
     const next = document.querySelector('[data-action="next"]');
     if (!next || next.dataset.v06FallbackValidation === "1") return;
     next.dataset.v06FallbackValidation = "1";
