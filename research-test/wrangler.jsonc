@@ -33,7 +33,6 @@
     "TURNSTILE_EXPECTED_HOSTNAME": "",
     "RESEARCH_ALLOWED_ORIGIN": "",
     "COLLECTION_ENABLED": "false",
-    "RESEARCH_INSTRUMENT_MODE": "instrument-preview",
     "FREE_TEXT_ENABLED": "false",
     "RESEARCH_FREE_TEXT_APPROVED": "false",
     "SYNTHETIC_PIPELINE_ENABLED": "false",
