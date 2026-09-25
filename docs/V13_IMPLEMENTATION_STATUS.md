@@ -51,15 +51,17 @@ and exporter query with five synthetic profiles in an in-memory SQLite database
 (Node 22+ and Python 3). It also checks that synthetic and research records
 stay separate. This local round trip does not replace an isolated D1 test.
 
-For a newly created, **empty** isolated D1 with `0003_research_v13.sql` already
-applied, run `node scripts/verify_v13_remote_d1.mjs <isolated-database-name>
-<database-UUID>`. The helper checks the exact database UUID and name, rejects
-non-isolated names and existing rows, then stores one synthetic contract-shaped
-row and verifies the operator export query on remote D1. It never binds a Worker,
-enables collection or writes a research row. The synthetic row remains in this
-throwaway database for inspection. This verifies D1 storage and export SQL;
-the shared Worker handler still needs its own isolated D1 integration check
-before collection readiness.
+On 25 September 2026, `0003_research_v13.sql` was applied to the separate D1
+`pulse-research-v13-isolated-20260925` (ID
+`c0ce7bc3-7844-47c3-8d23-fe358c536693`). The direct remote D1 probe passed:
+one synthetic row, zero research rows and a verified operator export allow-list.
+The dedicated `pulse-srf-v13-isolated-test` Worker was then tested through its
+HTTP handler with the official Turnstile test keys and a temporary synthetic
+gate. `scripts/verify_v13_worker_http.mjs` confirmed one additional synthetic
+submission reached isolated D1, zero research rows, and a locked research
+submit route. The gate was deleted afterward; `/api/health` again reported
+`synthetic_pipeline_ready=false` and `collection_enabled=false`. These results
+verify the synthetic Worker-to-D1 path, not live participant collection.
 
 ## Verification and next gates
 
@@ -67,7 +69,9 @@ Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and
 `npx wrangler deploy --dry-run --config variant-preview/wrangler.jsonc`.
 The tests cover five profiles, mismatched and hidden fields, scoring, persistence
-shape and locked endpoints. Complete a browser walkthrough on each site route,
-review the translated instrument and perform an isolated D1 round trip before
-any live research rollout. The preview Worker can be deployed separately after
-Cloudflare authentication; the public V1.2 Worker must remain unchanged.
+shape and locked endpoints. The isolated D1 and Worker HTTP round trips are
+complete. Remaining gates include a browser walkthrough on all three site
+routes, site validation of service promises, Finnish and Greek instrument
+review, UK assistive-technology and participant checks, and ethics, retention
+and production security approval before any live research rollout. The preview
+and isolated test Workers remain separate from the public V1.2 Worker.
