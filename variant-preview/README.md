@@ -62,13 +62,15 @@ charging_commands_enabled: false
 Full instrument preview:
 
 ```text
-https://pulse-srf-variant-preview.tom-tamlander.workers.dev/?variant=fi-fleet&workshop=WP1-PREVIEW&lang=en
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=fi-fleet&workshop=WP1-PREVIEW&lang=en
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=gr-prosumer&workshop=WP1-PREVIEW&lang=en
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=uk-v2h&workshop=WP1-PREVIEW&lang=en
 ```
 
 Reduced no-survey demonstration:
 
 ```text
-https://pulse-srf-variant-preview.tom-tamlander.workers.dev/?variant=fi-fleet&workshop=WP1-DEMO&lang=en&demo=1
+https://pulse-srf-variant-preview.tom-tamlander.workers.dev/v13.html?variant=fi-fleet&workshop=WP1-DEMO&lang=en&demo=1
 ```
 
-Neither URL can store or submit participant research data under this configuration.
+These URLs cannot store or submit participant research data under this configuration.
