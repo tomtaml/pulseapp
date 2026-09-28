@@ -24,8 +24,9 @@ only, demo plus understanding questions, or the full instrument. Individual
 `questions`, `sus` and `scales` switches support shorter workshop paths; these
 links cannot submit responses. The FI route `/v13-fleet.html` uses the full RC1 mobile script and stylesheet
 stack, including alignment, an animated charging/V2G cycle, override, recovery
-and mobile layout. `/v13.html?variant=fi-fleet` redirects to it. GR and UK keep
-their site-specific tariff, renewable-surplus and home-support scenarios. See
+and mobile layout. `/v13.html?variant=fi-fleet` redirects to it. GR keeps its
+tariff and renewable-surplus choices. UK now uses one home parking and V2H
+journey with an obstacle stop, manual override and an energy ledger. See
 `docs/V13_WORKSHOP_VIEWS.md`.
 
 These instruments are **drafts for site and ethics review**. The Finnish
@@ -45,7 +46,11 @@ promises match their proposed service before translation or field use.
 
 `/api/v13/config` reports `research-v1.3`. The Finnish RC1-based workshop
 page is a preview-only demonstration and does not construct or submit a V1.3
-research payload. The V1.3 submit endpoint is separately
+research payload. The focused UK route is also always a storage-free preview,
+including when a collection-enabled config is encountered: its former
+scenario/recovery choices are no longer elicited, and its instrument must be
+reconciled with the submission contract before research collection. The V1.3
+submit endpoint is separately
 locked by `V13_COLLECTION_ENABLED=true`, production readiness and
 `RESEARCH_INSTRUMENT_MODE=research`. The preview config keeps it false and has no
 D1 binding. The synthetic endpoint requires the existing test-only Turnstile,

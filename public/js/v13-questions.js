@@ -19,7 +19,7 @@ export function resolveWorkshopView(params) {
 
 export function workshopPages(variant, participantGroup, modules, profiles) {
   const pages = variant === "uk-v2h"
-    ? ["intro", "alignment", "street_charge", "recovery", "home_intro", "scenario", "energy"]
+    ? ["intro", "home_intro", "energy"]
     : ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
@@ -31,6 +31,17 @@ export function resolveWorkshopMode(config, { modules, workshopOnly }) {
   if (!modules.questions && !modules.sus && !modules.scales) return "demo";
   if (!workshopOnly && config.instrument_mode === "research" && config.collection_enabled === true) return "research";
   return "instrument-preview";
+}
+
+export function resolveSiteMode(config, view, variant) {
+  const mode = resolveWorkshopMode(config, view);
+  // The focused UK journey no longer exposes the choices required by the
+  // current research submission contract. Keep it workshop-only.
+  return variant === "uk-v2h" && mode === "research" ? "instrument-preview" : mode;
+}
+
+export function workshopOutcomeKeys(variant, profile) {
+  return variant === "uk-v2h" ? profile.outcomes.filter(key => key !== "wpt_intention_t1") : profile.outcomes;
 }
 
 export function rc1FleetWorkshopMode(view) {
@@ -109,18 +120,8 @@ export const SITES = Object.freeze({
     roles: { passenger_prosumer: "Passenger car driver" }
   },
   "uk-v2h": {
-    title: "Oxfordshire accessible charging and home energy", badge: "UK · accessible WPT · V2H", languages: ["en"],
-    intro: "First, try a simulated on-street wireless charging bay and a wet-weather recovery choice. Then move to a separate, illustrative overnight setting: the vehicle is parked close to a house and may support home demand while preserving charge for the next trip. The street bay is not shown as supplying the house.",
-    scenario: "At home overnight, the vehicle is parked beside the house. The next morning's trip needs a protected reserve. Which energy plan would you choose?",
-    scenarioOptions: [
-      ["charge_now", "Charge the vehicle overnight for the morning trip"], ["support_home", "Charge first, then allow limited home support"],
-      ["protect_trip", "Keep the existing charge for the trip; no sharing"]
-    ],
-    recovery: "Rain interrupts wireless alignment at the street bay. The vehicle needs charge for the next trip. What would you use?",
-    recoveryOptions: [
-      ["retry_wireless", "Retry wireless positioning"], ["use_conductive_fallback", "Use the conductive gully fallback"],
-      ["stop_and_leave", "Stop and leave with the available charge"]
-    ],
+    title: "Oxfordshire home parking and V2H", badge: "UK · accessible home V2H", languages: ["en"],
+    intro: "Try one illustrative overnight home journey. Check the surroundings before a guided parking manoeuvre beside the house; the demonstration stops if an obstacle appears, and you can stop it yourself. After a safe position is confirmed, see the car charge and then support the house while keeping the next-trip reserve. The example assumes home-support permission for this story; you can cancel or stop it at any time. This is a simulation, not a verified vehicle or home installation.",
     roles: { accessible_driver: "Accessible driver" }
   }
 });

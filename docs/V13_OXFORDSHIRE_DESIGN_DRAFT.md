@@ -1,65 +1,42 @@
-# Oxfordshire V1.3 workshop design draft
+# Oxfordshire V1.3 focused home V2H workshop draft
 
-Status: for site and participant review, 28 September 2026. A first, storage-free two-scene preview slice now implements street positioning/charging/recovery and a separate overnight household illustration. The remaining hypotheses and physical site details still require review; this document does not approve research collection.
+Status: preview for site and participant review, 28 September 2026. The route is storage-free. It illustrates a proposed interaction, not validated parking automation, a verified home energy installation or actual savings.
 
-## Direction from the three-site matrix
+## Why one journey
 
-**Primary principle:** support independent use and accessible recovery. The Oxfordshire interaction should elicit independent task completion, accessible controls, protection of vehicle and household needs, and effects on other users of the space. Keep the common definitions of technology, status, control and failure aligned with Tampere and Trikala. Provide an equivalent non-digital discussion route.
+The earlier preview put on-street WPT and a separate home V2H example in the same route to expose the UK-W and UK-H hypotheses. For the first Oxfordshire workshops, the app now focuses on the vehicle parked close to the house and the V2H experience. It no longer asks the participant to choose ordinary charging instead of V2H, or sends them through a street-bay and gully story. The WPT-specific street layout, cable handling and public-space effects remain separate facilitation topics pending site details; this focused screen should not be treated as evidence for those claims.
 
-The Tampere RC1 journey provides the interaction grammar: approach/position, charging readiness, protected needs and permission, an animated energy session, interruption/override, then optional understanding and experience questions. Oxfordshire uses **two explicitly separate scenes**. Scene A is on-street, cable-free WPT and accessible recovery. Scene B is a simplified, illustrative household V2H situation. The transition states that this is another setting; it does not imply a physical energy connection from the street bay to a home. V2G is optional only if the site confirms a relevant use. The current UK V1.3 cards are a starting point, not validated site geometry or a live HEMS connection.
+The scene assumes that limited V2H participation was authorised for this illustration. The participant can cancel home support before export or stop it later. In a real service, authorisation, household load protection, tariff basis, vehicle-home compatibility and who provides accessible support need site confirmation. The scenario does not claim that a wireless parking pad itself supplies bidirectional household energy.
 
-## Proposed Oxfordshire journey
+## Focused interaction
 
-| Screen | Participant-facing elements | Decision and visible consequence | Evidence prompt |
-| --- | --- | --- | --- |
-| 1. Scene A introduction | Compare a cable-handling description or storyboard with on-street cable-free WPT. Explain the simulated next-trip context. | Choose the broad perspective; identify any initial benefits or new barriers in either approach. | UK-W1: usefulness, effort and independence as the participant describes them. |
-| 2. Street approach and position | Schematic top-down bay: vehicle, pad, walking/rolling route, access space and gully. Animate `approach → guidance → aligned → ready`; give equivalent text and optional voice. | Request guidance, confirm positioning, or request help. Show clearly whether charging can start. | UK-W2: independent understanding and operation with large text, keyboard/switch and screen reader as applicable. |
-| 3. WPT charging state | User-started, pauseable/replayable status sequence `ready → charging → complete`, with an illustrative next-trip reserve. | Start or stop charging and see the resulting vehicle readiness. | Can the participant distinguish positioning, charging and departure readiness? |
-| 4. Wet/low-light recovery | Fault interrupts positioning or charging; show retry, conductive gully charging where usable, leave, and accessible support. | Choosing a path changes the visible state and its consequence. The fallback does not imply V2H. | UK-W3: independent recovery, support needed and credibility of the alternative. |
-| 5. Scene transition | Explicitly introduce a separate illustrative household-energy setting; retain the vehicle/next-trip concept, without implying the street bay powers the home. | Facilitator may include or skip this scene for the workshop use case. | Keep WPT and V2H responses distinguishable. |
-| 6. Household protections | Show vehicle trip reserve and agreed essential household loads or backup threshold side by side; label example values as illustrative. | Choose the conditions under which home support would be permitted. | UK-H1: what must remain protected and who sets each limit? |
-| 7. V2H energy and control | User-started sequence `grid → vehicle` or `vehicle → home` after explicit permission, with visible direction, protected needs, pause/stop and an unexpected-state prompt. | Suspend sharing and inspect the resulting state; support and responsibility are discoverable. | UK-H2: direction and override; UK-H3: who controls settings and who provides accessible help. |
-| 8. Completion and optional questions | Separate recap for street WPT and household V2H. Same facilitator switches: demo only; understanding; SUS for direct users; confidence, trust and outcome scales. | Replay either scene or finish. No workshop response is submitted. | Comparable constructs, tagged by scene and participation mode. Ask other affected space users about the street scene separately (UK-S1). |
-
-The parking illustration must remain schematic until the site supplies bay orientation, pad, gully, footway and access-clearance details. The animation must be understandable as a still sequence, by keyboard/switch and screen reader, with concise status announcements and reduced motion. A spoken status is participant initiated. Do not use a precise alignment score or claim automatic vehicle positioning without a validated service basis. The household scene uses a distinct visual setting and scene label, rather than continuing the street animation into a home.
-
-The preview presents both scenes. Street charging has a start/active status; the household example now runs automatically through 22:00, 23:00, 00:00, 01:00, 02:00 and 07:00, with pause/resume, manual checkpoint, skip and replay. It uses illustrative vehicle percentages 70 → 75 → 80 → 75 (if home support is allowed) against a 65% next-trip reserve. A `protect_trip` choice keeps the initial 70%; cancellation before home support leaves the charged vehicle at 80%. Stopping after export leaves it at 75%. The displayed direction and timeline change with the simulated session; reduced-motion preferences disable movement while controls and text state remain. The household essential-load threshold, physical home installation, site geometry and any live HEMS behavior remain unconfirmed. Scene-level facilitator switches, richer street charging phases, and the separate UK-S1 non-user pathway remain design work.
-
-The energy ledger makes the V2H consequence explicit without claiming operational measurements. Assuming a 60 kWh usable battery, 70% → 80% stores 6.0 kWh, and 80% → 75% takes 3.0 kWh from the car. At an illustrative 90% delivery fraction, 2.7 kWh reaches the home. At assumed prices of 30p/kWh for household import and 15p/kWh for replacement battery energy, £0.81 avoided import less £0.45 replacement is a £0.36 *illustrative energy cost difference*. Recharge losses, battery wear and fees are omitted. This is not a tariff quote or a measured saving. If sharing is cancelled before export, both V2H energy and the displayed difference stay at zero. Site participants should review capacity, delivery fraction, tariffs and the comparison basis before any field use.
-
-## Table A-6 hypotheses as workshop probes
-
-These are **early acceptance hypotheses**, not predicted participant answers. Facilitation should ask neutral questions and note counterexamples as well as support.
-
-| ID | Stage and neutral probe | Observation or response to capture | SRF / downstream use |
-| --- | --- | --- | --- |
-| UK-W1 | Scene A first reaction: “What would change for you between handling a cable and using this wireless bay? What might become harder?” | Perceived usefulness, effort, independence and new positioning/interface barriers. | SRF-03/04/05/25; accessibility and WPT service requirements. |
-| UK-W2 | Street positioning: “Show how you would know where to park and when charging has started.” Offer the participant's usual display/assistive settings. | Unaided task completion, status comprehension, guidance replays, assistance requested and HMI mode used; avoid collecting diagnosis. | SRF-06/12/25; accessible HMI requirements and testing. |
-| UK-W3 | Wet or low-light interruption: “What would you do next? What help would you need, if any?” | Fallback chosen, ability to find support, perceived independence and burden of retry/gully/leave. | SRF-08/25/27; fallback and pilot accessibility requirements. |
-| UK-H1 | Separate household scene: “What vehicle charge and household needs would have to stay protected before you allowed home support?” | Participant-stated trip and essential-load conditions; comprehension of both protections; V2H intention under those conditions. | SRF-11/19/26; V2H reserve-setting requirements. |
-| UK-H2 | V2H unexpected-state prompt: “Where is energy going now? How would you pause it?” If site-relevant, probe grid export separately. | Direction answer, independent override success, consequence understood, assistance requested. | SRF-11/12/25; accessible control and V2H/V2G items. |
-| UK-H3 | Household responsibility cards: “Who should set the limits, who may stop sharing, and who should provide help if it fails?” | Separate attributions to user, household, HEMS/service provider, carer or support actor; any uncertainty or fairness concern. | SRF-10/12/21; governance and accessible support requirements. |
-| UK-S1 | A separate street-layout discussion with affected non-users: “What could this installation change for your route or use of the space?” | Access-route obstruction, rain/lighting concerns, fairness and local-authority design issues; do not ask one driver to represent all users. | SRF-20/22/24/25; site design and public-space assessment. |
-
-## Capture during the first workshops
-
-The existing V1.3 preview is storage-free. Interaction state may drive the on-screen simulation, but no participant event stream or research payload should be added as part of this design review. Use an approved facilitator sheet for observations and a matching printed/assisted storyboard where digital use is unsuitable.
-
-| Comparable construct | On-screen interaction state | Facilitator observation or question |
+| Step | Visible participant action and consequence | What the facilitator can probe |
 | --- | --- | --- |
-| Positioning and start | Guidance requested, position confirmed, charging ready | Unaided completion, assistance requested, positioning confusion, and perceived effort |
-| Control and protected needs | Scene B permission chosen, vehicle/household protections displayed, sharing stopped | Who controls sharing? What stays protected? Can the participant find and explain stop/leave? |
-| Failure and recovery | Fault shown, retry/gully/leave/support path selected | Recovery understood; physical or digital burden of each path; support needed |
-| Inclusion and public space | Access route and gully shown on the schematic | Participant comments on clearance and dignity; separate observations from other affected space users |
-| Experience | Questions, SUS where applicable, confidence/trust/accessibility items | Same construct definitions and mode label (`digital` or `facilitated`) across sites |
+| 1. Home context | One role and simulation acknowledgement; house, marked bay and entrance route are introduced. | Whose mobility and household needs must be protected? |
+| 2. Check surroundings | Inspect people, objects, bay sides and the walking/rolling entrance route before starting guided parking. | Could the participant understand and complete this task independently? What is missing from the guidance? |
+| 3. Controlled manoeuvre | Vehicle moves only in the illustration; Stop manoeuvre is available. A staged object appears and the manoeuvre stops automatically in the simulation. Charging and V2H do not start. | Is the stop reason clear in text, large text, high contrast and spoken status? What would count as safe positioning? |
+| 4. Review and recover | Review the obstruction and access route. The illustrated object moves clear, but the participant must confirm the path before resuming. They may cancel or inspect a support panel; it has no real provider contact and sends no message. | Could they stop, recheck, resume or decide to seek assistance without dependence on another person? Who would clear a real obstruction? |
+| 5. Overnight V2H | Parked vehicle charges from 70% to 80%, then can support the house to 75%; 65% remains the protected trip reserve. Energy direction, kWh ledger and cost assumptions stay visible. Pause, step, skip, replay and stop home support remain available. | Can they identify current direction, energy delivered to the house, reserve, value assumptions and override? Which essential home loads need protection? |
+| 6. Optional questions | Facilitator toggles comprehension, SUS for the direct user and confidence/trust/outcome scales. The preview does not submit answers. | Compare technology understanding, control, accessible use and service trust with the other site variants. |
 
-For a later approved study, define common event meanings such as `position_confirmed`, `charging_started`, `sharing_authorised`, `override_used`, `fault_shown`, `recovery_selected` and `task_completed`. Include a `scene` distinction (`street_wpt` or `household_v2h`) and record the energy destination (`vehicle`, `home`, or `grid`) separately. Simulation events, facilitator observations and operational telemetry have different sources and should remain distinguishable. Any stored event schema, retention or participant linkage requires separate review; the current V1.3 submission contract has no fields for parking corrections, assistance or event timing.
+The parking sequence is deterministic: approach → surroundings checked → illustrated movement → obstacle stop → obstacle reviewed → resumed movement → parked. Manual stop works during either movement segment; a new review is required before trying again. The UI cannot continue to V2H while the car is moving, stopped or blocked. These transitions are workshop cues, not sensor readings or safety certification. Real use would require a validated vehicle procedure and physical site assessment. Provide an equivalent spoken/printed route when digital interaction is unsuitable.
 
-## Site decisions before implementation
+## Energy arithmetic shown on screen
 
-1. Confirm the physical bay layout and which access/clearance features the workshop image may truthfully depict.
-2. Use a separate illustrative household-energy scene for V2H in this workshop draft. Confirm which HEMS behavior and household needs the scene may depict. Include V2G only if relevant to the Oxfordshire service under review.
-3. Agree illustrative vehicle trip reserve and household backup threshold, departure consequence and fallback behavior, including what the conductive gully can and cannot support.
-4. Agree who will review the accessible interaction with screen reader, keyboard/switch, large text, high contrast and reduced motion; include affected space users in a separate prompt.
+This is a fixed workshop example, not a meter reading. A 60 kWh usable battery makes a 10 percentage-point charge gain equal to 6.0 kWh stored. A 5-point V2H drop takes 3.0 kWh from the car. At an assumed 90% home delivery fraction, 2.7 kWh reaches the house. At assumed prices of 30p/kWh for household import and 15p/kWh for replacement battery energy, the £0.81 avoided import minus £0.45 replacement is a £0.36 illustrative energy cost difference. Recharge losses, battery wear and fees are excluded. No saving is shown if support was stopped before export.
 
-The implementation should be confined to the V1.3 preview branch and Worker. The partner-facing V1.2 RC1 Worker remains unchanged.
+These values, the 65% trip reserve and the household essential-load rule need review with the site. The app has no operational telemetry, tariff connection or household energy management system.
+
+## Hypotheses and evidence boundaries
+
+| Hypothesis | Probe in this focused route | What remains outside this route |
+| --- | --- | --- |
+| UK-H1 | Ask for minimum vehicle reserve, protected household loads and who sets each. | No verified household backup threshold. |
+| UK-H2 | Ask the participant to identify energy direction and stop home support; watch whether the controls are usable independently. | No claim of tested assistive technology or actual service override. |
+| UK-H3 | Ask who authorises V2H, who receives a fault and who provides accessible help. | No verified operator/HEMS/carer responsibilities. |
+| UK-W2/W3, adapted to home positioning | Observe understanding of positioning, obstacle stop, manual stop, accessible status and recovery. | No measured WPT alignment or real automated parking capability. |
+| UK-W1 and UK-S1 | Use separate storyboard/discussion for cable handling and effects on other users of an on-street installation. | The home scene cannot answer street WPT or public-space readiness by itself. |
+
+For the first workshops, the facilitator may record completion, help requested, whether the stop reason was understood, reserve and energy-direction comprehension, override success, and comments on access routes through a separately approved procedure. No participant event stream or new research payload is added by this preview. The UK UI no longer elicits the choice fields required by the present V1.3 submission schema, so it is explicitly kept in preview mode until an approved UK instrument and contract are reconciled.
+
+The partner V1.2 RC1 Worker and its QR links are outside this implementation.

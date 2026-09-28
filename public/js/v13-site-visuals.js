@@ -31,40 +31,42 @@ export function grEnergyCard(choice, v2gPermitted) {
   </div>`;
 }
 
-export function ukAlignmentCard(stage) {
-  const ready = stage === "ready";
-  const guided = stage === "guided";
-  return `<div class="site-demo-card accessible-bay" aria-label="Accessible wireless charging position">
-    <div class="scenario-badge">Workshop scenario · simulated positioning</div>
-    <h2>Wireless charging position</h2>
-    <div class="bay-track" role="img" aria-label="${ready ? "Vehicle aligned with the wireless pad" : guided ? "Vehicle needs a small positioning correction" : "Vehicle approaching the wireless pad"}"><span class="bay-vehicle ${ready ? "ready" : guided ? "guided" : ""}" aria-hidden="true">🚐</span><span class="bay-pad" aria-hidden="true">⌁⌁⌁</span></div>
-    <p class="demo-state" role="status">${ready ? "Position confirmed. Wireless charging is ready in this simulation." : guided ? "Move a little closer to the marked pad; check the position again." : "Position needs confirmation before wireless charging can begin."}</p>
-    <div class="alignment-controls"><button type="button" class="secondary" data-uk-align="guided">Show positioning guidance</button><button type="button" class="primary" data-uk-align="ready">Confirm wireless position</button></div>
-    <p class="study-note">The conductive gully remains a fallback if wireless charging is interrupted.</p>
-  </div>`;
-}
-
-export function ukStreetChargeCard(started) {
-  return `<div class="site-demo-card" aria-label="On-street wireless charging example">
-    <div class="scenario-badge">Scene A · Oxfordshire street WPT</div>
-    <h2>${started ? "Wireless charging started" : "Position confirmed · ready to charge"}</h2>
-    <div class="demo-flow ${started ? "" : "idle"}" role="img" aria-label="${started ? "Grid sends energy to the vehicle at the street bay" : "Vehicle is positioned; charging has not started"}"><span>⚡<small>Grid</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>🚐<small>Vehicle</small></span></div>
-    <p class="demo-state">${started ? "Charging is active in this simulation. The following rain scenario will interrupt it." : "The pad is ready. Start the simulated session when you are ready."}</p>
-    <button type="button" class="primary" data-uk-street-charge ${started ? "disabled" : ""}>${started ? "Session started" : "Start wireless charging"}</button>
-  </div>`;
-}
-
-export function ukHomeParkingCard(parked) {
-  return `<div class="site-demo-card home-scene" aria-label="Separate overnight household energy example">
-    <div class="scenario-badge">Scene B · illustrative overnight home setting</div>
-    <h2>Park close to the house</h2>
-    <div class="home-layout" role="img" aria-label="${parked ? "Vehicle parked beside the house in a marked parking space" : "Vehicle approaches the parking space beside the house"}">
+export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared }) {
+  const moving = stage === "moving" || stage === "resuming";
+  const obstructed = obstacleSeen && !obstacleCleared && ["blocked", "stopped", "support"].includes(stage);
+  const cleared = obstacleCleared;
+  const status = {
+    approach: "Vehicle waiting. Check people, objects, the entrance route and both sides of the bay before moving.",
+    checked: "Surroundings checked for this illustration. Keep watching the route and use Stop manoeuvre if needed.",
+    moving: "Guided manoeuvre in progress. The driver stays responsible for observing the surroundings and can stop it.",
+    blocked: "Obstacle in the illustrated path. Parking stopped automatically; charging and V2H have not started.",
+    reviewed: "Obstacle reviewed and shown clear of the path. Confirm the bay and access route are clear before resuming.",
+    resuming: "Guided manoeuvre resuming after your safety confirmation. Stop remains available.",
+    stopped: "You stopped the manoeuvre. No charging or V2H is active. Recheck the surroundings before moving again.",
+    support: "Parking remains stopped. Support options are shown in this simulation; no real message has been sent. Recheck the route with help or cancel.",
+    parked: "Vehicle parked beside the house after the obstacle check. The entrance route is clear in this example; the V2H session can begin."
+  }[stage];
+  const controls = stage === "approach" ? `<button type="button" class="primary" data-uk-parking="inspect">Check surroundings</button>`
+    : stage === "checked" ? `<button type="button" class="primary" data-uk-parking="start">Start guided parking</button>`
+    : moving ? `<button type="button" class="secondary" data-uk-parking="stop">Stop manoeuvre</button>`
+    : stage === "blocked" ? `<button type="button" class="primary" data-uk-parking="review">Review obstacle and access route</button><button type="button" class="secondary" data-uk-parking="support">Show support options</button>`
+    : stage === "stopped" ? `<button type="button" class="primary" data-uk-parking="review">Recheck surroundings</button><button type="button" class="secondary" data-uk-parking="support">Show support options</button>`
+    : stage === "support" ? `<button type="button" class="primary" data-uk-parking="review">Recheck with support</button>`
+    : stage === "reviewed" ? `<button type="button" class="primary" data-uk-parking="resume">Confirm route clear and resume</button>`
+    : "";
+  return `<div class="site-demo-card home-scene" aria-label="Illustrative home parking and obstacle recovery">
+    <div class="scenario-badge">Oxfordshire · home V2H journey · simulated manoeuvre</div>
+    <h2>Position beside the house</h2>
+    <div class="home-layout" role="img" aria-label="${obstructed ? "Vehicle stopped short of the home bay because an obstacle is in its path" : stage === "parked" ? "Vehicle parked beside the house; the entrance route is clear" : moving ? "Vehicle moving slowly toward the home bay while the driver watches its surroundings" : "Vehicle waiting near the house and marked parking bay"}">
       <div class="home-house" aria-hidden="true">🏠<small>House</small></div>
-      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${parked ? "parked" : ""}">🚐</span><span class="home-pad">▭<small>Parking space</small></span></div>
+      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${stage}">🚐</span><span class="home-pad">▭<small>Parking bay</small></span><span class="home-obstacle ${obstructed ? "visible" : cleared ? "cleared" : ""}">▣<small>${cleared ? "Object moved clear" : "Object in path"}</small></span></div>
+      <div class="home-access-path" aria-hidden="true">🚶 Entrance and walking/rolling route · keep clear</div>
     </div>
-    <p class="demo-state">${parked ? "Vehicle parked beside the house. The overnight example can begin." : "This is a new setting, separate from the street bay. Position the vehicle close to the house."}</p>
-    <button type="button" class="primary" data-uk-home-park ${parked ? "disabled" : ""}>${parked ? "Parked by the house" : "Park by the house"}</button>
-    <p class="study-note">Schematic workshop example; it does not depict a verified Oxfordshire home installation or live HEMS connection.</p>
+    <p class="demo-state" role="status">${status}</p>
+    <div class="home-safety-list"><strong>Before and during the manoeuvre</strong><ul><li>Check people and objects around the vehicle.</li><li>Keep the entrance and walking/rolling route clear.</li><li>Watch the guidance; stop whenever needed.</li></ul></div>
+    ${stage === "support" ? `<div class="demo-permission"><strong>Support to confirm with the site</strong><p>Who can clear an obstruction, and how could a user reach them through an accessible phone or assisted channel? The prototype has no provider contact and sends no request.</p></div>` : ""}
+    <div class="study-actions">${controls}${stage !== "approach" && stage !== "parked" ? `<button type="button" class="secondary" data-uk-parking="cancel">Cancel manoeuvre</button>` : ""}</div>
+    <p class="study-note">This is a staged workshop illustration. It does not claim that a real vehicle detects this obstacle, parks autonomously, or has a verified home energy connection. The driver would check the physical space and seek accessible help if the route could not be cleared.</p>
   </div>`;
 }
 
@@ -105,8 +107,8 @@ export function ukEnergyCard(choice, phase, sharingActive, exported, running = f
   const flowLabel = frame.direction === "home" ? "Vehicle sends energy to home" : frame.direction === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
   const left = frame.direction === "home" ? ["🚐", "Vehicle"] : ["⚡", "Grid"];
   const right = frame.direction === "home" ? ["🏠", "Home"] : ["🚐", "Vehicle"];
-  return `<div class="site-demo-card overnight-card" aria-label="Separate overnight household V2H example">
-    <div class="scenario-badge">Scene B · simulated overnight energy</div>
+  return `<div class="site-demo-card overnight-card" aria-label="Illustrative overnight household V2H example">
+    <div class="scenario-badge">Oxfordshire · home V2H session · simulated energy</div>
     <div class="night-heading"><h2>Parked beside the house · <span data-uk-time>${frame.time}</span></h2><span class="night-live" data-uk-state>${running ? "Running" : phase === 5 ? "Ready for next trip" : "Ready to start"}</span></div>
     <div class="home-reserves"><div><span>Vehicle battery</span><strong data-uk-soc>${frame.soc}%</strong></div><div><span>Protected next-trip reserve</span><strong>65%</strong></div></div>
     <div class="home-battery" data-uk-battery role="img" aria-label="Vehicle battery ${frame.soc} percent; protected trip reserve 65 percent"><span data-uk-fill style="width:${frame.soc}%"></span></div>
@@ -127,13 +129,5 @@ export function ukEnergyCard(choice, phase, sharingActive, exported, running = f
       <button type="button" class="secondary" data-uk-night-step ${running || phase === 5 ? "hidden" : ""}>Next checkpoint</button>
       <button type="button" class="secondary" data-uk-night-skip ${phase === 5 ? "hidden" : ""}>Skip to morning</button>
       ${choice === "support_home" ? `<button type="button" class="secondary" data-uk-sharing ${!sharingActive || phase === 5 ? "hidden" : ""}>${phase < 3 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
-  </div>`;
-}
-
-export function ukRecoveryCard() {
-  return `<div class="site-demo-card" aria-label="Wireless interruption and conductive fallback">
-    <div class="scenario-badge">Workshop scenario · wet conditions</div>
-    <h2>Street charging interrupted</h2><p>Rain disrupts the active wireless session and position can no longer be confirmed. The driver can retry, choose the conductive gully fallback, or leave with the available charge.</p>
-    <p class="study-note">The gully is an alternative charging method in this scenario. Home energy sharing is not assumed through the fallback.</p>
   </div>`;
 }
