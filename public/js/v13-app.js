@@ -1,7 +1,7 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
 import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "./v13-questions.js";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
-import { grTimingCard, grEnergyCard, ukAlignmentCard, ukEnergyCard, ukRecoveryCard } from "./v13-site-visuals.js";
+import { grTimingCard, grEnergyCard, ukAlignmentCard, ukStreetChargeCard, ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukRecoveryCard } from "./v13-site-visuals.js";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -30,7 +30,11 @@ const fleetState = {
 };
 let grV2gPermitted = false;
 let ukAlignmentStage = "approach";
+let ukStreetStarted = false;
+let ukHomeParked = false;
+let ukOvernightPhase = 0;
 let ukHomeSharing = false;
+let ukHomeExported = false;
 let stage = 0;
 // Do not expose the demo route while the collection configuration is pending.
 // A fast click could otherwise skip the preview/research acknowledgement.
@@ -72,7 +76,7 @@ function energyPreview() {
   if (variant === "gr-prosumer") {
     return grEnergyCard(values.scenario_choice, grV2gPermitted);
   }
-  return ukEnergyCard(values.scenario_choice, ukHomeSharing);
+  return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported);
 }
 
 function options(name, choices, selected = values[name]) {
@@ -114,14 +118,18 @@ function render() {
       }
       body += buttonRow();
     }
+  } else if (page === "street_charge") {
+    body += `<h1>Start wireless charging</h1><p class="lead">The vehicle is positioned at the Oxfordshire street bay. See when charging actually starts; this scene does not supply a house.</p>${ukStreetChargeCard(ukStreetStarted)}${buttonRow()}`;
+  } else if (page === "home_intro") {
+    body += `<h1>A separate overnight home example</h1><p class="lead">Now imagine the vehicle parked close to a house overnight. This is a new illustrative setting, separate from the street bay. Position the vehicle beside the house before choosing an energy plan.</p>${ukHomeParkingCard(ukHomeParked)}${buttonRow()}`;
   } else if (page === "scenario") {
-    body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
+    body += `<h1>${variant === "uk-v2h" ? "Choose the overnight plan" : demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
     if (variant === "gr-prosumer") body += grTimingCard(values.scenario_choice);
-    if (variant === "uk-v2h") body += `<div class="guarantee"><strong>Next trip first</strong><span>Home support can use only energy above the protected reserve. The driver can stop it whenever the vehicle is needed.</span></div>`;
+    if (variant === "uk-v2h") body += `<div class="guarantee"><strong>Next trip first</strong><span>Illustrative battery: 70% when parked; protected trip reserve: 65%. If selected, the vehicle charges before limited home support. Essential household loads need a separately agreed protection rule.</span></div>`;
     body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>${buttonRow()}`;
   } else if (page === "energy") {
-    body += `<h1>${demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
+    body += `<h1>${variant === "uk-v2h" ? "Run the overnight example" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Step through the night from parking to morning. Energy can reach the home only after the separate home-support choice; the protected next-trip reserve remains visible." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
     body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p>${variant === "uk-v2h" ? ukRecoveryCard() : ""}<fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
@@ -140,6 +148,7 @@ function render() {
     body += buttonRow(mode === "research" && config.collection_enabled ? "Submit response" : "Finish preview");
   } else {
     body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? demoText("Demo complete", "Esittely valmis") : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : demoText("No research response was sent or stored.", "Tutkimusvastauksia ei lähetetty eikä tallennettu." )}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
+    if (variant === "uk-v2h" && !submitted) body += `<p class="study-note">Street WPT recovery: ${esc(site.recoveryOptions.find(([key]) => key === values.recovery_choice)?.[1] || "not selected")}. Separate overnight home plan: ${esc(site.scenarioOptions.find(([key]) => key === values.scenario_choice)?.[1] || "not selected")}. Illustrative morning vehicle charge: ${ukOvernightFrame(values.scenario_choice, 3, ukHomeSharing, ukHomeExported).soc}% (protected reserve 65%).</p>`;
   }
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { collect(); stage -= 1; render(); });
@@ -161,15 +170,43 @@ function render() {
     render();
     screen.querySelector(`[data-uk-align="${ukAlignmentStage}"]`)?.focus();
   }));
+  screen.querySelector('[data-uk-street-charge]')?.addEventListener("click", () => {
+    ukStreetStarted = true;
+    render();
+    screen.querySelector('[data-action="next"]')?.focus();
+  });
+  screen.querySelector('[data-uk-home-park]')?.addEventListener("click", () => {
+    ukHomeParked = true;
+    render();
+    screen.querySelector('[data-action="next"]')?.focus();
+  });
+  screen.querySelector('[data-uk-night]')?.addEventListener("click", () => {
+    if (ukOvernightPhase === 3) {
+      ukOvernightPhase = 0;
+      ukHomeSharing = values.scenario_choice === "support_home";
+      ukHomeExported = false;
+    } else {
+      ukOvernightPhase += 1;
+      if (ukOvernightPhase === 2 && ukHomeSharing) ukHomeExported = true;
+    }
+    render();
+    screen.querySelector('[data-uk-night]')?.focus();
+  });
+  screen.querySelector('[data-uk-night-skip]')?.addEventListener("click", () => {
+    if (values.scenario_choice === "support_home" && ukHomeSharing) ukHomeExported = true;
+    ukOvernightPhase = 3;
+    render();
+    screen.querySelector('[data-action="next"]')?.focus();
+  });
   screen.querySelector('[data-gr-v2g]')?.addEventListener("click", () => {
     grV2gPermitted = !grV2gPermitted;
     render();
     screen.querySelector('[data-gr-v2g]')?.focus();
   });
   screen.querySelector('[data-uk-sharing]')?.addEventListener("click", () => {
-    ukHomeSharing = !ukHomeSharing;
+    ukHomeSharing = false;
     render();
-    screen.querySelector('[data-uk-sharing]')?.focus();
+    screen.querySelector('[data-uk-night]')?.focus();
   });
   if (page === "outcomes" && mode === "research" && config.collection_enabled) renderTurnstile();
   screen.focus({ preventScroll: true });
@@ -200,7 +237,10 @@ function valid() {
   if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return demoText("Choose a role and acknowledge the information above.", "Valitse rooli ja vahvista, että kyseessä on simulaatio.");
   if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
   if (page === "alignment" && variant === "uk-v2h" && ukAlignmentStage !== "ready") return "Confirm the wireless position before continuing.";
+  if (page === "street_charge" && !ukStreetStarted) return "Start the simulated street charging session before continuing.";
+  if (page === "home_intro" && !ukHomeParked) return "Park the vehicle by the house before continuing.";
   if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
+  if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 3) return "Advance or skip the overnight example to morning before continuing.";
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
   if (page === "sus" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
@@ -227,7 +267,11 @@ async function next() {
   collect();
   const problem = valid();
   if (problem) return error(problem);
-  if (currentPage() === "scenario" && variant === "uk-v2h") ukHomeSharing = values.scenario_choice === "support_home";
+  if (currentPage() === "scenario" && variant === "uk-v2h") {
+    ukHomeSharing = values.scenario_choice === "support_home";
+    ukHomeExported = false;
+    ukOvernightPhase = 0;
+  }
   if (currentPage() === "outcomes" && mode === "research" && config.collection_enabled) {
     const token = window.turnstile?.getResponse(tokenWidget);
     if (!token) return error("Complete human verification before submitting.");

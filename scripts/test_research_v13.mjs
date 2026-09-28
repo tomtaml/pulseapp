@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { V13_PROFILES, V13_CHOICES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
 import { SITES, resolveWorkshopView, workshopPages, resolveWorkshopMode, rc1FleetWorkshopMode } from "../public/js/v13-questions.js";
-import { grTimingCard, grEnergyCard, ukAlignmentCard, ukEnergyCard, ukRecoveryCard } from "../public/js/v13-site-visuals.js";
+import { grTimingCard, grEnergyCard, ukAlignmentCard, ukStreetChargeCard, ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukRecoveryCard } from "../public/js/v13-site-visuals.js";
 import { routeProfile } from "../public/js/variant-registry.js";
 import { submitV13 } from "../src/research-v13.js";
 import baseWorker from "../src/index.js";
@@ -39,14 +39,27 @@ assert.equal(routeProfile("fi-fleet", "dispatcher").sus, false);
 assert.equal(routeProfile("fi-fleet", "fleet_manager").sus, false);
 assert.deepEqual(workshopPages("gr-prosumer", "passenger_prosumer", questionView.modules, V13_PROFILES), ["intro", "scenario", "energy", "recovery", "comprehension", "done"]);
 assert.deepEqual(workshopPages("fi-fleet", "dispatcher", fullView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "comprehension", "outcomes", "done"]);
-assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", fullView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "comprehension", "sus", "outcomes", "done"]);
-assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", demoView.modules, V13_PROFILES), ["intro", "alignment", "scenario", "energy", "recovery", "done"]);
+assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", fullView.modules, V13_PROFILES), ["intro", "alignment", "street_charge", "recovery", "home_intro", "scenario", "energy", "comprehension", "sus", "outcomes", "done"]);
+assert.deepEqual(workshopPages("uk-v2h", "accessible_driver", demoView.modules, V13_PROFILES), ["intro", "alignment", "street_charge", "recovery", "home_intro", "scenario", "energy", "done"]);
 assert.match(grTimingCard("wait_for_res_surplus"), /charging-window selected[^>]*><strong>Renewable surplus later/);
 assert.match(grEnergyCard("wait_for_lower_tariff", false), /Grid charges vehicle; V2G is not permitted/);
 assert.match(grEnergyCard("wait_for_lower_tariff", true), /Vehicle sends energy to grid with separate permission/);
 assert.match(ukAlignmentCard("ready"), /Position confirmed/);
-assert.match(ukEnergyCard("support_home", true), /Vehicle sends energy to home/);
-assert.match(ukEnergyCard("support_home", false), /Grid charges vehicle; no home support is active/);
+assert.match(ukStreetChargeCard(true), /Grid sends energy to the vehicle at the street bay/);
+assert.match(ukHomeParkingCard(true), /Vehicle parked beside the house over a home wireless pad/);
+assert.match(ukHomeParkingCard(false), /separate from the street bay/);
+assert.match(ukEnergyCard("support_home", 2, true, true), /Vehicle sends energy to home/);
+assert.match(ukEnergyCard("support_home", 2, false, true), /Home support was stopped/);
+assert.match(ukEnergyCard("support_home", 1, true, false), /Grid charges vehicle/);
+assert.match(ukEnergyCard("protect_trip", 3, false, false), /Morning departure: the vehicle is ready at 70%/);
+assert.equal(ukOvernightFrame("charge_now", 3, true, true).soc, 80, "Only the home-support choice may export energy");
+for (const choice of V13_CHOICES["uk-v2h"].scenario) for (let phase = 0; phase <= 3; phase++) {
+  for (const active of [false, true]) {
+    const frame = ukOvernightFrame(choice, phase, active, choice === "support_home" && phase >= 2 && active);
+    assert.ok(frame.soc >= 65, `${choice}/${phase} must preserve the illustrative trip reserve`);
+    if (choice !== "support_home") assert.notEqual(frame.direction, "home");
+  }
+}
 assert.match(ukRecoveryCard(), /Home energy sharing is not assumed through the fallback/);
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, questionView), "instrument-preview");
 assert.equal(resolveWorkshopMode({ instrument_mode: "research", collection_enabled: true }, fullView), "instrument-preview");

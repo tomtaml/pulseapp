@@ -1,6 +1,6 @@
 # Oxfordshire V1.3 workshop design draft
 
-Status: for site and participant review, 28 September 2026. This document proposes a preview experience; it does not approve research collection or change the deployed app.
+Status: for site and participant review, 28 September 2026. A first, storage-free two-scene preview slice now implements street positioning/charging/recovery and a separate overnight household illustration. The remaining hypotheses and physical site details still require review; this document does not approve research collection.
 
 ## Direction from the three-site matrix
 
@@ -22,6 +22,8 @@ The Tampere RC1 journey provides the interaction grammar: approach/position, cha
 | 8. Completion and optional questions | Separate recap for street WPT and household V2H. Same facilitator switches: demo only; understanding; SUS for direct users; confidence, trust and outcome scales. | Replay either scene or finish. No workshop response is submitted. | Comparable constructs, tagged by scene and participation mode. Ask other affected space users about the street scene separately (UK-S1). |
 
 The parking illustration must remain schematic until the site supplies bay orientation, pad, gully, footway and access-clearance details. The animation must be understandable as a still sequence, by keyboard/switch and screen reader, with concise status announcements and reduced motion. A spoken status is participant initiated. Do not use a precise alignment score or claim automatic vehicle positioning without a validated service basis. The household scene uses a distinct visual setting and scene label, rather than continuing the street animation into a home.
+
+The first preview slice always presents both scenes. Street charging has a start/active status; the household example advances on participant action through 22:00, 00:00, 02:00 and 07:00, with skip and replay. It uses illustrative vehicle percentages 70 → 80 → 75 (if home support is allowed) against a 65% next-trip reserve. A `protect_trip` choice keeps the initial 70%; cancellation before home support leaves the charged vehicle at 80%. The household essential-load threshold, physical home installation, site geometry and any live HEMS behavior remain unconfirmed. Scene-level facilitator switches, richer street charging phases, and the separate UK-S1 non-user pathway remain design work.
 
 ## Table A-6 hypotheses as workshop probes
 

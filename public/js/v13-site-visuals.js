@@ -43,21 +43,70 @@ export function ukAlignmentCard(stage) {
   </div>`;
 }
 
-export function ukEnergyCard(choice, sharingActive) {
-  const home = choice === "support_home" && sharingActive;
-  return `<div class="site-demo-card" aria-label="UK vehicle and home energy flow">
-    <div class="scenario-badge">Workshop scenario · simulated flow</div>
-    <h2>${home ? "Vehicle supports the home" : "Vehicle charge stays available for the trip"}</h2>
-    <div class="demo-flow" role="img" aria-label="${home ? "Vehicle sends energy to home" : "Grid charges vehicle; no home support is active"}"><span>${home ? "🚐" : "⚡"}<small>${home ? "Vehicle" : "Grid"}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>${home ? "🏠" : "🚐"}<small>${home ? "Home" : "Vehicle"}</small></span></div>
-    <p class="study-note">${home ? "Home support stops before the protected next-trip reserve. The driver can stop it at any time." : "Home energy sharing is off. The next-trip reserve remains protected."}</p>
-    ${choice === "support_home" ? `<button type="button" class="secondary" data-uk-sharing aria-pressed="${sharingActive}">${sharingActive ? "Stop home support" : "Resume home support"}</button>` : ""}
+export function ukStreetChargeCard(started) {
+  return `<div class="site-demo-card" aria-label="On-street wireless charging example">
+    <div class="scenario-badge">Scene A · Oxfordshire street WPT</div>
+    <h2>${started ? "Wireless charging started" : "Position confirmed · ready to charge"}</h2>
+    <div class="demo-flow ${started ? "" : "idle"}" role="img" aria-label="${started ? "Grid sends energy to the vehicle at the street bay" : "Vehicle is positioned; charging has not started"}"><span>⚡<small>Grid</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>🚐<small>Vehicle</small></span></div>
+    <p class="demo-state">${started ? "Charging is active in this simulation. The following rain scenario will interrupt it." : "The pad is ready. Start the simulated session when you are ready."}</p>
+    <button type="button" class="primary" data-uk-street-charge ${started ? "disabled" : ""}>${started ? "Session started" : "Start wireless charging"}</button>
+  </div>`;
+}
+
+export function ukHomeParkingCard(parked) {
+  return `<div class="site-demo-card home-scene" aria-label="Separate overnight household energy example">
+    <div class="scenario-badge">Scene B · illustrative overnight home setting</div>
+    <h2>Park close to the house</h2>
+    <div class="home-layout" role="img" aria-label="${parked ? "Vehicle parked beside the house over a home wireless pad" : "Vehicle approaches the house and its wireless parking pad"}">
+      <div class="home-house" aria-hidden="true">🏠<small>House</small></div>
+      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${parked ? "parked" : ""}">🚐</span><span class="home-pad">⌁⌁⌁<small>Home pad</small></span></div>
+    </div>
+    <p class="demo-state">${parked ? "Vehicle parked beside the house. The overnight example can begin." : "This is a new setting, separate from the street bay. Position the vehicle close to the house."}</p>
+    <button type="button" class="primary" data-uk-home-park ${parked ? "disabled" : ""}>${parked ? "Parked by the house" : "Park by the house"}</button>
+    <p class="study-note">Schematic workshop example; it does not depict a verified Oxfordshire home installation or live HEMS connection.</p>
+  </div>`;
+}
+
+export function ukOvernightFrame(choice, phase, sharingActive, exported) {
+  const step = Math.max(0, Math.min(3, phase));
+  const home = choice === "support_home";
+  const didExport = home && exported;
+  const charging = choice !== "protect_trip";
+  const chargedSoc = charging ? 80 : 70;
+  const soc = step === 0 ? 70 : didExport ? 75 : chargedSoc;
+  const time = ["22:00", "00:00", "02:00", "07:00"][step];
+  const direction = step === 1 && charging ? "charge" : step === 2 && home && sharingActive && didExport ? "home" : "idle";
+  const status = step === 0 ? "Parked at home. Vehicle charge is 70%; the protected next-trip reserve is 65%. No energy sharing has started."
+    : step === 1 ? charging ? "Overnight charging raises the vehicle to an illustrative 80%. Home sharing has not started." : "The vehicle keeps its existing 70% for the next trip; no charging or sharing is selected."
+    : step === 2 ? direction === "home" ? "With separate permission, the vehicle supports the home and remains at 75%, above the protected 65% reserve." : didExport ? "Home support was stopped. The vehicle remains at 75%, above the protected reserve." : "Home support is off. The vehicle keeps its protected charge."
+    : `Morning departure: the vehicle is ready at ${soc}%, above the protected 65% reserve. Home sharing is off.`;
+  return { time, soc, direction, status };
+}
+
+export function ukEnergyCard(choice, phase, sharingActive, exported) {
+  const frame = ukOvernightFrame(choice, phase, sharingActive, exported);
+  const active = frame.direction !== "idle";
+  const flowLabel = frame.direction === "home" ? "Vehicle sends energy to home" : frame.direction === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
+  const left = frame.direction === "home" ? ["🚐", "Vehicle"] : ["⚡", "Grid"];
+  const right = frame.direction === "home" ? ["🏠", "Home"] : ["🚐", "Vehicle"];
+  return `<div class="site-demo-card overnight-card" aria-label="Separate overnight household V2H example">
+    <div class="scenario-badge">Scene B · simulated overnight energy</div>
+    <h2>Parked beside the house · ${frame.time}</h2>
+    <div class="home-reserves"><div><span>Vehicle battery</span><strong>${frame.soc}%</strong></div><div><span>Protected next-trip reserve</span><strong>65%</strong></div></div>
+    <div class="home-battery" role="img" aria-label="Vehicle battery ${frame.soc} percent; protected trip reserve 65 percent"><span style="width:${frame.soc}%"></span></div>
+    <div class="demo-flow ${active ? "" : "idle"}" role="img" aria-label="${flowLabel}"><span>${left[0]}<small>${left[1]}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>${right[0]}<small>${right[1]}</small></span></div>
+    <p class="demo-state">${frame.status}</p>
+    <p class="study-note">Household essential loads and backup threshold are a workshop discussion point; no household value or live tariff is connected. All battery values above are illustrative.</p>
+    <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 0 ? "Start overnight example" : phase === 3 ? "Replay overnight example" : "Advance overnight example"}</button>
+      ${phase < 3 ? `<button type="button" class="secondary" data-uk-night-skip>Skip to morning</button>` : ""}
+      ${choice === "support_home" && sharingActive && phase < 3 ? `<button type="button" class="secondary" data-uk-sharing>${phase < 2 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
   </div>`;
 }
 
 export function ukRecoveryCard() {
   return `<div class="site-demo-card" aria-label="Wireless interruption and conductive fallback">
     <div class="scenario-badge">Workshop scenario · wet conditions</div>
-    <h2>Charging interrupted</h2><p>Wireless positioning cannot be confirmed. The driver can retry, choose the conductive gully fallback, or leave with the available charge.</p>
+    <h2>Street charging interrupted</h2><p>Rain disrupts the active wireless session and position can no longer be confirmed. The driver can retry, choose the conductive gully fallback, or leave with the available charge.</p>
     <p class="study-note">The gully is an alternative charging method in this scenario. Home energy sharing is not assumed through the fallback.</p>
   </div>`;
 }

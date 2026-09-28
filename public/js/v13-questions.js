@@ -18,7 +18,9 @@ export function resolveWorkshopView(params) {
 }
 
 export function workshopPages(variant, participantGroup, modules, profiles) {
-  const pages = ["intro", ...(["fi-fleet", "uk-v2h"].includes(variant) ? ["alignment"] : []), "scenario", "energy", "recovery"];
+  const pages = variant === "uk-v2h"
+    ? ["intro", "alignment", "street_charge", "recovery", "home_intro", "scenario", "energy"]
+    : ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
   if (modules.scales) pages.push("outcomes");
@@ -107,14 +109,14 @@ export const SITES = Object.freeze({
     roles: { passenger_prosumer: "Passenger car driver" }
   },
   "uk-v2h": {
-    title: "Accessible home energy", badge: "UK · accessible driver · V2H", languages: ["en"],
-    intro: "An accessible vehicle charges wirelessly at home. It may support home demand while protecting the charge needed for the next trip. In this proposed service, you could leave early and stop home energy sharing at any time. A conductive gully is available as a fallback.",
-    scenario: "Home demand rises before the next trip. Choose how the vehicle and home should share energy.",
+    title: "Oxfordshire accessible charging and home energy", badge: "UK · accessible WPT · V2H", languages: ["en"],
+    intro: "First, try a simulated on-street wireless charging bay and a wet-weather recovery choice. Then move to a separate, illustrative overnight setting: the vehicle is parked close to a house and may support home demand while preserving charge for the next trip. The street bay is not shown as supplying the house.",
+    scenario: "At home overnight, the vehicle is parked beside the house. The next morning's trip needs a protected reserve. Which energy plan would you choose?",
     scenarioOptions: [
-      ["charge_now", "Charge the vehicle now"], ["support_home", "Support the home within the protected reserve"],
-      ["protect_trip", "Keep all available charge for the trip"]
+      ["charge_now", "Charge the vehicle overnight for the morning trip"], ["support_home", "Charge first, then allow limited home support"],
+      ["protect_trip", "Keep the existing charge for the trip; no sharing"]
     ],
-    recovery: "Rain interrupts wireless alignment. The vehicle needs charge for the next trip. What would you use?",
+    recovery: "Rain interrupts wireless alignment at the street bay. The vehicle needs charge for the next trip. What would you use?",
     recoveryOptions: [
       ["retry_wireless", "Retry wireless positioning"], ["use_conductive_fallback", "Use the conductive gully fallback"],
       ["stop_and_leave", "Stop and leave with the available charge"]
