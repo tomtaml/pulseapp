@@ -18,7 +18,7 @@ export function resolveWorkshopView(params) {
 }
 
 export function workshopPages(variant, participantGroup, modules, profiles) {
-  const pages = ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
+  const pages = ["intro", ...(["fi-fleet", "uk-v2h"].includes(variant) ? ["alignment"] : []), "scenario", "energy", "recovery"];
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
   if (modules.scales) pages.push("outcomes");
@@ -93,13 +93,13 @@ export const SITES = Object.freeze({
   },
   "gr-prosumer": {
     title: "Trikala passenger charging", badge: "Greece · passenger · tariff and RES", languages: ["en", "el"],
-    intro: "A passenger car is parked in Trikala. Compare charging now with a lower tariff and a renewable energy surplus, then decide whether to shift the session. In this proposed service, you could leave early. A separate V2G offer would need your permission and a protected reserve; you could stop energy sharing at any time.",
+    intro: "A passenger car is parked in Trikala. Compare charging now with a lower tariff and a renewable energy surplus, then decide whether to shift the session. In this proposed service, you could leave early. A separate V2G offer would need your permission and a protected reserve; you could stop energy sharing at any time. These signals are illustrative, not live prices or forecasts.",
     scenario: "The app shows a cheaper later tariff and a renewable surplus period. The next trip still needs a protected reserve. With permission, V2G would return energy to the grid. Which charging option would you choose?",
     scenarioOptions: [
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
       ["wait_for_res_surplus", "Wait for the renewable surplus"]
     ],
-    recovery: "The chosen charging session cannot start. How should the app recover?",
+    recovery: "On a hot afternoon the chosen charging session cannot start. Your next trip still needs its protected reserve. What would you do?",
     recoveryOptions: [
       ["retry", "Retry the planned session"], ["charge_now", "Charge now for the next trip"],
       ["contact_provider", "Contact the service provider"]

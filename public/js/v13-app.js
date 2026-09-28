@@ -1,6 +1,7 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
 import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "./v13-questions.js";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
+import { grTimingCard, grEnergyCard, ukAlignmentCard, ukEnergyCard, ukRecoveryCard } from "./v13-site-visuals.js";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -27,6 +28,9 @@ const fleetState = {
   alignment_stage: "approach", alignment_completed: false,
   current_soc: 55, minimum_soc: 65, dwell_minutes: 90, departure_time: "17:00"
 };
+let grV2gPermitted = false;
+let ukAlignmentStage = "approach";
+let ukHomeSharing = false;
 let stage = 0;
 // Do not expose the demo route while the collection configuration is pending.
 // A fast click could otherwise skip the preview/research acknowledgement.
@@ -66,10 +70,9 @@ function energyPreview() {
     return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
-    return `<div class="v2g-card offer-card"><div class="scenario-badge">Illustrative workshop scenario</div><div class="v2g-flow"><span class="flow-node">⚡<small>grid</small></span><span class="flow-arrow">→</span><span class="flow-node">🚗<small>vehicle</small></span></div><p>A lower tariff or renewable surplus changes when the vehicle charges. Returning energy to the grid would require separate V2G permission and a protected reserve.</p></div>`;
+    return grEnergyCard(values.scenario_choice, grV2gPermitted);
   }
-  const supportingHome = values.scenario_choice === "support_home";
-  return `<div class="v2g-card offer-card"><div class="scenario-badge">Illustrative workshop scenario</div><div class="v2g-flow"><span class="flow-node">${supportingHome ? "🚗<small>vehicle</small>" : "⚡<small>grid</small>"}</span><span class="flow-arrow">→</span><span class="flow-node">${supportingHome ? "🏠<small>home</small>" : "🚗<small>vehicle</small>"}</span></div><p>${supportingHome ? "Home support is limited by the protected charge for the next trip. The driver may stop sharing." : "The vehicle charges for the next trip. Home energy sharing is not selected."}</p></div>`;
+  return ukEnergyCard(values.scenario_choice, ukHomeSharing);
 }
 
 function options(name, choices, selected = values[name]) {
@@ -100,21 +103,27 @@ function render() {
     if (mode === "research") body += `<label class="study-option"><input type="checkbox" name="consent_confirmed" ${values.consent_confirmed ? "checked" : ""}><span>I have read the study information provided by the facilitator and agree to continue.</span></label>`;
     body += `<label class="study-option"><input type="checkbox" name="prototype_disclaimer_confirmed" ${values.prototype_disclaimer_confirmed ? "checked" : ""}><span>${demoText("I understand this is a simulation, not a real charging service.", "Ymmärrän, että tämä on simulaatio eikä oikea latauspalvelu.")}</span></label>${buttonRow()}`;
   } else if (page === "alignment") {
-    body += `<h1>${demoText("Approach the wireless charging bay", "Aja langattomalle latauspaikalle")}</h1><p class="lead">${demoText("A snowbank narrows the space. Use the guidance to align the van with the wireless pad before the next delivery.", "Lumivalli kaventaa ruutua. Kohdista auto latausalustaan ennen seuraavaa toimitusta.")}</p>${alignmentVisual(finnishDemo ? "fi" : "en", fleetState)}`;
-    if (values.participant_group === "fleet_driver") {
-      body += `<div class="alignment-controls"><button type="button" class="secondary" data-align="guided">${demoText("Show manoeuvre guidance", "Näytä ajo-ohje")}</button><button type="button" class="primary" data-align="auto">${demoText("Try automatic alignment", "Kokeile automaattista kohdistusta")}</button></div>`;
+    if (variant === "uk-v2h") {
+      body += `<h1>Position for wireless charging</h1><p class="lead">Confirm the vehicle position without handling a cable. The service must show when charging is ready and offer an alternative if it cannot start.</p>${ukAlignmentCard(ukAlignmentStage)}${buttonRow()}`;
     } else {
-      body += `<p class="study-note">${demoText("Review how alignment is shown to the driver. The driver would make the manoeuvre.", "Tarkastele, miten kohdistus näkyy kuljettajalle. Kuljettaja tekisi varsinaisen ajoliikkeen.")}</p>`;
+      body += `<h1>${demoText("Approach the wireless charging bay", "Aja langattomalle latauspaikalle")}</h1><p class="lead">${demoText("A snowbank narrows the space. Use the guidance to align the van with the wireless pad before the next delivery.", "Lumivalli kaventaa ruutua. Kohdista auto latausalustaan ennen seuraavaa toimitusta.")}</p>${alignmentVisual(finnishDemo ? "fi" : "en", fleetState)}`;
+      if (values.participant_group === "fleet_driver") {
+        body += `<div class="alignment-controls"><button type="button" class="secondary" data-align="guided">${demoText("Show manoeuvre guidance", "Näytä ajo-ohje")}</button><button type="button" class="primary" data-align="auto">${demoText("Try automatic alignment", "Kokeile automaattista kohdistusta")}</button></div>`;
+      } else {
+        body += `<p class="study-note">${demoText("Review how alignment is shown to the driver. The driver would make the manoeuvre.", "Tarkastele, miten kohdistus näkyy kuljettajalle. Kuljettaja tekisi varsinaisen ajoliikkeen.")}</p>`;
+      }
+      body += buttonRow();
     }
-    body += buttonRow();
   } else if (page === "scenario") {
     body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
+    if (variant === "gr-prosumer") body += grTimingCard(values.scenario_choice);
+    if (variant === "uk-v2h") body += `<div class="guarantee"><strong>Next trip first</strong><span>Home support can use only energy above the protected reserve. The driver can stop it whenever the vehicle is needed.</span></div>`;
     body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>${buttonRow()}`;
   } else if (page === "energy") {
     body += `<h1>${demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
-    body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p><fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
+    body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p>${variant === "uk-v2h" ? ukRecoveryCard() : ""}<fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
     body += `<h1>Understanding check</h1><p class="lead">These questions test whether the prototype explained the scenario clearly.</p>`;
     body += COMPREHENSION.map(([question, choices], index) => {
@@ -135,11 +144,33 @@ function render() {
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { collect(); stage -= 1; render(); });
   screen.querySelector('[data-action="next"]')?.addEventListener("click", next);
+  if (page === "scenario" && variant === "gr-prosumer") screen.querySelectorAll('input[name="scenario_choice"]').forEach(input => {
+    input.addEventListener("change", () => {
+      collect();
+      render();
+      screen.querySelector(`input[name="scenario_choice"][value="${values.scenario_choice}"]`)?.focus();
+    });
+  });
   screen.querySelectorAll("[data-align]").forEach(button => button.addEventListener("click", () => {
     fleetState.alignment_stage = button.dataset.align === "guided" ? "guided" : "aligned";
     fleetState.alignment_completed = button.dataset.align === "auto";
     render();
   }));
+  screen.querySelectorAll("[data-uk-align]").forEach(button => button.addEventListener("click", () => {
+    ukAlignmentStage = button.dataset.ukAlign;
+    render();
+    screen.querySelector(`[data-uk-align="${ukAlignmentStage}"]`)?.focus();
+  }));
+  screen.querySelector('[data-gr-v2g]')?.addEventListener("click", () => {
+    grV2gPermitted = !grV2gPermitted;
+    render();
+    screen.querySelector('[data-gr-v2g]')?.focus();
+  });
+  screen.querySelector('[data-uk-sharing]')?.addEventListener("click", () => {
+    ukHomeSharing = !ukHomeSharing;
+    render();
+    screen.querySelector('[data-uk-sharing]')?.focus();
+  });
   if (page === "outcomes" && mode === "research" && config.collection_enabled) renderTurnstile();
   screen.focus({ preventScroll: true });
 }
@@ -168,6 +199,7 @@ function valid() {
   const page = currentPage();
   if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return demoText("Choose a role and acknowledge the information above.", "Valitse rooli ja vahvista, että kyseessä on simulaatio.");
   if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
+  if (page === "alignment" && variant === "uk-v2h" && ukAlignmentStage !== "ready") return "Confirm the wireless position before continuing.";
   if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
@@ -195,6 +227,7 @@ async function next() {
   collect();
   const problem = valid();
   if (problem) return error(problem);
+  if (currentPage() === "scenario" && variant === "uk-v2h") ukHomeSharing = values.scenario_choice === "support_home";
   if (currentPage() === "outcomes" && mode === "research" && config.collection_enabled) {
     const token = window.turnstile?.getResponse(tokenWidget);
     if (!token) return error("Complete human verification before submitting.");
