@@ -3,6 +3,7 @@ import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorks
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { grTimingCard, grEnergyCard, ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
+import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -96,10 +97,18 @@ function stopUkParkingTimer() {
 
 function parkingAction(action) {
   stopUkParkingTimer();
+  const previousParking = ukParking;
   const previousStage = ukParking.stage;
   ukParking = ukParkingTransition(ukParking, action);
   render();
-  if (ukParking.stage === "moving" || ukParking.stage === "resuming" || ukParking.stage === "manual_aligned") {
+  if (action.startsWith("move_") && ukParking.manualStep !== previousParking.manualStep) {
+    const vehicle = screen.querySelector(".home-vehicle");
+    const positions = ["translate(16px, 8px)", "translate(16px, -4px)", "translate(4px, -4px)", "translate(0)"];
+    const destination = positions[ukParking.manualStep];
+    vehicle.style.transform = positions[previousParking.manualStep];
+    void vehicle.offsetWidth;
+    requestAnimationFrame(() => { if (screen.contains(vehicle)) vehicle.style.transform = destination; });
+  } else if (ukParking.stage === "moving" || ukParking.stage === "resuming") {
     const destinationStage = ukParking.stage;
     const vehicle = screen.querySelector(".home-vehicle");
     vehicle.classList.replace(destinationStage, previousStage);
@@ -107,12 +116,11 @@ function parkingAction(action) {
     requestAnimationFrame(() => {
       if (screen.contains(vehicle)) vehicle.classList.replace(previousStage, destinationStage);
     });
-    if (destinationStage !== "manual_aligned") {
-      const arrival = destinationStage === "moving" ? "obstacle" : "parked";
-      ukParkingTimer = setTimeout(() => parkingAction(arrival), destinationStage === "moving" ? 1800 : 1500);
-    }
+    const arrival = destinationStage === "moving" ? "obstacle" : "parked";
+    ukParkingTimer = setTimeout(() => parkingAction(arrival), destinationStage === "moving" ? 1800 : 1500);
   }
-  screen.querySelector("[data-uk-parking]")?.focus();
+  if (action.startsWith("move_") && ukParking.stage === "manual_guidance") screen.querySelector(`[data-uk-move="${action.slice(5)}"]`)?.focus();
+  else screen.querySelector("[data-uk-parking]")?.focus();
   if (ukParking.stage === "parked") screen.querySelector('[data-action="next"]')?.focus();
 }
 
@@ -203,7 +211,7 @@ function render() {
     }
     body += buttonRow();
   } else if (page === "home_intro") {
-    body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. A guided manoeuvre can stop at an obstacle, or guidance can become unavailable. Recheck the route and choose guided or driver-controlled parking; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
+    body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. A guided manoeuvre can stop at an obstacle, or guidance can become unavailable. Recheck the route and choose guided parking or the three-step manual arrow controls; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
   } else if (page === "scenario") {
     body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
@@ -213,11 +221,13 @@ function render() {
     body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Choose the minimum car charge needed for the morning. In this simulation home support is authorised, the car charges from 50% to 80%, then supplies some household demand only above your chosen minimum. Run, pause or step through the night; stop home support whenever needed. Actual compatibility, household backup rules and tariffs require site confirmation." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
     body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p><fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
+  } else if (page === "uk_probes") {
+    body += `<h1>Oxfordshire task experience</h1><p class="lead">Think about the home parking and V2H example you just used. These are draft workshop questions about accessible positioning, recovery, reserves and control. You may leave an item unanswered.</p>`;
+    body += ukTaskItems(ukParking.manualUsed).map(item => scale(item.key, item.label)).join("") + buttonRow(nextLabel());
   } else if (page === "comprehension") {
     body += `<h1>Understanding check</h1><p class="lead">These questions test whether the prototype explained the scenario clearly.</p>`;
-    body += COMPREHENSION.map(([question, choices], index) => {
-      const label = index === 2 && variant === "uk-v2h" ? "Where does shared energy go in this home scenario?" : question;
-      return `<fieldset class="study-question"><legend>${index + 1}. ${esc(label)}</legend>${options(`comprehension_${index + 1}`,choices)}</fieldset>`;
+    body += (variant === "uk-v2h" ? UK_COMPREHENSION : COMPREHENSION).map(([question, choices], index) => {
+      return `<fieldset class="study-question"><legend>${index + 1}. ${esc(question)}</legend>${options(`comprehension_${index + 1}`,choices)}</fieldset>`;
     }).join("") + buttonRow(nextLabel());
   } else if (page === "sus") {
     body += `<h1>Usability (SUS)</h1><p class="lead">Rate the interface you just used.</p>`;
@@ -254,6 +264,7 @@ function render() {
     render();
   }));
   screen.querySelectorAll("[data-uk-parking]").forEach(button => button.addEventListener("click", () => parkingAction(button.dataset.ukParking)));
+  screen.querySelectorAll("[data-uk-move]").forEach(button => button.addEventListener("click", () => parkingAction(`move_${button.dataset.ukMove}`)));
   screen.querySelector('[data-uk-night]')?.addEventListener("click", () => {
     if (ukOvernightPhase === 7) {
       stopUkCycle();
@@ -304,7 +315,7 @@ function render() {
 
 function collect() {
   screen.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-    values[input.name] = /^sus_\d\d$/.test(input.name) || input.name.startsWith("service_confidence_") || Object.hasOwn(OUTCOME_QUESTIONS,input.name) ? Number(input.value) : input.value;
+    values[input.name] = /^sus_\d\d$/.test(input.name) || input.name.startsWith("service_confidence_") || input.name.startsWith("uk_") || Object.hasOwn(OUTCOME_QUESTIONS,input.name) ? Number(input.value) : input.value;
   });
   for (const name of ["consent_confirmed", "prototype_disclaimer_confirmed"]) {
     const control = screen.querySelector(`input[name="${name}"]`);

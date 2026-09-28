@@ -36,6 +36,21 @@
 .home-vehicle { z-index: 1; font-size: 3.4rem; transform: translate(42px, 20px); transition: transform 1.15s ease; }
 .home-vehicle.moving, .home-vehicle.blocked, .home-vehicle.reviewed, .home-vehicle.stopped, .home-vehicle.support, .home-vehicle.manual_guidance { transform: translate(16px, 8px); }
 .home-vehicle.resuming, .home-vehicle.parked, .home-vehicle.manual_aligned { transform: translate(0); }
+.home-vehicle.manual_guidance[data-uk-manual-step="1"] { transform: translate(16px, -4px); }
+.home-vehicle.manual_guidance[data-uk-manual-step="2"] { transform: translate(4px, -4px); }
+.home-guidance-arrow { position: absolute; z-index: 2; font-size: 2.6rem; line-height: 1; font-weight: 900; color: #084536; animation: home-guide-pulse 1s ease-in-out infinite alternate; }
+.home-guidance-arrow.uk-forward { left: 39%; top: .2rem; }
+.home-guidance-arrow.uk-right { right: 12%; top: 29%; }
+.home-guidance-arrow.uk-back { left: 39%; bottom: .2rem; }
+.home-ready-mark { position: absolute; z-index: 2; right: 10%; top: 20%; padding: .15rem .45rem; border-radius: 50%; background: #e6f5ef; color: #084536; font-size: 2rem; font-weight: 900; }
+.home-manual-panel { display: grid; gap: .5rem; padding: .9rem; border: 1px solid #87aaa0; border-radius: .7rem; background: #fff; }
+.home-manual-panel p { margin: .15rem 0; }
+.home-dpad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; width: 100%; max-width: 430px; margin: auto; }
+.home-dpad button { min-height: 70px; display: grid; place-items: center; border: 2px solid #0b6b58; border-radius: .8rem; background: #fff; color: #153e68; font-size: 1.5rem; font-weight: 900; }
+.home-dpad button small { color: #4f6461; font-size: .72rem; font-weight: 750; }
+.home-dpad button.recommended { background: #e6f5ec; border-width: 3px; box-shadow: 0 0 0 2px rgba(11,107,88,.12); }
+.home-dpad button:focus-visible { outline: 3px solid #144885; outline-offset: 3px; }
+.home-move-feedback { padding: .65rem; border-left: .3rem solid #0b5d4b; background: #e6f5ef; font-weight: 700; }
 .home-pad { display: grid; justify-items: center; font-size: 1.3rem; color: #0b5d4b; }
 .home-obstacle { display: none; position: absolute; top: .15rem; right: .25rem; padding: .25rem; border: 2px solid #9d2323; border-radius: .4rem; background: #fff5f5; color: #661020; font-size: 1.15rem; text-align: center; }
 .home-obstacle small { display: block; font-size: .75rem; font-weight: 700; }
@@ -70,7 +85,8 @@
 .overnight-card .demo-flow { min-height: 6rem; }
 .overnight-card button[hidden] { display: none; }
 @keyframes demo-flow { 50% { transform: translateX(.28rem); } }
-@media (prefers-reduced-motion: reduce) { .demo-flow .flow-arrow { animation: none; } .home-vehicle, .home-battery > span { transition: none; } }
+@keyframes home-guide-pulse { to { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .demo-flow .flow-arrow, .home-guidance-arrow { animation: none; } .home-vehicle, .home-battery > span { transition: none; } }
 body.large-text .card { font-size: 1.3rem; }
 body.high-contrast { color: var(--text); }
 body.high-contrast .study-status { background: #111; color: #fff; border-color: #ffe600; }
@@ -80,6 +96,9 @@ body.high-contrast .study-option:has(input:checked) { background: #111; color: #
 body.high-contrast .site-demo-card, body.high-contrast .charging-window, body.high-contrast .demo-permission, body.high-contrast .demo-state, body.high-contrast .demo-flow, body.high-contrast .home-safety-list { background: #111; color: #fff; border-color: #ffe600; }
 body.high-contrast .charging-window.selected { box-shadow: inset 0 0 0 2px #ffe600; }
 body.high-contrast .home-layout, body.high-contrast .home-parking, body.high-contrast .home-access-path, body.high-contrast .home-reserves > div, body.high-contrast .home-battery, body.high-contrast .night-ledger > div, body.high-contrast .night-equation { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .home-manual-panel, body.high-contrast .home-move-feedback, body.high-contrast .home-dpad button { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .home-dpad button small, body.high-contrast .home-guidance-arrow { color: #ffe600; }
+body.high-contrast .home-dpad button.recommended, body.high-contrast .home-ready-mark { background: #ffe600; color: #111; }
 body.high-contrast .night-minimum, body.high-contrast .night-minimum select { background: #111; color: #fff; border-color: #ffe600; }
 body.high-contrast .home-obstacle.visible, body.high-contrast .home-obstacle.cleared { background: #111; color: #fff; border-color: #ffe600; }
 body.high-contrast .home-pad { color: #ffe600; }

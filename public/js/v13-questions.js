@@ -21,6 +21,7 @@ export function workshopPages(variant, participantGroup, modules, profiles) {
   const pages = variant === "uk-v2h"
     ? ["intro", "home_intro", "energy"]
     : ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
+  if (modules.questions && variant === "uk-v2h") pages.push("uk_probes");
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
   if (modules.scales) pages.push("outcomes");
@@ -121,7 +122,7 @@ export const SITES = Object.freeze({
   },
   "uk-v2h": {
     title: "Oxfordshire home parking and V2H", badge: "UK · accessible home V2H", languages: ["en"],
-    intro: "Try one illustrative overnight home journey. Check the surroundings before a guided parking manoeuvre beside the house; the demonstration stops if an obstacle appears, and you can stop it yourself. After a safe position is confirmed, see the car charge and then support the house while keeping the next-trip reserve. The example assumes home-support permission for this story; you can cancel or stop it at any time. This is a simulation, not a verified vehicle or home installation.",
+    intro: "Try one illustrative overnight home journey. Check the surroundings before guided parking beside the house. If an obstacle appears or guidance fails, review the route and try the manual arrow controls. Once parked, choose a minimum charge for the morning journey, watch the car charge, then see how it can support the house. The example assumes home-support permission for this story; you can stop it. This is a simulation, not a verified vehicle or home installation.",
     roles: { accessible_driver: "Accessible driver" }
   }
 });

@@ -90,6 +90,11 @@ V2H scene starts at 50%, charges to 80%, and lets the participant choose a
 illustrative cost ledger respond to that selection and to stopping export.
 Replaying returns to the reserve selector so workshop participants can compare
 choices. The UK route remains storage-free pending site and instrument review.
+The manual path now mirrors Tampere's highlighted forward/right/back arrow pad
+with staged visual movement and wrong-direction feedback. When `questions=1`,
+Oxfordshire adds draft task items and UK-specific comprehension after the V2H
+scene; the manual-arrow item appears only after use. These responses are not
+collected or scored and do not alter the shared submission schema.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and

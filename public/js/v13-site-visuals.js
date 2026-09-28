@@ -1,5 +1,6 @@
 // Workshop-only illustrations. They show a choice without claiming live tariff,
 // grid, vehicle or home energy data.
+import { UK_MANUAL_MOVES } from "./v13-uk-parking.js";
 const chargingWindows = [
   ["charge_now", "Charge now", "Ready for the next trip"],
   ["wait_for_lower_tariff", "Lower tariff later", "Price signal"],
@@ -35,10 +36,12 @@ export function grEnergyCard(choice, v2gPermitted) {
   </div>`;
 }
 
-export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared, manualUsed, guidanceFault }) {
+export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared, manualUsed, guidanceFault, manualStep = 0, wrongMoves = 0, lastMoveWasWrong = false }) {
   const moving = stage === "moving" || stage === "resuming";
   const obstructed = obstacleSeen && !obstacleCleared && ["blocked", "stopped", "support"].includes(stage);
   const cleared = obstacleCleared;
+  const manual = stage === "manual_guidance";
+  const recommended = UK_MANUAL_MOVES[manualStep];
   const status = {
     approach: "Vehicle waiting. Check people, objects, the entrance route and both sides of the bay before moving.",
     checked: "Surroundings checked for this illustration. Keep watching the route and use Stop manoeuvre if needed.",
@@ -47,21 +50,21 @@ export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared, manual
     reviewed: "Obstacle reviewed and shown clear of the path. Confirm the bay and access route are clear before resuming.",
     resuming: "Guided manoeuvre resuming after your safety confirmation. Stop remains available.",
     fault: "Guided parking is unavailable in this simulated fault. The vehicle has not moved. Recheck the route before choosing a driver-controlled manoeuvre or seeking support.",
-    manual_guidance: "Driver-controlled manoeuvre selected. Check the clear path and move a short illustrated step using the control below; stop if anything changes.",
-    manual_aligned: "The illustrated short movement is complete. Confirm the bay and entrance route remain clear before marking the vehicle parked.",
+    manual_guidance: `Manual guidance ${manualStep + 1} of 3: move ${recommended?.label || "carefully"}. Keep checking the bay and entrance route; stop if anything changes.`,
+    manual_aligned: "Three illustrated corrections are complete. Confirm the bay and entrance route remain clear before marking the vehicle parked.",
     stopped: "You stopped the manoeuvre. No charging or V2H is active. Recheck the surroundings before moving again.",
     support: "Parking remains stopped. Support options are shown in this simulation; no real message has been sent. Recheck the route with help or cancel.",
     parked: `Vehicle parked beside the house ${manualUsed ? "using driver-controlled steps" : "after the guided obstacle check"}. The entrance route is clear in this example; the V2H session can begin.`
   }[stage];
   const controls = stage === "approach" ? `<button type="button" class="primary" data-uk-parking="inspect">Check surroundings</button>`
-    : stage === "checked" ? `<button type="button" class="primary" data-uk-parking="start">${guidanceFault ? "Retry guided parking" : "Start guided parking"}</button><button type="button" class="secondary" data-uk-parking="manual">Use manual guidance</button>${guidanceFault ? "" : `<button type="button" class="secondary" data-uk-parking="guidance_fault">Simulate guidance unavailable</button>`}`
+    : stage === "checked" ? `<button type="button" class="primary" data-uk-parking="start">${guidanceFault ? "Retry guided parking" : "Start guided parking"}</button>${guidanceFault ? `<button type="button" class="secondary" data-uk-parking="manual">Use manual guidance</button>` : `<button type="button" class="secondary" data-uk-parking="guidance_fault">Simulate guidance unavailable</button>`}`
     : moving ? `<button type="button" class="secondary" data-uk-parking="stop">Stop manoeuvre</button>`
     : stage === "blocked" ? `<button type="button" class="primary" data-uk-parking="review">Review obstacle and access route</button><button type="button" class="secondary" data-uk-parking="support">Show support options</button>`
     : stage === "stopped" ? `<button type="button" class="primary" data-uk-parking="review">Recheck surroundings</button><button type="button" class="secondary" data-uk-parking="support">Show support options</button>`
     : stage === "support" ? `<button type="button" class="primary" data-uk-parking="review">Recheck with support</button>`
     : stage === "fault" ? `<button type="button" class="primary" data-uk-parking="review">Recheck bay and access route</button><button type="button" class="secondary" data-uk-parking="support">Show support options</button>`
     : stage === "reviewed" ? `<button type="button" class="primary" data-uk-parking="resume">Confirm route clear and resume</button><button type="button" class="secondary" data-uk-parking="manual">Use manual guidance</button>`
-    : stage === "manual_guidance" ? `<button type="button" class="primary" data-uk-parking="manual_step">Move a short step (simulation)</button><button type="button" class="secondary" data-uk-parking="stop">Stop manoeuvre</button>`
+    : stage === "manual_guidance" ? `<button type="button" class="secondary" data-uk-parking="stop">Stop manoeuvre</button>`
     : stage === "manual_aligned" ? `<button type="button" class="primary" data-uk-parking="manual_confirm">Confirm bay and access route clear</button><button type="button" class="secondary" data-uk-parking="stop">Stop manoeuvre</button>`
     : "";
   return `<div class="site-demo-card home-scene" aria-label="Illustrative home parking and obstacle recovery">
@@ -69,10 +72,11 @@ export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared, manual
     <h2>Position beside the house</h2>
     <div class="home-layout" role="img" aria-label="${obstructed ? "Vehicle stopped short of the home bay because an obstacle is in its path" : stage === "parked" ? "Vehicle parked beside the house; the entrance route is clear" : stage === "manual_aligned" ? "Driver-controlled illustrated step has positioned the vehicle in the bay" : moving ? "Vehicle moving slowly toward the home bay while the driver watches its surroundings" : "Vehicle waiting near the house and marked parking bay"}">
       <div class="home-house" aria-hidden="true">🏠<small>House</small></div>
-      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${stage}">🚐</span><span class="home-pad">▭<small>Parking bay</small></span><span class="home-obstacle ${obstructed ? "visible" : cleared ? "cleared" : ""}">▣<small>${cleared ? "Object moved clear" : "Object in path"}</small></span></div>
+      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${stage}" data-uk-manual-step="${manualStep}">🚐</span><span class="home-pad">▭<small>Parking bay</small></span><span class="home-obstacle ${obstructed ? "visible" : cleared ? "cleared" : ""}">▣<small>${cleared ? "Object moved clear" : "Object in path"}</small></span>${manual ? `<span class="home-guidance-arrow uk-${recommended.move}">${recommended.arrow}</span>` : stage === "manual_aligned" ? `<span class="home-ready-mark">✓</span>` : ""}</div>
       <div class="home-access-path" aria-hidden="true">🚶 Entrance and walking/rolling route · keep clear</div>
     </div>
     <p class="demo-state" role="status">${status}</p>
+    ${manual ? `<div class="home-manual-panel"><strong>Manual fallback positioning · step ${manualStep + 1} of 3</strong><p>Follow the highlighted arrow and short movement instruction. These buttons advance an illustration; they do not move a vehicle.</p><div class="home-dpad" role="group" aria-label="Manual positioning controls"><span></span><button type="button" data-uk-move="forward" class="${recommended.move === "forward" ? "recommended" : ""}" aria-label="Move forward, simulated">↑<small>Forward</small></button><span></span><button type="button" data-uk-move="left" class="${recommended.move === "left" ? "recommended" : ""}" aria-label="Move left, simulated">←<small>Left</small></button><button type="button" data-uk-move="right" class="${recommended.move === "right" ? "recommended" : ""}" aria-label="Move right, simulated">→<small>Right</small></button><button type="button" data-uk-move="back" class="${recommended.move === "back" ? "recommended" : ""}" aria-label="Move back, simulated">↓<small>Back</small></button></div><p class="home-move-feedback" role="status">${lastMoveWasWrong ? "That arrow did not advance the illustration. " : ""}Recommended correction: ${recommended.label}.${wrongMoves ? ` Wrong-direction attempts: ${wrongMoves}. Follow the highlighted arrow.` : ""}</p></div>` : stage === "manual_aligned" ? `<p class="home-move-feedback" role="status">Manual positioning complete in three illustrated corrections. Check the route once more before confirming.</p>` : ""}
     ${guidanceFault && stage !== "parked" ? `<p class="study-note">Illustrated fault: automatic guidance unavailable. No vehicle sensor or support service is connected.</p>` : ""}
     <div class="home-safety-list"><strong>Before and during the manoeuvre</strong><ul><li>Check people and objects around the vehicle.</li><li>Keep the entrance and walking/rolling route clear.</li><li>Watch the guidance; stop whenever needed.</li></ul></div>
     ${stage === "support" ? `<div class="demo-permission"><strong>Support to confirm with the site</strong><p>Who can clear an obstruction, and how could a user reach them through an accessible phone or assisted channel? The prototype has no provider contact and sends no request.</p></div>` : ""}
