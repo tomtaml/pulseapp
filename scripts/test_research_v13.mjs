@@ -46,7 +46,7 @@ assert.match(grEnergyCard("wait_for_lower_tariff", false), /Grid charges vehicle
 assert.match(grEnergyCard("wait_for_lower_tariff", true), /Vehicle sends energy to grid with separate permission/);
 assert.match(ukAlignmentCard("ready"), /Position confirmed/);
 assert.match(ukStreetChargeCard(true), /Grid sends energy to the vehicle at the street bay/);
-assert.match(ukHomeParkingCard(true), /Vehicle parked beside the house over a home wireless pad/);
+assert.match(ukHomeParkingCard(true), /Vehicle parked beside the house in a marked parking space/);
 assert.match(ukHomeParkingCard(false), /separate from the street bay/);
 assert.match(ukEnergyCard("support_home", 2, true, true), /Vehicle sends energy to home/);
 assert.match(ukEnergyCard("support_home", 2, false, true), /Home support was stopped/);

@@ -57,9 +57,9 @@ export function ukHomeParkingCard(parked) {
   return `<div class="site-demo-card home-scene" aria-label="Separate overnight household energy example">
     <div class="scenario-badge">Scene B · illustrative overnight home setting</div>
     <h2>Park close to the house</h2>
-    <div class="home-layout" role="img" aria-label="${parked ? "Vehicle parked beside the house over a home wireless pad" : "Vehicle approaches the house and its wireless parking pad"}">
+    <div class="home-layout" role="img" aria-label="${parked ? "Vehicle parked beside the house in a marked parking space" : "Vehicle approaches the parking space beside the house"}">
       <div class="home-house" aria-hidden="true">🏠<small>House</small></div>
-      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${parked ? "parked" : ""}">🚐</span><span class="home-pad">⌁⌁⌁<small>Home pad</small></span></div>
+      <div class="home-parking" aria-hidden="true"><span class="home-vehicle ${parked ? "parked" : ""}">🚐</span><span class="home-pad">▭<small>Parking space</small></span></div>
     </div>
     <p class="demo-state">${parked ? "Vehicle parked beside the house. The overnight example can begin." : "This is a new setting, separate from the street bay. Position the vehicle close to the house."}</p>
     <button type="button" class="primary" data-uk-home-park ${parked ? "disabled" : ""}>${parked ? "Parked by the house" : "Park by the house"}</button>
