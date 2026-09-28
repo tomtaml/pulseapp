@@ -95,6 +95,10 @@ with staged visual movement and wrong-direction feedback. When `questions=1`,
 Oxfordshire adds draft task items and UK-specific comprehension after the V2H
 scene; the manual-arrow item appears only after use. These responses are not
 collected or scored and do not alter the shared submission schema.
+The Oxfordshire pad now places Forward above and Back below a central vehicle
+marker, with Left and Right on the middle row. The next Trikala stage is a
+concept draft (`docs/V13_TRIKALA_CONCEPT_DRAFT.md`); no Trikala app behavior
+or collection contract has changed as part of that draft.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and

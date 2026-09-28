@@ -72,6 +72,7 @@ let manualParking = ukParkingTransition(parking, "manual");
 assert.equal(manualParking.stage, "manual_guidance");
 assert.equal(ukParkingTransition(manualParking, "manual_confirm").stage, "manual_guidance", "Manual approach cannot skip positioning");
 assert.match(ukHomeParkingCard(manualParking), /data-uk-move="forward" class="recommended"/);
+assert.match(ukHomeParkingCard(manualParking), /home-dpad-center/, "The arrows have a central vehicle marker");
 assert.match(ukHomeParkingCard(manualParking), /Recommended correction: a short step forward/);
 manualParking = ukParkingTransition(manualParking, "move_left");
 assert.equal(manualParking.manualStep, 0, "Wrong arrow must not advance manoeuvre");
@@ -172,6 +173,7 @@ for (const preset of [demoView, questionView, fullView, customView]) {
   assert.equal(rc1.modules.outcomes, preset.modules.scales);
 }
 const publicFile = name => readFileSync(new URL(`../public/${name}`, import.meta.url), "utf8");
+assert.match(publicFile("v13-study.css"), /grid-template-areas: "\. forward \." "left center right" "\. back \."/, "Forward and Back must share the vertical axis");
 const styleHrefs = html => [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(match => match[1]);
 const imports = js => [...js.matchAll(/^import "([^"]+)";/gm)].map(match => match[1]);
 assert.deepEqual(styleHrefs(publicFile("v13-fleet.html")), styleHrefs(publicFile("index.html")), "Finnish V1.3 must retain the RC1 mobile styles.");
