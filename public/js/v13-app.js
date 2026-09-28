@@ -34,7 +34,8 @@ let ukParking = initialUkParking();
 let ukParkingTimer = null;
 let ukOvernightPhase = 0;
 let ukHomeSharing = false;
-let ukHomeExported = false;
+let ukHomeExported = 0;
+let ukMorningMinimum = 70;
 let ukCycleRunning = false;
 let ukCycleTimer = null;
 let stage = 0;
@@ -79,7 +80,7 @@ function energyPreview() {
   if (variant === "gr-prosumer") {
     return grEnergyCard(values.scenario_choice, grV2gPermitted);
   }
-  return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning);
+  return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning, ukMorningMinimum);
 }
 
 function stopUkCycle() {
@@ -98,7 +99,7 @@ function parkingAction(action) {
   const previousStage = ukParking.stage;
   ukParking = ukParkingTransition(ukParking, action);
   render();
-  if (ukParking.stage === "moving" || ukParking.stage === "resuming") {
+  if (ukParking.stage === "moving" || ukParking.stage === "resuming" || ukParking.stage === "manual_aligned") {
     const destinationStage = ukParking.stage;
     const vehicle = screen.querySelector(".home-vehicle");
     vehicle.classList.replace(destinationStage, previousStage);
@@ -106,8 +107,10 @@ function parkingAction(action) {
     requestAnimationFrame(() => {
       if (screen.contains(vehicle)) vehicle.classList.replace(previousStage, destinationStage);
     });
-    const arrival = destinationStage === "moving" ? "obstacle" : "parked";
-    ukParkingTimer = setTimeout(() => parkingAction(arrival), destinationStage === "moving" ? 1800 : 1500);
+    if (destinationStage !== "manual_aligned") {
+      const arrival = destinationStage === "moving" ? "obstacle" : "parked";
+      ukParkingTimer = setTimeout(() => parkingAction(arrival), destinationStage === "moving" ? 1800 : 1500);
+    }
   }
   screen.querySelector("[data-uk-parking]")?.focus();
   if (ukParking.stage === "parked") screen.querySelector('[data-action="next"]')?.focus();
@@ -116,44 +119,50 @@ function parkingAction(action) {
 function updateUkEnergy() {
   const card = screen.querySelector(".overnight-card");
   if (!card) return;
-  const frame = ukOvernightFrame(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported);
-  const ledger = ukEnergyLedger(values.scenario_choice, ukOvernightPhase, ukHomeExported);
+  const frame = ukOvernightFrame(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukMorningMinimum);
+  const ledger = ukEnergyLedger(values.scenario_choice, ukOvernightPhase, ukHomeExported, ukMorningMinimum);
   const effectiveDirection = ukCycleRunning && ukOvernightPhase === 0 && values.scenario_choice !== "protect_trip" ? "charge" : frame.direction;
   const direction = effectiveDirection === "home" ? "Vehicle sends energy to home" : effectiveDirection === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
-  const paused = !ukCycleRunning && ukOvernightPhase > 0 && ukOvernightPhase < 5;
+  const paused = !ukCycleRunning && ukOvernightPhase > 0 && ukOvernightPhase < 7;
   const flow = card.querySelector("[data-uk-flow]");
   card.querySelector("[data-uk-time]").textContent = frame.time;
   card.querySelector("[data-uk-soc]").textContent = `${frame.soc}%`;
-  card.querySelector("[data-uk-battery]").setAttribute("aria-label", `Vehicle battery ${frame.soc} percent; protected trip reserve 65 percent`);
+  card.querySelector("[data-uk-battery]").setAttribute("aria-label", `Vehicle battery ${frame.soc} percent; chosen morning minimum ${ukMorningMinimum} percent`);
   card.querySelector("[data-uk-fill]").style.width = `${frame.soc}%`;
-  card.querySelector("[data-uk-state]").textContent = ukOvernightPhase === 5 ? "Ready for next trip" : ukCycleRunning ? "Running" : paused ? "Paused" : "Ready to start";
+  card.querySelector("[data-uk-marker]").style.left = `${ukMorningMinimum}%`;
+  card.querySelector("[data-uk-reserve]").textContent = `${ukMorningMinimum}%`;
+  card.querySelector("[data-uk-minimum]").disabled = ukOvernightPhase !== 0 || ukCycleRunning;
+  const potential = ukEnergyLedger("support_home", 7, 80 - ukMorningMinimum, ukMorningMinimum);
+  card.querySelector("[data-uk-min-preview]").textContent = `At ${ukMorningMinimum}% minimum, up to ${potential.homeKwh.toFixed(1)} kWh could reach the house after charging to 80%; illustrative energy cost difference £${potential.differencePounds.toFixed(2)} under the assumptions below. ${ukMorningMinimum === 80 ? "No V2H export is available." : "Compare household support with the charge retained for travel."}`;
+  card.querySelector("[data-uk-state]").textContent = ukOvernightPhase === 7 ? "Ready for next trip" : ukCycleRunning ? "Running" : paused ? "Paused" : "Ready to start";
   flow.classList.toggle("idle", !ukCycleRunning || effectiveDirection === "idle");
   flow.setAttribute("aria-label", paused ? "Paused; no energy transfer is active" : direction);
   card.querySelector("[data-uk-from]").innerHTML = effectiveDirection === "home" ? "🚐<small>Vehicle</small>" : "⚡<small>Grid</small>";
   card.querySelector("[data-uk-to]").innerHTML = effectiveDirection === "home" ? "🏠<small>Home</small>" : "🚐<small>Vehicle</small>";
   card.querySelector("[data-uk-direction]").textContent = paused ? "Paused · no energy transfer" : direction;
-  card.querySelector("[data-uk-status]").textContent = paused ? `Session paused at ${frame.time}. Vehicle battery ${frame.soc}%; no energy transfer. The 65% trip reserve remains protected.` : ukCycleRunning && ukOvernightPhase === 0 ? values.scenario_choice === "protect_trip" ? "Monitoring the parked vehicle; its 70% charge remains protected for the next trip." : "Charging started at the home setting. Vehicle battery is 70%; next checkpoint 23:00." : frame.status;
+  card.querySelector("[data-uk-status]").textContent = paused ? `Session paused at ${frame.time}. Vehicle battery ${frame.soc}%; no energy transfer. The ${ukMorningMinimum}% morning minimum remains protected.` : ukCycleRunning && ukOvernightPhase === 0 ? "Charging started at the home setting. Vehicle battery is 50%; next checkpoint 19:30." : frame.status;
   card.querySelector("[data-uk-charged]").textContent = `${ledger.chargedKwh.toFixed(1)} kWh`;
   card.querySelector("[data-uk-drawn]").textContent = `${ledger.drawnKwh.toFixed(1)} kWh`;
   card.querySelector("[data-uk-home]").textContent = `${ledger.homeKwh.toFixed(1)} kWh`;
   card.querySelector("[data-uk-difference]").textContent = `£${ledger.differencePounds.toFixed(2)}`;
   card.querySelector("[data-uk-equation]").textContent = `House import avoided: £${ledger.avoidedPounds.toFixed(2)} − battery energy replacement: £${ledger.replacementPounds.toFixed(2)} = £${ledger.differencePounds.toFixed(2)}.`;
   card.querySelectorAll("[data-uk-checkpoint]").forEach(item => item.classList.toggle("current", Number(item.dataset.ukCheckpoint) === ukOvernightPhase));
-  card.querySelector("[data-uk-night]").textContent = ukOvernightPhase === 5 ? ukHomeSharing ? "Replay overnight example" : "Replay with home support" : ukCycleRunning ? "Pause example" : ukOvernightPhase === 0 ? "Run overnight example" : "Resume example";
-  card.querySelector("[data-uk-night-step]").hidden = ukCycleRunning || ukOvernightPhase === 5;
-  card.querySelector("[data-uk-night-skip]").hidden = ukOvernightPhase === 5;
+  card.querySelector("[data-uk-night]").textContent = ukOvernightPhase === 7 ? ukHomeSharing ? "Replay overnight example" : "Replay with home support" : ukCycleRunning ? "Pause example" : ukOvernightPhase === 0 ? "Run overnight example" : "Resume example";
+  card.querySelector("[data-uk-night-step]").hidden = ukCycleRunning || ukOvernightPhase === 7;
+  card.querySelector("[data-uk-night-skip]").hidden = ukOvernightPhase === 7;
   const sharing = card.querySelector("[data-uk-sharing]");
   if (sharing) {
-    sharing.hidden = !ukHomeSharing || ukOvernightPhase === 5;
-    sharing.textContent = ukOvernightPhase < 3 ? "Cancel home support" : "Stop home support";
+    sharing.hidden = !ukHomeSharing || ukOvernightPhase === 7;
+    sharing.textContent = ukOvernightPhase < 4 ? "Cancel home support" : "Stop home support";
   }
 }
 
 function advanceUkCycle() {
-  if (ukOvernightPhase >= 5) return;
+  if (ukOvernightPhase >= 7) return;
   ukOvernightPhase += 1;
-  if (ukOvernightPhase === 3 && ukHomeSharing) ukHomeExported = true;
-  if (ukOvernightPhase === 5) stopUkCycle();
+  if (ukHomeSharing && ukOvernightPhase === 4) ukHomeExported = Math.min(5, 80 - ukMorningMinimum);
+  if (ukHomeSharing && ukOvernightPhase === 5) ukHomeExported = 80 - ukMorningMinimum;
+  if (ukOvernightPhase === 7) stopUkCycle();
   updateUkEnergy();
   if (ukCycleRunning) ukCycleTimer = setTimeout(advanceUkCycle, 1400);
 }
@@ -194,14 +203,14 @@ function render() {
     }
     body += buttonRow();
   } else if (page === "home_intro") {
-    body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. In this illustration, a guided manoeuvre stops for an obstacle; you can stop it yourself, review the route and resume only when it is clear.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
+    body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. A guided manoeuvre can stop at an obstacle, or guidance can become unavailable. Recheck the route and choose guided or driver-controlled parking; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
   } else if (page === "scenario") {
     body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
     if (variant === "gr-prosumer") body += grTimingCard(values.scenario_choice);
     body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>${buttonRow()}`;
   } else if (page === "energy") {
-    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "In this single home example, limited V2H support is assumed to be authorised for the simulation. The car charges first, then energy can reach the house while the 65% trip reserve stays protected. Run, pause or step through the night; stop home support whenever needed. The home connection and household backup rule require site confirmation." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
+    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Choose the minimum car charge needed for the morning. In this simulation home support is authorised, the car charges from 50% to 80%, then supplies some household demand only above your chosen minimum. Run, pause or step through the night; stop home support whenever needed. Actual compatibility, household backup rules and tariffs require site confirmation." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${buttonRow()}`;
   } else if (page === "recovery") {
     body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p><fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
@@ -221,8 +230,8 @@ function render() {
   } else {
     body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? demoText("Demo complete", "Esittely valmis") : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : demoText("No research response was sent or stored.", "Tutkimusvastauksia ei lähetetty eikä tallennettu." )}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
     if (variant === "uk-v2h" && !submitted) {
-      const ledger = ukEnergyLedger(values.scenario_choice, 5, ukHomeExported);
-      body += `<p class="study-note">Home parking stopped at the illustrated obstacle and resumed after the route check. The simulated V2H session finished with ${ukOvernightFrame(values.scenario_choice, 5, ukHomeSharing, ukHomeExported).soc}% vehicle charge (protected reserve 65%). ${ledger.drawnKwh.toFixed(1)} kWh was taken from the car and ${ledger.homeKwh.toFixed(1)} kWh reached the house. Illustrative energy cost difference: £${ledger.differencePounds.toFixed(2)}, before recharge losses, wear and fees.</p>`;
+      const ledger = ukEnergyLedger(values.scenario_choice, 7, ukHomeExported, ukMorningMinimum);
+      body += `<p class="study-note">${ukParking.obstacleSeen ? "The illustrated obstacle stopped guided parking and was reviewed." : ukParking.guidanceFault ? "Guided parking became unavailable and the route was rechecked." : "The route was checked before parking."} ${ukParking.manualUsed ? "The driver-controlled manoeuvre was completed step by step." : "The guided manoeuvre was completed after the route check."} The simulated V2H session finished at ${ukOvernightFrame(values.scenario_choice, 7, ukHomeSharing, ukHomeExported, ukMorningMinimum).soc}% vehicle charge (chosen morning minimum ${ukMorningMinimum}%). ${ledger.drawnKwh.toFixed(1)} kWh was taken from the car and ${ledger.homeKwh.toFixed(1)} kWh reached the house. Illustrative energy cost difference: £${ledger.differencePounds.toFixed(2)}, before recharge losses, wear and fees.</p>`;
     }
   }
   screen.innerHTML = body;
@@ -246,12 +255,14 @@ function render() {
   }));
   screen.querySelectorAll("[data-uk-parking]").forEach(button => button.addEventListener("click", () => parkingAction(button.dataset.ukParking)));
   screen.querySelector('[data-uk-night]')?.addEventListener("click", () => {
-    if (ukOvernightPhase === 5) {
+    if (ukOvernightPhase === 7) {
       stopUkCycle();
       ukOvernightPhase = 0;
       ukHomeSharing = values.scenario_choice === "support_home";
-      ukHomeExported = false;
-      ukCycleRunning = true;
+      ukHomeExported = 0;
+      updateUkEnergy();
+      screen.querySelector('[data-uk-minimum]')?.focus();
+      return;
     } else if (ukCycleRunning) {
       stopUkCycle();
     } else {
@@ -262,12 +273,12 @@ function render() {
   });
   screen.querySelector('[data-uk-night-step]')?.addEventListener("click", () => {
     advanceUkCycle();
-    if (ukOvernightPhase === 5) screen.querySelector('[data-uk-night]')?.focus();
+    if (ukOvernightPhase === 7) screen.querySelector('[data-uk-night]')?.focus();
   });
   screen.querySelector('[data-uk-night-skip]')?.addEventListener("click", () => {
     stopUkCycle();
-    if (values.scenario_choice === "support_home" && ukHomeSharing) ukHomeExported = true;
-    ukOvernightPhase = 5;
+    if (values.scenario_choice === "support_home" && ukHomeSharing) ukHomeExported = 80 - ukMorningMinimum;
+    ukOvernightPhase = 7;
     updateUkEnergy();
     screen.querySelector('[data-action="next"]')?.focus();
   });
@@ -281,6 +292,12 @@ function render() {
     updateUkEnergy();
     screen.querySelector('[data-uk-night]')?.focus();
   });
+  screen.querySelector('[data-uk-minimum]')?.addEventListener("change", event => {
+    if (ukOvernightPhase !== 0 || ukCycleRunning) return;
+    ukMorningMinimum = [65, 70, 75, 80].includes(Number(event.currentTarget.value)) ? Number(event.currentTarget.value) : 70;
+    updateUkEnergy();
+  });
+  if (page === "energy" && variant === "uk-v2h") updateUkEnergy();
   if (page === "outcomes" && mode === "research" && config.collection_enabled) renderTurnstile();
   screen.focus({ preventScroll: true });
 }
@@ -311,7 +328,7 @@ function valid() {
   if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
   if (page === "home_intro" && ukParking.stage !== "parked") return "Complete the surrounding-area check and safely finish the illustrative home parking before continuing.";
   if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
-  if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 5) return "Run, step through or skip the overnight example to morning before continuing.";
+  if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 7) return "Run, step through or skip the overnight example to morning before continuing.";
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
   if (page === "sus" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
@@ -342,7 +359,7 @@ async function next() {
   if (currentPage() === "home_intro" && variant === "uk-v2h") {
     stopUkCycle();
     ukHomeSharing = true;
-    ukHomeExported = false;
+    ukHomeExported = 0;
     ukOvernightPhase = 0;
   }
   if (currentPage() === "outcomes" && mode === "research" && config.collection_enabled) {

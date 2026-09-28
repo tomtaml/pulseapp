@@ -83,6 +83,14 @@ verify the synthetic Worker-to-D1 path, not live participant collection.
 
 ## Verification and next gates
 
+The 28 September Oxfordshire preview now offers a driver-controlled parking
+recovery after obstacle review or an illustrated guidance fault. Its overnight
+V2H scene starts at 50%, charges to 80%, and lets the participant choose a
+65–80% morning minimum before running eight checkpoints. The home energy and
+illustrative cost ledger respond to that selection and to stopping export.
+Replaying returns to the reserve selector so workshop participants can compare
+choices. The UK route remains storage-free pending site and instrument review.
+
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and
 `npx wrangler deploy --dry-run --config variant-preview/wrangler.jsonc`.
