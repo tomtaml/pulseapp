@@ -1,40 +1,11 @@
 // Workshop-only illustrations. They show a choice without claiming live tariff,
 // grid, vehicle or home energy data.
 import { UK_MANUAL_MOVES } from "./v13-uk-parking.js";
-const chargingWindows = [
-  ["charge_now", "Charge now", "Ready for the next trip"],
-  ["wait_for_lower_tariff", "Lower tariff later", "Price signal"],
-  ["wait_for_res_surplus", "Renewable surplus later", "RES signal"]
-];
 const ukHomeAssumptions = Object.freeze({ batteryKwh: 60, homeDeliveryRatio: 0.9, importPence: 30, replacementPence: 15 });
 export const ukMorningMinimums = Object.freeze([65, 70, 75, 80]);
 const ukTimes = Object.freeze(["18:00", "19:30", "21:00", "22:30", "00:00", "03:00", "06:30", "07:00"]);
 const minimum = value => ukMorningMinimums.includes(Number(value)) ? Number(value) : 70;
 const exportPoints = (value, floor) => Math.max(0, Math.min(80 - floor, Number.isFinite(Number(value)) ? Number(value) : 0));
-
-export function grTimingCard(choice) {
-  return `<div class="site-demo-card" aria-label="Illustrative charging windows">
-    <div class="scenario-badge">Workshop scenario · illustrative signals</div>
-    <h2>Choose when to charge</h2>
-    <div class="charging-windows">${chargingWindows.map(([key, label, signal]) => `<div class="charging-window ${choice === key ? "selected" : ""}"><strong>${label}</strong><span>${signal}</span></div>`).join("")}</div>
-    <p class="study-note">The next-trip reserve stays protected. No actual tariff, renewable forecast or charging schedule is connected.</p>
-  </div>`;
-}
-
-export function grEnergyCard(choice, v2gPermitted) {
-  const selected = chargingWindows.find(([key]) => key === choice)?.[1] || "Charge now";
-  return `<div class="site-demo-card" aria-label="Trikala energy flow">
-    <div class="scenario-badge">Workshop scenario · simulated flow</div>
-    <h2>${selected}</h2>
-    <div class="demo-flow" role="img" aria-label="${v2gPermitted ? "Vehicle sends energy to grid with separate permission" : "Grid charges vehicle; V2G is not permitted"}">
-      <span>${v2gPermitted ? "🚗" : "⚡"}<small>${v2gPermitted ? "Vehicle" : "Grid"}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>${v2gPermitted ? "⚡" : "🚗"}<small>${v2gPermitted ? "Grid" : "Vehicle"}</small></span>
-    </div>
-    <p class="study-note">The selected window changes charging time. The protected next-trip reserve takes priority.</p>
-    <div class="demo-permission"><strong>Separate V2G permission</strong><p>${v2gPermitted ? "Permission granted for this illustration. The driver can stop sharing; export cannot cross the protected reserve." : "Off by default. Choosing a charging window does not authorise export to the grid."}</p>
-      <button type="button" class="secondary" data-gr-v2g aria-pressed="${v2gPermitted}">${v2gPermitted ? "Stop V2G sharing" : "Allow illustrative V2G"}</button>
-    </div>
-  </div>`;
-}
 
 function ukManualPad(recommended) {
   const moves = [["forward", "↑", "Forward"], ["left", "←", "Left"], ["right", "→", "Right"], ["back", "↓", "Back"]];

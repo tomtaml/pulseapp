@@ -96,9 +96,20 @@ Oxfordshire adds draft task items and UK-specific comprehension after the V2H
 scene; the manual-arrow item appears only after use. These responses are not
 collected or scored and do not alter the shared submission schema.
 The Oxfordshire pad now places Forward above and Back below a central vehicle
-marker, with Left and Right on the middle row. The next Trikala stage is a
-concept draft (`docs/V13_TRIKALA_CONCEPT_DRAFT.md`); no Trikala app behavior
-or collection contract has changed as part of that draft.
+marker, with Left and Right on the middle row. The Trikala preview now
+implements an illustrative single-stop WPT/charging/V2G journey. It includes
+bay alignment, a protected next trip, feasibility-aware charging windows,
+explicit price and renewable cues, a hot-weather start-delay recovery, a
+five-checkpoint animated charge and a separate declineable/stoppable V2G offer.
+Six optional Trikala task probes and four case-specific understanding questions
+are draft and unscored. The Greek and UK journeys remain preview-only regardless
+of a collection-enabled host, since their workshop tasks are outside the current
+research submission contract. All prices, energy and compensation are fictional
+workshop assumptions pending partner confirmation. The `/v13.html` footer
+shows `V1.3 preview 2026-09-28b` to distinguish the deployed assets from the
+older preview Worker. A Git pull alone does not update the Worker; redeploy
+`variant-preview/wrangler.jsonc` after these changes land. The V1.2 RC1 Worker
+and its QR target are unchanged.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and

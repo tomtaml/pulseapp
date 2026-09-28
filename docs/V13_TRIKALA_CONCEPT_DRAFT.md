@@ -1,6 +1,6 @@
 # Trikala V1.3 participant journey — concept for review
 
-Status: design proposal, 28 September 2026. No Trikala implementation or survey contract change is implied by this document. The existing Trikala preview still has three timing cards and a separate illustrative V2G button. The proposal below develops that into one coherent passenger-car journey.
+Status: design rationale and site-review questions, 28 September 2026. A first single-stop workshop preview now implements alignment, protected departure, example timing/price/renewable cues, a delay stress test, simulated charging and a separate V2G offer. The numbers and service promises remain fictional assumptions for review. This document does not approve a survey or collection contract.
 
 ## Case anchor and design decision
 
@@ -20,7 +20,7 @@ The PULSE project includes a Trikala local host and a passenger-car charging pat
 | Recovery | A hot-weather or charger-start delay interrupts this same stop. Show what happens to the next-trip reserve and the selected plan, then offer retry, charge now if feasible, stop/leave or contact support. Do not silently switch to export or a higher-cost schedule. | Which fallback retains trust and autonomy? Who bears delay or cost, and how could someone without the app participate? |
 | Optional reflection | Case-specific understanding and short experience probes, then the shared SUS for direct users and common confidence, trust, WPT/V2G intention and fairness items when enabled. | Compare across sites while preserving Trikala-specific reasons for timing, opt-in and economic value. |
 
-The first demonstration should run on mock signals and a fixed, disclosed battery/charging example. Do not imply that a renewable-availability indicator proves the physical source of electricity delivered. Keep charging-cost changes separate from compensation for exported energy. Any net-value example must say which costs, losses, fees and battery effects it omits. The exact numbers, time windows and site equipment should be agreed before they appear in the UI.
+The first demonstration uses mock signals and a fixed, disclosed battery/charging example. It does not imply that renewable availability proves the physical source of delivered electricity. Charging costs and gross export payment are separate; battery wear, losses and fees remain unknown. The values now shown are explicitly labelled fictional workshop placeholders, to be replaced only after site confirmation.
 
 ## Evidence map for workshop probing
 
@@ -43,4 +43,4 @@ These are proposed cognitive-testing probes, not a tariff-elasticity estimate or
 4. What departure/reserve range and charging power make the example feasible? What happens if a later window cannot satisfy it?
 5. Which participant and non-digital routes, accessibility needs and Greek-language wording will be tested first?
 
-Keep the V1.2 RC1 Worker untouched. Build this only in the isolated V1.3 preview after the scenario assumptions are reviewed; keep collection disabled until the instrument, translations and contract are approved.
+Keep the V1.2 RC1 Worker untouched. The first interaction is on the isolated V1.3 preview, with collection disabled. Review the scenario assumptions, equipment, numbers, recovery promises, accessibility, translations and research contract before any participant data collection.

@@ -20,8 +20,10 @@ export function resolveWorkshopView(params) {
 export function workshopPages(variant, participantGroup, modules, profiles) {
   const pages = variant === "uk-v2h"
     ? ["intro", "home_intro", "energy"]
-    : ["intro", ...(variant === "fi-fleet" ? ["alignment"] : []), "scenario", "energy", "recovery"];
+    : variant === "gr-prosumer" ? ["intro", "gr_arrival", "scenario", "recovery", "energy"]
+    : ["intro", "alignment", "scenario", "energy", "recovery"];
   if (modules.questions && variant === "uk-v2h") pages.push("uk_probes");
+  if (modules.questions && variant === "gr-prosumer") pages.push("gr_probes");
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
   if (modules.scales) pages.push("outcomes");
@@ -36,9 +38,9 @@ export function resolveWorkshopMode(config, { modules, workshopOnly }) {
 
 export function resolveSiteMode(config, view, variant) {
   const mode = resolveWorkshopMode(config, view);
-  // The focused UK journey no longer exposes the choices required by the
-  // current research submission contract. Keep it workshop-only.
-  return variant === "uk-v2h" && mode === "research" ? "instrument-preview" : mode;
+  // Focused site journeys contain draft tasks that the current research
+  // submission contract does not represent. Keep them workshop-only.
+  return ["uk-v2h", "gr-prosumer"].includes(variant) && mode === "research" ? "instrument-preview" : mode;
 }
 
 export function workshopOutcomeKeys(variant, profile) {
@@ -107,16 +109,16 @@ export const SITES = Object.freeze({
   },
   "gr-prosumer": {
     title: "Trikala passenger charging", badge: "Greece · passenger · tariff and RES", languages: ["en", "el"],
-    intro: "A passenger car is parked in Trikala. Compare charging now with a lower tariff and a renewable energy surplus, then decide whether to shift the session. In this proposed service, you could leave early. A separate V2G offer would need your permission and a protected reserve; you could stop energy sharing at any time. These signals are illustrative, not live prices or forecasts.",
-    scenario: "The app shows a cheaper later tariff and a renewable surplus period. The next trip still needs a protected reserve. With permission, V2G would return energy to the grid. Which charging option would you choose?",
+    intro: "Try one simulated passenger-car stop at a wireless bay in Trikala. Position the car, set the minimum needed for the next trip, and compare charging now with later price and renewable-availability signals. A hot-weather start delay requires a recovery decision. Then watch the chosen charging session and decide separately whether to permit V2G export. All prices, times and energy amounts are illustrative workshop assumptions, not a local offer or live forecast.",
+    scenario: "The same parked car can charge in one of three example windows. Set a protected next-trip minimum and departure, then compare price and renewable availability separately. Later windows must still leave the car ready in time.",
     scenarioOptions: [
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
       ["wait_for_res_surplus", "Wait for the renewable surplus"]
     ],
-    recovery: "On a hot afternoon the chosen charging session cannot start. Your next trip still needs its protected reserve. What would you do?",
+    recovery: "On a hot afternoon the chosen wireless charging session is delayed before energy begins to move. Your next trip still needs its protected minimum. How should the plan recover?",
     recoveryOptions: [
       ["retry", "Retry the planned session"], ["charge_now", "Charge now for the next trip"],
-      ["contact_provider", "Contact the service provider"]
+      ["contact_provider", "Contact provider about an assisted charge-now fallback"]
     ],
     roles: { passenger_prosumer: "Passenger car driver" }
   },
