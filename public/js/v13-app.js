@@ -139,7 +139,7 @@ function updateUkEnergy() {
   card.querySelector("[data-uk-difference]").textContent = `£${ledger.differencePounds.toFixed(2)}`;
   card.querySelector("[data-uk-equation]").textContent = `House import avoided: £${ledger.avoidedPounds.toFixed(2)} − battery energy replacement: £${ledger.replacementPounds.toFixed(2)} = £${ledger.differencePounds.toFixed(2)}.`;
   card.querySelectorAll("[data-uk-checkpoint]").forEach(item => item.classList.toggle("current", Number(item.dataset.ukCheckpoint) === ukOvernightPhase));
-  card.querySelector("[data-uk-night]").textContent = ukOvernightPhase === 5 ? "Replay overnight example" : ukCycleRunning ? "Pause example" : ukOvernightPhase === 0 ? "Run overnight example" : "Resume example";
+  card.querySelector("[data-uk-night]").textContent = ukOvernightPhase === 5 ? ukHomeSharing ? "Replay overnight example" : "Replay with home support" : ukCycleRunning ? "Pause example" : ukOvernightPhase === 0 ? "Run overnight example" : "Resume example";
   card.querySelector("[data-uk-night-step]").hidden = ukCycleRunning || ukOvernightPhase === 5;
   card.querySelector("[data-uk-night-skip]").hidden = ukOvernightPhase === 5;
   const sharing = card.querySelector("[data-uk-sharing]");
