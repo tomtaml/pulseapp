@@ -31,6 +31,18 @@ export function resolveWorkshopMode(config, { modules, workshopOnly }) {
   return "instrument-preview";
 }
 
+export function rc1FleetWorkshopMode(view) {
+  return {
+    id: "v13-fleet-preview",
+    modules: {
+      scenarioTasks: true, measurementFields: false,
+      comprehension: view.modules.questions, sus: view.modules.sus,
+      outcomes: view.modules.scales
+    },
+    constructPayload: false, submit: false
+  };
+}
+
 export const SITES = Object.freeze({
   "fi-fleet": {
     title: "Tampere fleet charging", badge: "Finland · fleet · V2G", languages: ["en", "fi"],
