@@ -48,14 +48,26 @@ assert.match(ukAlignmentCard("ready"), /Position confirmed/);
 assert.match(ukStreetChargeCard(true), /Grid sends energy to the vehicle at the street bay/);
 assert.match(ukHomeParkingCard(true), /Vehicle parked beside the house in a marked parking space/);
 assert.match(ukHomeParkingCard(false), /separate from the street bay/);
-assert.match(ukEnergyCard("support_home", 2, true, true), /Vehicle sends energy to home/);
-assert.match(ukEnergyCard("support_home", 2, false, true), /Home support was stopped/);
+assert.match(ukEnergyCard("support_home", 3, true, true, true), /Vehicle sends energy to home/);
+assert.match(ukEnergyCard("support_home", 3, false, true), /Home support was stopped/);
 assert.match(ukEnergyCard("support_home", 1, true, false), /Grid charges vehicle/);
-assert.match(ukEnergyCard("protect_trip", 3, false, false), /Morning departure: the vehicle is ready at 70%/);
-assert.equal(ukOvernightFrame("charge_now", 3, true, true).soc, 80, "Only the home-support choice may export energy");
-for (const choice of V13_CHOICES["uk-v2h"].scenario) for (let phase = 0; phase <= 3; phase++) {
+assert.match(ukEnergyCard("protect_trip", 5, false, false), /Morning departure: the vehicle is ready at 70%/);
+assert.match(ukEnergyCard("support_home", 0, true, false), /Run overnight example/);
+assert.match(ukEnergyCard("support_home", 2, true, false, true), /Pause example/);
+assert.match(ukEnergyCard("support_home", 2, true, false), /Next checkpoint/);
+assert.match(ukEnergyCard("support_home", 2, true, false), /Cancel home support/);
+assert.match(ukEnergyCard("support_home", 3, true, true), /Stop home support/);
+assert.doesNotMatch(ukEnergyCard("charge_now", 3, false, false), /data-uk-sharing/);
+assert.match(ukEnergyCard("support_home", 5, false, true), /Replay overnight example/);
+assert.equal(ukOvernightFrame("charge_now", 5, true, true).soc, 80, "Only the home-support choice may export energy");
+assert.equal(ukOvernightFrame("support_home", 1, true, false).soc, 75);
+assert.equal(ukOvernightFrame("support_home", 2, true, false).soc, 80);
+assert.equal(ukOvernightFrame("support_home", 3, true, true).direction, "home");
+assert.equal(ukOvernightFrame("support_home", 5, false, true).soc, 75, "Stopping after export preserves the last illustrative charge");
+assert.equal(ukOvernightFrame("support_home", 5, false, false).soc, 80, "Cancelling before export preserves charged vehicle");
+for (const choice of V13_CHOICES["uk-v2h"].scenario) for (let phase = 0; phase <= 5; phase++) {
   for (const active of [false, true]) {
-    const frame = ukOvernightFrame(choice, phase, active, choice === "support_home" && phase >= 2 && active);
+    const frame = ukOvernightFrame(choice, phase, active, choice === "support_home" && phase >= 3 && active);
     assert.ok(frame.soc >= 65, `${choice}/${phase} must preserve the illustrative trip reserve`);
     if (choice !== "support_home") assert.notEqual(frame.direction, "home");
   }

@@ -68,22 +68,23 @@ export function ukHomeParkingCard(parked) {
 }
 
 export function ukOvernightFrame(choice, phase, sharingActive, exported) {
-  const step = Math.max(0, Math.min(3, phase));
+  const step = Math.max(0, Math.min(5, phase));
   const home = choice === "support_home";
   const didExport = home && exported;
   const charging = choice !== "protect_trip";
   const chargedSoc = charging ? 80 : 70;
-  const soc = step === 0 ? 70 : didExport ? 75 : chargedSoc;
-  const time = ["22:00", "00:00", "02:00", "07:00"][step];
-  const direction = step === 1 && charging ? "charge" : step === 2 && home && sharingActive && didExport ? "home" : "idle";
+  const soc = step === 0 ? 70 : step === 1 ? charging ? 75 : 70 : didExport ? 75 : chargedSoc;
+  const time = ["22:00", "23:00", "00:00", "01:00", "02:00", "07:00"][step];
+  const direction = (step === 1 || step === 2) && charging ? "charge" : (step === 3 || step === 4) && home && sharingActive && didExport ? "home" : "idle";
   const status = step === 0 ? "Parked at home. Vehicle charge is 70%; the protected next-trip reserve is 65%. No energy sharing has started."
-    : step === 1 ? charging ? "Overnight charging raises the vehicle to an illustrative 80%. Home sharing has not started." : "The vehicle keeps its existing 70% for the next trip; no charging or sharing is selected."
-    : step === 2 ? direction === "home" ? "With separate permission, the vehicle supports the home and remains at 75%, above the protected 65% reserve." : didExport ? "Home support was stopped. The vehicle remains at 75%, above the protected reserve." : "Home support is off. The vehicle keeps its protected charge."
+    : step === 1 ? charging ? "Grid charging has raised the vehicle to an illustrative 75%. Home sharing has not started." : "The vehicle keeps its existing 70% for the next trip; no charging or sharing is selected."
+    : step === 2 ? charging ? "Overnight charging raises the vehicle to an illustrative 80%. Home sharing has not started." : "The vehicle remains at 70% for its next trip."
+    : step < 5 ? direction === "home" ? "With separate permission, the vehicle supports the home and remains at 75%, above the protected 65% reserve." : didExport ? "Home support was stopped. The vehicle remains at 75%, above the protected reserve." : "Home support is off. The vehicle keeps its protected charge."
     : `Morning departure: the vehicle is ready at ${soc}%, above the protected 65% reserve. Home sharing is off.`;
   return { time, soc, direction, status };
 }
 
-export function ukEnergyCard(choice, phase, sharingActive, exported) {
+export function ukEnergyCard(choice, phase, sharingActive, exported, running = false) {
   const frame = ukOvernightFrame(choice, phase, sharingActive, exported);
   const active = frame.direction !== "idle";
   const flowLabel = frame.direction === "home" ? "Vehicle sends energy to home" : frame.direction === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
@@ -91,15 +92,18 @@ export function ukEnergyCard(choice, phase, sharingActive, exported) {
   const right = frame.direction === "home" ? ["🏠", "Home"] : ["🚐", "Vehicle"];
   return `<div class="site-demo-card overnight-card" aria-label="Separate overnight household V2H example">
     <div class="scenario-badge">Scene B · simulated overnight energy</div>
-    <h2>Parked beside the house · ${frame.time}</h2>
-    <div class="home-reserves"><div><span>Vehicle battery</span><strong>${frame.soc}%</strong></div><div><span>Protected next-trip reserve</span><strong>65%</strong></div></div>
-    <div class="home-battery" role="img" aria-label="Vehicle battery ${frame.soc} percent; protected trip reserve 65 percent"><span style="width:${frame.soc}%"></span></div>
-    <div class="demo-flow ${active ? "" : "idle"}" role="img" aria-label="${flowLabel}"><span>${left[0]}<small>${left[1]}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span>${right[0]}<small>${right[1]}</small></span></div>
-    <p class="demo-state">${frame.status}</p>
+    <div class="night-heading"><h2>Parked beside the house · <span data-uk-time>${frame.time}</span></h2><span class="night-live" data-uk-state>${running ? "Running" : phase === 5 ? "Ready for next trip" : "Ready to start"}</span></div>
+    <div class="home-reserves"><div><span>Vehicle battery</span><strong data-uk-soc>${frame.soc}%</strong></div><div><span>Protected next-trip reserve</span><strong>65%</strong></div></div>
+    <div class="home-battery" data-uk-battery role="img" aria-label="Vehicle battery ${frame.soc} percent; protected trip reserve 65 percent"><span data-uk-fill style="width:${frame.soc}%"></span></div>
+    <div class="night-timeline" aria-label="Illustrative overnight checkpoints">${["22:00", "23:00", "00:00", "01:00", "02:00", "07:00"].map((time, index) => `<span data-uk-checkpoint="${index}" class="${index === phase ? "current" : ""}">${time}</span>`).join("")}</div>
+    <div class="demo-flow ${active && running ? "" : "idle"}" data-uk-flow role="img" aria-label="${flowLabel}"><span data-uk-from>${left[0]}<small>${left[1]}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span data-uk-to>${right[0]}<small>${right[1]}</small></span></div>
+    <p class="night-direction" data-uk-direction>${flowLabel}</p>
+    <p class="demo-state" data-uk-status>${frame.status}</p>
     <p class="study-note">Household essential loads and backup threshold are a workshop discussion point; no household value or live tariff is connected. All battery values above are illustrative.</p>
-    <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 0 ? "Start overnight example" : phase === 3 ? "Replay overnight example" : "Advance overnight example"}</button>
-      ${phase < 3 ? `<button type="button" class="secondary" data-uk-night-skip>Skip to morning</button>` : ""}
-      ${choice === "support_home" && sharingActive && phase < 3 ? `<button type="button" class="secondary" data-uk-sharing>${phase < 2 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
+    <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 5 ? "Replay overnight example" : running ? "Pause example" : phase === 0 ? "Run overnight example" : "Resume example"}</button>
+      <button type="button" class="secondary" data-uk-night-step ${running || phase === 5 ? "hidden" : ""}>Next checkpoint</button>
+      <button type="button" class="secondary" data-uk-night-skip ${phase === 5 ? "hidden" : ""}>Skip to morning</button>
+      ${choice === "support_home" ? `<button type="button" class="secondary" data-uk-sharing ${!sharingActive || phase === 5 ? "hidden" : ""}>${phase < 3 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
   </div>`;
 }
 
