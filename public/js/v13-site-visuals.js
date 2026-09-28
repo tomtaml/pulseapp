@@ -5,6 +5,7 @@ const chargingWindows = [
   ["wait_for_lower_tariff", "Lower tariff later", "Price signal"],
   ["wait_for_res_surplus", "Renewable surplus later", "RES signal"]
 ];
+const ukHomeAssumptions = Object.freeze({ batteryKwh: 60, homeDeliveryRatio: 0.9, importPence: 30, replacementPence: 15 });
 
 export function grTimingCard(choice) {
   return `<div class="site-demo-card" aria-label="Illustrative charging windows">
@@ -84,8 +85,22 @@ export function ukOvernightFrame(choice, phase, sharingActive, exported) {
   return { time, soc, direction, status };
 }
 
+// Workshop arithmetic, not a tariff quote or meter reading. Replacing the
+// energy taken from the battery is the comparison cost for the V2H choice.
+export function ukEnergyLedger(choice, phase, exported) {
+  const step = Math.max(0, Math.min(5, phase));
+  const chargedKwh = choice === "protect_trip" || step === 0 ? 0 : ukHomeAssumptions.batteryKwh * (step === 1 ? 5 : 10) / 100;
+  const drawnKwh = choice === "support_home" && exported && step >= 3 ? ukHomeAssumptions.batteryKwh * 5 / 100 : 0;
+  const homeKwh = Number((drawnKwh * ukHomeAssumptions.homeDeliveryRatio).toFixed(1));
+  const avoidedPounds = Number((homeKwh * ukHomeAssumptions.importPence / 100).toFixed(2));
+  const replacementPounds = Number((drawnKwh * ukHomeAssumptions.replacementPence / 100).toFixed(2));
+  return { chargedKwh, drawnKwh, homeKwh, avoidedPounds, replacementPounds,
+    differencePounds: Number((avoidedPounds - replacementPounds).toFixed(2)) };
+}
+
 export function ukEnergyCard(choice, phase, sharingActive, exported, running = false) {
   const frame = ukOvernightFrame(choice, phase, sharingActive, exported);
+  const ledger = ukEnergyLedger(choice, phase, exported);
   const active = frame.direction !== "idle";
   const flowLabel = frame.direction === "home" ? "Vehicle sends energy to home" : frame.direction === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
   const left = frame.direction === "home" ? ["🚐", "Vehicle"] : ["⚡", "Grid"];
@@ -99,7 +114,15 @@ export function ukEnergyCard(choice, phase, sharingActive, exported, running = f
     <div class="demo-flow ${active && running ? "" : "idle"}" data-uk-flow role="img" aria-label="${flowLabel}"><span data-uk-from>${left[0]}<small>${left[1]}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span data-uk-to>${right[0]}<small>${right[1]}</small></span></div>
     <p class="night-direction" data-uk-direction>${flowLabel}</p>
     <p class="demo-state" data-uk-status>${frame.status}</p>
-    <p class="study-note">Household essential loads and backup threshold are a workshop discussion point; no household value or live tariff is connected. All battery values above are illustrative.</p>
+    <h3>Energy and value in this example</h3>
+    <div class="night-ledger" aria-label="Illustrative overnight energy ledger">
+      <div><span>Stored in car while charging</span><strong data-uk-charged>${ledger.chargedKwh.toFixed(1)} kWh</strong></div>
+      <div><span>Taken from car for V2H</span><strong data-uk-drawn>${ledger.drawnKwh.toFixed(1)} kWh</strong></div>
+      <div><span>Delivered to house</span><strong data-uk-home>${ledger.homeKwh.toFixed(1)} kWh</strong></div>
+      <div><span>Illustrative energy cost difference</span><strong data-uk-difference>£${ledger.differencePounds.toFixed(2)}</strong></div>
+    </div>
+    <p class="night-equation" data-uk-equation>House import avoided: £${ledger.avoidedPounds.toFixed(2)} − battery energy replacement: £${ledger.replacementPounds.toFixed(2)} = £${ledger.differencePounds.toFixed(2)}.</p>
+    <p class="study-note">Illustrative assumptions: ${ukHomeAssumptions.batteryKwh} kWh usable car battery; 5 percentage points = ${(ukHomeAssumptions.batteryKwh * 0.05).toFixed(1)} kWh taken from the car; ${ukHomeAssumptions.homeDeliveryRatio * 100}% reaches the house; household electricity ${ukHomeAssumptions.importPence}p/kWh and replacement battery energy ${ukHomeAssumptions.replacementPence}p/kWh. The comparison excludes recharge losses, battery wear and fees. It is not a measured saving or a live tariff. Household essential-load protection still needs a separately agreed rule.</p>
     <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 5 ? "Replay overnight example" : running ? "Pause example" : phase === 0 ? "Run overnight example" : "Resume example"}</button>
       <button type="button" class="secondary" data-uk-night-step ${running || phase === 5 ? "hidden" : ""}>Next checkpoint</button>
       <button type="button" class="secondary" data-uk-night-skip ${phase === 5 ? "hidden" : ""}>Skip to morning</button>

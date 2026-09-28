@@ -54,6 +54,11 @@
 .night-timeline span { padding: .5rem .1rem; border-top: 3px solid #8fa9a1; text-align: center; font-size: .84rem; font-weight: 600; }
 .night-timeline .current { border-color: #0b5d4b; background: #e6f5ef; font-weight: 800; }
 .night-direction { text-align: center; font-weight: 750; margin: .7rem 0; }
+.night-ledger { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.night-ledger > div { display: grid; align-content: space-between; gap: .3rem; padding: .8rem; border: 1px solid #87aaa0; border-radius: .7rem; background: #fff; }
+.night-ledger strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.night-ledger span { font-weight: 600; }
+.night-equation { padding: .75rem; border-left: .3rem solid #0b5d4b; background: #e6f5ef; line-height: 1.45; }
 .overnight-card .home-battery { height: 1.8rem; }
 .overnight-card .home-reserves strong { font-size: 2rem; }
 .overnight-card .demo-flow { min-height: 6rem; }
@@ -68,7 +73,7 @@ body.high-contrast .study-option { border-color: currentColor; }
 body.high-contrast .study-option:has(input:checked) { background: #111; color: #fff; }
 body.high-contrast .site-demo-card, body.high-contrast .charging-window, body.high-contrast .demo-permission, body.high-contrast .demo-state, body.high-contrast .bay-track, body.high-contrast .demo-flow { background: #111; color: #fff; border-color: #ffe600; }
 body.high-contrast .charging-window.selected { box-shadow: inset 0 0 0 2px #ffe600; }
-body.high-contrast .home-layout, body.high-contrast .home-parking, body.high-contrast .home-reserves > div, body.high-contrast .home-battery { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .home-layout, body.high-contrast .home-parking, body.high-contrast .home-reserves > div, body.high-contrast .home-battery, body.high-contrast .night-ledger > div, body.high-contrast .night-equation { background: #111; color: #fff; border-color: #ffe600; }
 body.high-contrast .home-pad { color: #ffe600; }
 body.high-contrast .home-battery > span { background: #ffe600; }
 body.high-contrast .home-battery::after { border-color: #fff; }
@@ -81,3 +86,4 @@ body.high-contrast .night-timeline .current { border-color: #ffe600; }
 #generated { margin-top: 1.5rem; }
 #copyStatus { min-height: 1.5rem; }
 @media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } .charging-windows { grid-template-columns: 1fr; } .charging-window { min-height: 0; } .site-demo-card .alignment-controls button { width: 100%; } .home-layout { min-height: 10rem; } .home-house { font-size: 3.2rem; } .home-vehicle { font-size: 2.6rem; } .night-timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .night-ledger { grid-template-columns: 1fr; } }

@@ -1,7 +1,7 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
 import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveWorkshopMode } from "./v13-questions.js";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
-import { grTimingCard, grEnergyCard, ukAlignmentCard, ukStreetChargeCard, ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukRecoveryCard } from "./v13-site-visuals.js";
+import { grTimingCard, grEnergyCard, ukAlignmentCard, ukStreetChargeCard, ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger, ukRecoveryCard } from "./v13-site-visuals.js";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -91,6 +91,7 @@ function updateUkEnergy() {
   const card = screen.querySelector(".overnight-card");
   if (!card) return;
   const frame = ukOvernightFrame(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported);
+  const ledger = ukEnergyLedger(values.scenario_choice, ukOvernightPhase, ukHomeExported);
   const effectiveDirection = ukCycleRunning && ukOvernightPhase === 0 && values.scenario_choice !== "protect_trip" ? "charge" : frame.direction;
   const direction = effectiveDirection === "home" ? "Vehicle sends energy to home" : effectiveDirection === "charge" ? "Grid charges vehicle" : "No energy transfer is active";
   const paused = !ukCycleRunning && ukOvernightPhase > 0 && ukOvernightPhase < 5;
@@ -106,6 +107,11 @@ function updateUkEnergy() {
   card.querySelector("[data-uk-to]").innerHTML = effectiveDirection === "home" ? "🏠<small>Home</small>" : "🚐<small>Vehicle</small>";
   card.querySelector("[data-uk-direction]").textContent = paused ? "Paused · no energy transfer" : direction;
   card.querySelector("[data-uk-status]").textContent = paused ? `Session paused at ${frame.time}. Vehicle battery ${frame.soc}%; no energy transfer. The 65% trip reserve remains protected.` : ukCycleRunning && ukOvernightPhase === 0 ? values.scenario_choice === "protect_trip" ? "Monitoring the parked vehicle; its 70% charge remains protected for the next trip." : "Charging started at the home setting. Vehicle battery is 70%; next checkpoint 23:00." : frame.status;
+  card.querySelector("[data-uk-charged]").textContent = `${ledger.chargedKwh.toFixed(1)} kWh`;
+  card.querySelector("[data-uk-drawn]").textContent = `${ledger.drawnKwh.toFixed(1)} kWh`;
+  card.querySelector("[data-uk-home]").textContent = `${ledger.homeKwh.toFixed(1)} kWh`;
+  card.querySelector("[data-uk-difference]").textContent = `£${ledger.differencePounds.toFixed(2)}`;
+  card.querySelector("[data-uk-equation]").textContent = `House import avoided: £${ledger.avoidedPounds.toFixed(2)} − battery energy replacement: £${ledger.replacementPounds.toFixed(2)} = £${ledger.differencePounds.toFixed(2)}.`;
   card.querySelectorAll("[data-uk-checkpoint]").forEach(item => item.classList.toggle("current", Number(item.dataset.ukCheckpoint) === ukOvernightPhase));
   card.querySelector("[data-uk-night]").textContent = ukOvernightPhase === 5 ? "Replay overnight example" : ukCycleRunning ? "Pause example" : ukOvernightPhase === 0 ? "Run overnight example" : "Resume example";
   card.querySelector("[data-uk-night-step]").hidden = ukCycleRunning || ukOvernightPhase === 5;
@@ -195,7 +201,10 @@ function render() {
     body += buttonRow(mode === "research" && config.collection_enabled ? "Submit response" : "Finish preview");
   } else {
     body += `<h1>${submitted ? "Thank you — response recorded" : mode === "demo" ? demoText("Demo complete", "Esittely valmis") : "Workshop preview complete"}</h1><p>${submitted ? "Your anonymous response was stored." : demoText("No research response was sent or stored.", "Tutkimusvastauksia ei lähetetty eikä tallennettu." )}</p>${submissionId ? `<p>Submission ID: ${esc(submissionId)}</p>` : ""}`;
-    if (variant === "uk-v2h" && !submitted) body += `<p class="study-note">Street WPT recovery: ${esc(site.recoveryOptions.find(([key]) => key === values.recovery_choice)?.[1] || "not selected")}. Separate overnight home plan: ${esc(site.scenarioOptions.find(([key]) => key === values.scenario_choice)?.[1] || "not selected")}. Illustrative morning vehicle charge: ${ukOvernightFrame(values.scenario_choice, 5, ukHomeSharing, ukHomeExported).soc}% (protected reserve 65%).</p>`;
+    if (variant === "uk-v2h" && !submitted) {
+      const ledger = ukEnergyLedger(values.scenario_choice, 5, ukHomeExported);
+      body += `<p class="study-note">Street WPT recovery: ${esc(site.recoveryOptions.find(([key]) => key === values.recovery_choice)?.[1] || "not selected")}. Separate overnight home plan: ${esc(site.scenarioOptions.find(([key]) => key === values.scenario_choice)?.[1] || "not selected")}. Illustrative morning vehicle charge: ${ukOvernightFrame(values.scenario_choice, 5, ukHomeSharing, ukHomeExported).soc}% (protected reserve 65%). In the home example, ${ledger.drawnKwh.toFixed(1)} kWh was taken from the car and ${ledger.homeKwh.toFixed(1)} kWh reached the house. Illustrative energy cost difference: £${ledger.differencePounds.toFixed(2)}, before recharge losses, wear and fees.</p>`;
+    }
   }
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => { collect(); stopUkCycle(); stage -= 1; render(); });
