@@ -10,7 +10,7 @@ export const GR_TASK_ITEMS = Object.freeze([
 ]);
 
 export const GR_COMPREHENSION = Object.freeze([
-  ["Does choosing a charging time or a fictional contract card authorise this session's V2G export?", [["yes", "Yes"], ["no", "No; session permission is separate"], ["unsure", "Not sure"]]],
+  ["Does choosing a charging time or an illustrative V2G offer alone enable this session's export?", [["yes", "Yes"], ["no", "No; accepting the limits and enabling this stop is separate"], ["unsure", "Not sure"]]],
   ["Does a higher renewable-availability signal prove which electricity reached the car?", [["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]]],
   ["When a later window cannot meet the departure margin, what should the app do?", [["earlier", "Offer an earlier feasible charging window"], ["export", "Start exporting the car's energy"], ["ignore", "Ignore the departure"], ["unsure", "Not sure"]]],
   ["Does the example gross export payment include battery wear and all fees?", [["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]]]

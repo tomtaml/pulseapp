@@ -1,12 +1,12 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
-import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js";
+import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260929c";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260929b";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260929c";
 import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
-import { GR_TASK_ITEMS, GR_COMPREHENSION } from "./v13-gr-instrument.js";
+import { GR_TASK_ITEMS, GR_COMPREHENSION } from "./v13-gr-instrument.js?v=20260929c";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -47,6 +47,7 @@ let grExportTimer = null;
 let grLeftEarly = false;
 let grAssistedFallback = false;
 let grOfferChoice = null;
+let grV2gEnabled = false;
 let ukParking = initialUkParking();
 let ukParkingTimer = null;
 let ukOvernightPhase = 0;
@@ -95,7 +96,7 @@ function energyPreview() {
     return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
-    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, exportStep: grExportStep, exportedKwh: grExported, delayMinutes: 30 });
+    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, v2gEnabled: grV2gEnabled, facilitatorControls: mode !== "demo", exportStep: grExportStep, exportedKwh: grExported, delayMinutes: 30 });
   }
   return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning, ukMorningMinimum);
 }
@@ -137,23 +138,38 @@ function grParkingAction(action) {
   if (grParking.stage === "aligned") screen.querySelector('[data-action="next"]')?.focus();
 }
 
-function resetGrSession() {
+function resetGrSession(preservePlan = false) {
   stopGrTimers();
   grPhase = 0;
   grPermission = "off";
   grExported = 0;
   grExportStep = 0;
   grLeftEarly = false;
-  grOfferChoice = null;
+  if (!preservePlan) { grOfferChoice = null; grV2gEnabled = false; values.recovery_choice = null; }
 }
 
 function grNextCheckpoint() {
   if (grPhase >= 4) return;
   grPhase += 1;
   grLeftEarly = false;
-  if (grPhase === 4) grRunning = false;
+  if (grPhase === 4) {
+    grRunning = false;
+    if (grCanExport(grOfferChoice, grV2gEnabled, grReserve, grDeparture)) {
+      grPermission = "scheduled";
+      grExportStep = 0;
+      grExported = 0;
+      grExportTimer = setTimeout(grStartExport, 2200);
+    }
+  }
   render();
   if (grRunning) grTimer = setTimeout(grNextCheckpoint, 1250);
+}
+
+function grStartExport() {
+  if (grPermission !== "scheduled") return;
+  grPermission = "active";
+  render();
+  grExportTimer = setTimeout(grNextExport, 1800);
 }
 
 function grNextExport(manual = false) {
@@ -164,6 +180,13 @@ function grNextExport(manual = false) {
   render();
   if (grPermission === "active") grExportTimer = setTimeout(grNextExport, 1800);
   else if (manual) screen.querySelector('[data-gr-session="step_export"]')?.focus();
+}
+
+function grRecoveryNotice() {
+  if (!["charge_now", "contact_provider"].includes(values.recovery_choice)) return "";
+  const planned = grWindow(values.scenario_choice, grDeparture);
+  const fallback = grWindow("charge_now", grDeparture, 30);
+  return `<p class="study-note">${planned.id === "charge_now" ? "The charge-now schedule remains selected." : `This replaces ${planned.label.toLowerCase()} with charge now.`} After the illustrated 30-minute delay, charge is ready at ${fallback.ready} and costs an example €${fallback.cost.toFixed(2)}. Your V2G offer, ${grReserve}% reserve and ${grDeparture} departure limits remain as confirmed. Opening the energy session accepts this revised charging schedule in the simulation.</p>`;
 }
 
 function stopUkCycle() {
@@ -299,13 +322,13 @@ function render() {
   } else if (page === "scenario") {
     body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
-    if (variant === "gr-prosumer") body += grPlanCard(values.scenario_choice, grReserve, grDeparture);
+    if (variant === "gr-prosumer") body += grPlanCard(values.scenario_choice, grReserve, grDeparture, grOfferChoice, grV2gEnabled);
     else body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>`;
-    body += buttonRow();
+    body += buttonRow(variant === "gr-prosumer" ? "Confirm session plan" : demoText("Continue", "Jatka"));
   } else if (page === "energy") {
-    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : variant === "gr-prosumer" ? "Charge the car, then consider V2G" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Choose the minimum car charge needed for the morning. In this simulation home support is authorised, the car charges from 50% to 80%, then supplies some household demand only above your chosen minimum. Run, pause or step through the night; stop home support whenever needed. Actual compatibility, household backup rules and tariffs require site confirmation." : variant === "gr-prosumer" ? `For this workshop example, assume the start delay was resolved after 30 minutes; contacting support alone would not guarantee that result.${grAssistedFallback ? " The support path now illustrates an earlier charge-now fallback; no request was sent." : ""} Watch charging in this same stop. Afterward a separate V2G offer can be declined or stopped; the next-trip minimum remains protected.` : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${variant === "gr-prosumer" && grLeftEarly ? `<p class="study-note" role="status">${grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30).soc < grReserve ? `Charging stopped before your ${grReserve}% next-trip minimum. Resume charging or ask for help before relying on this plan.` : `Charging stopped early at ${grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30).soc}%; the ${grReserve}% minimum is retained. No export is permitted.`}</p>` : ""}${buttonRow()}`;
+    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : variant === "gr-prosumer" ? "One parked energy session" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Choose the minimum car charge needed for the morning. In this simulation home support is authorised, the car charges from 50% to 80%, then supplies some household demand only above your chosen minimum. Run, pause or step through the night; stop home support whenever needed. Actual compatibility, household backup rules and tariffs require site confirmation." : variant === "gr-prosumer" ? `For this workshop example, assume the start delay was resolved after 30 minutes; contacting support alone would not guarantee that result.${grAssistedFallback ? " The support path now illustrates an earlier charge-now fallback; no request was sent." : ""} The V2G plan was enabled or declined before starting. Run one parked session to see charging followed by any permitted export; the next-trip minimum remains protected.` : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${variant === "gr-prosumer" && grLeftEarly ? `<p class="study-note" role="status">${grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30).soc < grReserve ? `Charging stopped before your ${grReserve}% next-trip minimum. Resume charging or ask for help before relying on this plan.` : `Charging stopped early at ${grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30).soc}%; the ${grReserve}% minimum is retained. No export is permitted.`}</p>` : ""}${buttonRow()}`;
   } else if (page === "recovery") {
-    body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p>${variant === "gr-prosumer" ? `<div class="site-demo-card"><strong>Before the charging window starts</strong><p>At the same bay, a hot-weather start delay holds the car at 45%. The selected ${grWindow(values.scenario_choice, grDeparture).label.toLowerCase()} window may be missed. A retry is shown with a 30-minute delay: ready at ${grWindow(values.scenario_choice, grDeparture, 30).ready}, ${grWindow(values.scenario_choice, grDeparture, 30).feasible ? "within" : "past"} the ${grDeparture} departure margin. The ${grReserve}% minimum remains a goal, not a guarantee; no V2G is permitted.</p></div>` : ""}<fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",siteCopy.recoveryOptions)}</fieldset>${variant === "gr-prosumer" && values.recovery_choice === "contact_provider" ? `<p class="study-note">No support request was sent. The next screen uses a hypothetical 30-minute assisted charge-now fallback. Discuss an accessible phone route and who is responsible if energy is missed.</p>` : ""}${buttonRow(nextLabel())}`;
+    body += `<h1>${demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p>${variant === "gr-prosumer" ? `<div class="site-demo-card"><strong>Before the charging window starts</strong><p>At the same bay, a hot-weather start delay holds the car at 45%. The selected ${grWindow(values.scenario_choice, grDeparture).label.toLowerCase()} window may be missed. A retry is shown with a 30-minute delay: ready at ${grWindow(values.scenario_choice, grDeparture, 30).ready}, ${grWindow(values.scenario_choice, grDeparture, 30).feasible ? "within" : "past"} the ${grDeparture} departure margin. No energy moves during the delay. The accepted V2G plan stays conditional on charging, the ${grReserve}% minimum and the ${grDeparture} departure.</p></div>` : ""}<fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",variant === "gr-prosumer" && values.scenario_choice === "charge_now" ? siteCopy.recoveryOptions.filter(([action]) => action !== "charge_now") : siteCopy.recoveryOptions)}</fieldset>${variant === "gr-prosumer" ? grRecoveryNotice() : ""}${variant === "gr-prosumer" && values.recovery_choice === "contact_provider" ? `<p class="study-note">No support request was sent. The next screen uses a hypothetical 30-minute assisted charge-now fallback. Discuss an accessible phone route and who is responsible if energy is missed.</p>` : ""}${buttonRow(variant === "gr-prosumer" ? "Open energy session" : nextLabel())}`;
   } else if (page === "uk_probes") {
     body += `<h1>Oxfordshire task experience</h1><p class="lead">Think about the home parking and V2H example you just used. These are draft workshop questions about accessible positioning, recovery, reserves and control. You may leave an item unanswered.</p>`;
     body += ukTaskItems(ukParking.manualUsed).map(item => scale(item.key, item.label)).join("") + buttonRow(nextLabel());
@@ -335,7 +358,7 @@ function render() {
       const frame = grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30);
       const window = grWindow(values.scenario_choice, grDeparture, 30);
       const offer = GR_OFFER_TERMS[grOfferChoice];
-      body += `<div class="site-demo-card"><h2>Illustrative stop summary</h2><p>${grParking.manualUsed ? "Driver-controlled arrows followed the shared-path check." : "Guided parking resumed after the shared-path check."} ${esc(window.label)} finished with ${frame.soc}% in the car; chosen next-trip minimum ${grReserve}% and departure ${grDeparture}. ${frame.storedKwh.toFixed(1)} kWh was charged at an example cost of €${(frame.storedKwh * window.rate).toFixed(2)}.</p><p>${offer ? `${esc(offer.label)} was considered. ${frame.exportedKwh > 0 ? `${frame.exportedKwh.toFixed(1)} kWh was exported with separate session permission; example gross credit €${(frame.exportedKwh * offer.rate).toFixed(2)}.` : "No energy was exported without a separate session action."}` : grOfferChoice === "none" ? "No V2G export was chosen." : grLeftEarly ? "Charging stopped early; no V2G offer was taken." : "No V2G offer was available for the chosen departure or reserve."}</p><p class="study-note">This is an on-screen practice summary, not a WTP/WTA estimate, real contract or stored participant record.</p></div>`;
+      body += `<div class="site-demo-card"><h2>Illustrative stop summary</h2><p>${grParking.manualUsed ? "Driver-controlled arrows followed the shared-path check." : "Guided parking resumed after the shared-path check."} The ${esc(window.label.toLowerCase())} plan ended with ${frame.soc}% in the car; chosen next-trip minimum ${grReserve}% and departure ${grDeparture}. ${frame.storedKwh.toFixed(1)} kWh was charged at an example cost of €${(frame.storedKwh * window.rate).toFixed(2)}.</p><p>${offer ? `${esc(offer.label)} was enabled within the stated limits before the session. ${frame.exportedKwh > 0 ? `${frame.exportedKwh.toFixed(1)} kWh was exported under those limits; example gross credit €${(frame.exportedKwh * offer.rate).toFixed(2)}.` : grLeftEarly ? "The car left before V2G; no energy was exported." : "V2G was stopped before energy moved."}` : grOfferChoice === "none" ? "Charging only was chosen; no V2G export occurred." : grLeftEarly ? "Charging stopped early; no V2G export occurred." : "No V2G offer was available for the chosen departure or reserve."}</p><p class="study-note">This is an on-screen practice summary, not a WTP/WTA estimate, real contract or stored participant record.</p></div>`;
     }
   }
   screen.innerHTML = body;
@@ -378,20 +401,25 @@ function render() {
       else { grRunning = true; grLeftEarly = false; grTimer = setTimeout(grNextCheckpoint, 1250); }
     } else if (action === "step") grNextCheckpoint();
     else if (action === "leave") { clearTimeout(grTimer); grRunning = false; grLeftEarly = true; }
-    else if (action === "allow" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && ["offer_a", "offer_b"].includes(grOfferChoice)) { grPermission = "active"; grExportStep = 0; grExported = 0; grExportTimer = setTimeout(grNextExport, 1800); }
     else if (action === "pause_export" && grPermission === "active") { clearTimeout(grExportTimer); grPermission = "paused"; }
     else if (action === "resume_export" && grPermission === "paused") { grPermission = "active"; grExportTimer = setTimeout(grNextExport, 1800); }
     else if (action === "step_export" && grPermission === "paused") return grNextExport(true);
+    else if (action === "cancel_export" && grPermission === "scheduled") { clearTimeout(grExportTimer); grPermission = "canceled"; }
     else if (action === "stop_export" && ["active", "paused"].includes(grPermission)) { clearTimeout(grExportTimer); grPermission = "stopped"; }
     render();
-    screen.querySelector(`[data-gr-session="${({ allow: "pause_export", pause_export: "resume_export", resume_export: "pause_export" })[action] || action}"]`)?.focus();
+    screen.querySelector(`[data-gr-session="${({ pause_export: "resume_export", resume_export: "pause_export" })[action] || action}"]`)?.focus();
   }));
   screen.querySelectorAll('input[name="offer_choice"]').forEach(input => input.addEventListener("change", () => {
-    if (grPermission !== "off") return;
     grOfferChoice = input.value;
+    grV2gEnabled = false;
     render();
     screen.querySelector(`input[name="offer_choice"][value="${grOfferChoice}"]`)?.focus();
   }));
+  screen.querySelector('[data-gr-consent]')?.addEventListener("change", event => {
+    grV2gEnabled = event.currentTarget.checked;
+    render();
+    screen.querySelector('[data-gr-consent]')?.focus();
+  });
   screen.querySelectorAll("[data-align]").forEach(button => button.addEventListener("click", () => {
     fleetState.alignment_stage = button.dataset.align === "guided" ? "guided" : "aligned";
     fleetState.alignment_completed = button.dataset.align === "auto";
@@ -470,12 +498,14 @@ function valid() {
   if (page === "gr_arrival" && grParking.stage !== "aligned") return "Complete the shared-path check and align the car before continuing.";
   if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
   if (page === "scenario" && variant === "gr-prosumer" && !grWindow(values.scenario_choice, grDeparture).feasible) return "That window cannot meet the chosen departure margin. Choose an earlier window.";
+  if (page === "scenario" && variant === "gr-prosumer" && grDeparture === "17:30" && grReserve < 80 && !grOfferChoice) return "Choose an illustrative V2G plan or Charging only before confirming this session.";
+  if (page === "scenario" && variant === "gr-prosumer" && GR_OFFER_TERMS[grOfferChoice] && !grV2gEnabled) return "Accept the displayed reserve, export cap and departure limits to enable this V2G plan, or choose Charging only.";
   if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 7) return "Run, step through or skip the overnight example to morning before continuing.";
   if (page === "energy" && variant === "gr-prosumer" && grPhase !== 4 && (!grLeftEarly || grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc < grReserve)) return "Reach the next-trip minimum before finishing. Run or step through charging; you may stop early once the minimum is reached.";
-  if (page === "energy" && variant === "gr-prosumer" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && !grOfferChoice) return "Choose Offer A, Offer B or No V2G export before continuing. This is a practice choice and does not authorise export.";
-  if (page === "energy" && variant === "gr-prosumer" && ["active", "paused"].includes(grPermission)) return "Finish or stop the V2G example before continuing. Your next-trip minimum stays protected.";
+  if (page === "energy" && variant === "gr-prosumer" && ["scheduled", "active", "paused"].includes(grPermission)) return "Finish, cancel or stop the V2G example before continuing. Your next-trip minimum stays protected.";
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
-  if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "retry" && !grWindow(values.scenario_choice, grDeparture, 30).feasible) return "Retry after the 30-minute delay would miss your departure margin. Choose Charge now or discuss support.";
+  if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "retry" && !grWindow(values.scenario_choice, grDeparture, 30).feasible) return "Retry after the 30-minute delay would miss your departure margin. Switch to an earlier start or discuss support.";
+  if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "charge_now" && values.scenario_choice === "charge_now") return "Charge now is already selected. Retry the delayed start or discuss support.";
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
   if (page === "sus" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
   if (page === "outcomes" && [...COMMON_QUESTIONS.map(([key])=>key),...outcomeKeys()].some(key => !values[key])) return "Rate all statements before continuing.";
@@ -511,7 +541,7 @@ async function next() {
   if (currentPage() === "recovery" && variant === "gr-prosumer") {
     grAssistedFallback = values.recovery_choice === "contact_provider";
     if (["charge_now", "contact_provider"].includes(values.recovery_choice)) values.scenario_choice = "charge_now";
-    resetGrSession();
+    resetGrSession(true);
   }
   if (currentPage() === "outcomes" && mode === "research" && config.collection_enabled) {
     const token = window.turnstile?.getResponse(tokenWidget);

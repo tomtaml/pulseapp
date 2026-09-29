@@ -109,16 +109,16 @@ export const SITES = Object.freeze({
   },
   "gr-prosumer": {
     title: "Trikala passenger charging", badge: "Greece · passenger · tariff and RES", languages: ["en", "el"],
-    intro: "Try one simulated day with a passenger car parked at a shared wireless bay in Trikala. Guidance pauses for a pedestrian crossing. Set the minimum needed for the next trip, compare three charging windows, and respond to a start delay. Then watch charging and compare two fictional V2G contract offers or choose no export. The illustrated 22 kW AC-side wireless equipment class, power limits, prices and payments are proposals for testing, not verified site equipment or a real contract.",
-    scenario: "The car is parked from 08:45 for a longer daily stop. Set a protected next-trip minimum and departure, then compare price and renewable availability separately. A feasible later window must still leave the car ready in time. V2G may be offered only during a separate 15:00–16:00 period while parked.",
+    intro: "Try one simulated day with a passenger car parked at a shared wireless bay in Trikala. Guidance pauses for a pedestrian crossing. Before starting one energy session, set the next-trip minimum, compare charging windows and accept or decline an illustrative V2G plan with explicit limits. Respond to a start delay, then watch charging and any permitted car-to-grid export in the same parked stop. The illustrated 22 kW AC-side wireless equipment class, power limits, prices and payments are proposals for testing, not verified site equipment or a real contract.",
+    scenario: "The car is parked from 08:45 for a longer daily stop. Set a protected next-trip minimum and departure, compare price and renewable availability, then decide whether to enable V2G within stated limits before starting. A feasible later window must still leave the car ready in time.",
     scenarioOptions: [
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
       ["wait_for_res_surplus", "Wait for the renewable surplus"]
     ],
-    recovery: "On a warm day the chosen wireless charging session is delayed before energy begins to move. Your next trip still needs its protected minimum. How should the plan recover?",
+    recovery: "The confirmed session reports a warm-weather start delay before energy begins to move. Your next trip still needs its protected minimum. How should the scheduled plan recover?",
     recoveryOptions: [
-      ["retry", "Retry the planned session"], ["charge_now", "Charge now for the next trip"],
-      ["contact_provider", "Contact provider about an assisted charge-now fallback"]
+      ["retry", "Retry the planned session"], ["charge_now", "Switch to the earliest available start"],
+      ["contact_provider", "Contact provider about an assisted fallback"]
     ],
     roles: { passenger_prosumer: "Passenger car driver" }
   },

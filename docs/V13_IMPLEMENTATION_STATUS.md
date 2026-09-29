@@ -100,13 +100,13 @@ marker, with Left and Right on the middle row. The Trikala preview now
 implements an illustrative single-stop WPT/charging/V2G journey. It includes
 bay alignment, a protected next trip, feasibility-aware charging windows,
 explicit price and renewable cues, a hot-weather start-delay recovery, a
-five-checkpoint animated charge and a separate declineable/stoppable V2G offer.
+five-checkpoint animated charge and a V2G plan accepted or declined before starting.
 Six optional Trikala task probes and four case-specific understanding questions
 are draft and unscored. The Greek and UK journeys remain preview-only regardless
 of a collection-enabled host, since their workshop tasks are outside the current
 research submission contract. All prices, energy and compensation are fictional
 workshop assumptions pending partner confirmation. The `/v13.html` footer
-shows `V1.3 preview 2026-09-29b` to distinguish the deployed assets from the
+shows `V1.3 preview 2026-09-29c` to distinguish the deployed assets from the
 older preview Worker. A Git pull alone does not update the Worker; redeploy
 `variant-preview/wrangler.jsonc` after these changes land. The V1.2 RC1 Worker
 and its QR target are unchanged.
@@ -118,19 +118,24 @@ AC-side bidirectional WPT class is shown as an unverified ceiling, while the
 mock uses 10.5 kW effective charging and 3 kW reverse flow. After the chosen
 charging window, the car remains parked for a separate V2G period. Two fictional
 contract cards trade gross compensation against the permission arrangement;
-No export remains available. Card selection is a practice choice and does not
-enable sharing without a separate session action. `docs/V13_TRIKALA_DCE_ROUND1.md`
+Charging only remains available. Card selection is a practice choice and does not
+enable sharing without accepting the session limits. `docs/V13_TRIKALA_DCE_ROUND1.md`
 maps the highest-priority WTP/WTA hypotheses to a later balanced T1.2 DCE and
 states why this one app task cannot estimate monetary thresholds. The exact
 T1.2 questionnaire is not in this repository, so attribute levels remain to be
 reconciled. No data is collected by the preview.
 
-The export period now appears as a sixth checkpoint in the same parked-car
-session. After separate permission, the reverse car-to-grid flow stays visible
+The export period appears as a sixth checkpoint in the same parked-car
+session. The offer and explicit permission are chosen before charging. The
+staged start delay then leads into one run: the mock charges the car, shows it
+parked and waiting without energy transfer, then enters export if enabled and
+feasible. Planned export can be canceled before it begins. Reverse car-to-grid flow stays visible
 through four accelerated 15-minute checkpoints. The display updates exported
-kWh, gross credit and vehicle charge; participants can pause, step, resume or
-stop. Charging-only departure and an 80% reserve explain why no export can
-occur. Selecting an offer alone never starts V2G.
+kWh, gross credit and vehicle charge; participants can pause, resume or stop.
+Facilitator checkpoint controls appear only in instrument-review views.
+Charging-only departure and an 80% reserve explain why no export can
+occur. Selecting an offer alone never enables V2G. No standing agreement is
+created by the preview.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and
