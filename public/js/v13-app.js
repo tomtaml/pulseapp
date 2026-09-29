@@ -2,7 +2,8 @@ import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
 import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grArrivalCard, grPlanCard, grEnergyCard, grFrame, grWindow } from "./v13-gr-journey.js";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, GR_OFFER_TERMS } from "./v13-gr-journey.js";
+import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
 import { GR_TASK_ITEMS, GR_COMPREHENSION } from "./v13-gr-instrument.js";
@@ -32,10 +33,10 @@ const fleetState = {
   alignment_stage: "approach", alignment_completed: false,
   current_soc: 55, minimum_soc: 65, dwell_minutes: 90, departure_time: "17:00"
 };
-let grArrival = "approach";
-let grHelpShown = false;
-let grReserve = 60;
-let grDeparture = "22:30";
+let grParking = initialGrParking();
+let grParkingTimer = null;
+let grReserve = 65;
+let grDeparture = "17:30";
 let grPhase = 0;
 let grRunning = false;
 let grTimer = null;
@@ -44,6 +45,7 @@ let grExported = 0;
 let grExportTimer = null;
 let grLeftEarly = false;
 let grAssistedFallback = false;
+let grOfferChoice = null;
 let ukParking = initialUkParking();
 let ukParkingTimer = null;
 let ukOvernightPhase = 0;
@@ -92,7 +94,7 @@ function energyPreview() {
     return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
-    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, exportedKwh: grExported, delayMinutes: 30 });
+    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, exportedKwh: grExported, delayMinutes: 30 });
   }
   return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning, ukMorningMinimum);
 }
@@ -106,12 +108,41 @@ function stopGrTimers() {
   if (grPermission === "active") grPermission = "stopped";
 }
 
+function stopGrParkingTimer() { clearTimeout(grParkingTimer); grParkingTimer = null; }
+function grParkingAction(action) {
+  stopGrParkingTimer();
+  const previous = grParking;
+  grParking = grParkingTransition(grParking, action);
+  render();
+  const car = screen.querySelector(".gr-car");
+  const manualPositions = ["translate(-35px, 10px)", "translate(-20px, -8px)", "translate(-6px, -8px)", "translate(0)"];
+  if (car && action.startsWith("move_") && previous.manualStep !== grParking.manualStep) {
+    const destination = manualPositions[grParking.manualStep];
+    car.style.transform = manualPositions[previous.manualStep];
+    void car.offsetWidth;
+    requestAnimationFrame(() => { if (screen.contains(car)) car.style.transform = destination; });
+  } else if (car && ["moving", "resuming"].includes(grParking.stage)) {
+    const from = grParking.stage === "moving" ? "translate(-105px, 20px)" : "translate(-35px, 10px)";
+    const to = grParking.stage === "moving" ? "translate(-35px, 10px)" : "translate(0)";
+    car.style.transform = from;
+    void car.offsetWidth;
+    requestAnimationFrame(() => { if (screen.contains(car)) car.style.transform = to; });
+  }
+  if (grParking.stage === "moving" || grParking.stage === "resuming") {
+    grParkingTimer = setTimeout(() => grParkingAction(grParking.stage === "moving" ? "pedestrian" : "aligned"), 1600);
+  }
+  if (action.startsWith("move_") && grParking.stage === "manual") screen.querySelector('[data-gr-move].recommended')?.focus();
+  else screen.querySelector('[data-gr-parking]')?.focus();
+  if (grParking.stage === "aligned") screen.querySelector('[data-action="next"]')?.focus();
+}
+
 function resetGrSession() {
   stopGrTimers();
   grPhase = 0;
   grPermission = "off";
   grExported = 0;
   grLeftEarly = false;
+  grOfferChoice = null;
 }
 
 function grNextCheckpoint() {
@@ -125,7 +156,7 @@ function grNextCheckpoint() {
 
 function grNextExport() {
   if (grPermission !== "active") return;
-  const max = Math.max(0, Math.min(3, (75 - grReserve) * 0.6));
+  const max = Math.max(0, Math.min(3, (80 - grReserve) * 0.6));
   grExported = Math.min(max, grExported + 1.5);
   if (grExported >= max) grPermission = "complete";
   render();
@@ -259,7 +290,7 @@ function render() {
     }
     body += buttonRow();
   } else if (page === "gr_arrival") {
-    body += `<h1>Arrive at the Trikala wireless bay</h1><p class="lead">Use one ordinary parked-car stop for charging, an optional separate V2G offer, and a next trip. Check the marked bay before planning energy.</p>${grArrivalCard(grArrival)}${grHelpShown ? `<p class="study-note">Help route to discuss with the site: clear instructions and a phone or assisted contact. This prototype has no connected support channel.</p>` : ""}${buttonRow()}`;
+    body += `<h1>Arrive at the Trikala wireless bay</h1><p class="lead">Park for a longer daily stop at a shared bay. Watch the crossing. In this staged example a pedestrian enters the route, so guided parking stops until you check the path again.</p>${grParkingCard(grParking)}${buttonRow()}`;
   } else if (page === "home_intro") {
     body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. A guided manoeuvre can stop at an obstacle, or guidance can become unavailable. Recheck the route and choose guided parking or the three-step manual arrow controls; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
   } else if (page === "scenario") {
@@ -297,10 +328,16 @@ function render() {
       const ledger = ukEnergyLedger(values.scenario_choice, 7, ukHomeExported, ukMorningMinimum);
       body += `<p class="study-note">${ukParking.obstacleSeen ? "The illustrated obstacle stopped guided parking and was reviewed." : ukParking.guidanceFault ? "Guided parking became unavailable and the route was rechecked." : "The route was checked before parking."} ${ukParking.manualUsed ? "The driver-controlled manoeuvre was completed step by step." : "The guided manoeuvre was completed after the route check."} The simulated V2H session finished at ${ukOvernightFrame(values.scenario_choice, 7, ukHomeSharing, ukHomeExported, ukMorningMinimum).soc}% vehicle charge (chosen morning minimum ${ukMorningMinimum}%). ${ledger.drawnKwh.toFixed(1)} kWh was taken from the car and ${ledger.homeKwh.toFixed(1)} kWh reached the house. Illustrative energy cost difference: £${ledger.differencePounds.toFixed(2)}, before recharge losses, wear and fees.</p>`;
     }
+    if (variant === "gr-prosumer" && !submitted) {
+      const frame = grFrame(values.scenario_choice, grPhase, grReserve, grExported, 30);
+      const window = grWindow(values.scenario_choice, grDeparture, 30);
+      const offer = GR_OFFER_TERMS[grOfferChoice];
+      body += `<div class="site-demo-card"><h2>Illustrative stop summary</h2><p>${grParking.manualUsed ? "Driver-controlled arrows followed the shared-path check." : "Guided parking resumed after the shared-path check."} ${esc(window.label)} finished with ${frame.soc}% in the car; chosen next-trip minimum ${grReserve}% and departure ${grDeparture}. ${frame.storedKwh.toFixed(1)} kWh was charged at an example cost of €${(frame.storedKwh * window.rate).toFixed(2)}.</p><p>${offer ? `${esc(offer.label)} was considered. ${frame.exportedKwh > 0 ? `${frame.exportedKwh.toFixed(1)} kWh was exported with separate session permission; example gross credit €${(frame.exportedKwh * offer.rate).toFixed(2)}.` : "No energy was exported without a separate session action."}` : grOfferChoice === "none" ? "No V2G export was chosen." : grLeftEarly ? "Charging stopped early; no V2G offer was taken." : "No V2G offer was available for the chosen departure or reserve."}</p><p class="study-note">This is an on-screen practice summary, not a WTP/WTA estimate, real contract or stored participant record.</p></div>`;
+    }
   }
   screen.innerHTML = body;
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => {
-    collect(); stopUkCycle(); stopUkParkingTimer(); stopGrTimers();
+    collect(); stopUkCycle(); stopUkParkingTimer(); stopGrTimers(); stopGrParkingTimer();
     if (page === "home_intro" && ["moving", "resuming"].includes(ukParking.stage)) ukParking = ukParkingTransition(ukParking, "stop");
     stage -= 1; render();
   });
@@ -329,14 +366,8 @@ function render() {
     render();
     screen.querySelector('[data-gr-departure]')?.focus();
   });
-  screen.querySelectorAll('[data-gr-arrival]').forEach(button => button.addEventListener("click", () => {
-    const action = button.dataset.grArrival;
-    if (action === "align" || action === "retry") { grArrival = "aligned"; grHelpShown = false; }
-    if (action === "fault") grArrival = "fault";
-    if (action === "help") grHelpShown = true;
-    render();
-    screen.querySelector('[data-gr-arrival]')?.focus();
-  }));
+  screen.querySelectorAll('[data-gr-parking]').forEach(button => button.addEventListener("click", () => grParkingAction(button.dataset.grParking)));
+  screen.querySelectorAll('[data-gr-move]').forEach(button => button.addEventListener("click", () => grParkingAction(`move_${button.dataset.grMove}`)));
   screen.querySelectorAll('[data-gr-session]').forEach(button => button.addEventListener("click", () => {
     const action = button.dataset.grSession;
     if (action === "run") {
@@ -344,12 +375,16 @@ function render() {
       else { grRunning = true; grLeftEarly = false; grTimer = setTimeout(grNextCheckpoint, 1250); }
     } else if (action === "step") grNextCheckpoint();
     else if (action === "leave") { clearTimeout(grTimer); grRunning = false; grLeftEarly = true; }
-    else if (action === "allow" && grPhase === 4 && grReserve < 75) { grPermission = "active"; grExportTimer = setTimeout(grNextExport, 1400); }
-    else if (action === "decline") grPermission = "declined";
+    else if (action === "allow" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && ["offer_a", "offer_b"].includes(grOfferChoice)) { grPermission = "active"; grExportTimer = setTimeout(grNextExport, 1400); }
     else if (action === "stop_export") { clearTimeout(grExportTimer); grPermission = "stopped"; }
-    else if (action === "restart_offer") grPermission = "off";
     render();
-    screen.querySelector(`[data-gr-session="${action}"]`)?.focus();
+    screen.querySelector(`[data-gr-session="${action === "allow" ? "stop_export" : action}"]`)?.focus();
+  }));
+  screen.querySelectorAll('input[name="offer_choice"]').forEach(input => input.addEventListener("change", () => {
+    if (grPermission !== "off") return;
+    grOfferChoice = input.value;
+    render();
+    screen.querySelector(`input[name="offer_choice"][value="${grOfferChoice}"]`)?.focus();
   }));
   screen.querySelectorAll("[data-align]").forEach(button => button.addEventListener("click", () => {
     fleetState.alignment_stage = button.dataset.align === "guided" ? "guided" : "aligned";
@@ -426,11 +461,12 @@ function valid() {
   if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return demoText("Choose a role and acknowledge the information above.", "Valitse rooli ja vahvista, että kyseessä on simulaatio.");
   if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
   if (page === "home_intro" && ukParking.stage !== "parked") return "Complete the surrounding-area check and safely finish the illustrative home parking before continuing.";
-  if (page === "gr_arrival" && grArrival !== "aligned") return "Check the wireless bay and confirm alignment or retry the start before continuing.";
+  if (page === "gr_arrival" && grParking.stage !== "aligned") return "Complete the shared-path check and align the car before continuing.";
   if (page === "scenario" && !values.scenario_choice) return demoText("Choose a session action.", "Valitse latausjakson toimintatapa.");
   if (page === "scenario" && variant === "gr-prosumer" && !grWindow(values.scenario_choice, grDeparture).feasible) return "That window cannot meet the chosen departure margin. Choose an earlier window.";
   if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 7) return "Run, step through or skip the overnight example to morning before continuing.";
   if (page === "energy" && variant === "gr-prosumer" && grPhase !== 4 && (!grLeftEarly || grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc < grReserve)) return "Reach the next-trip minimum before finishing. Run or step through charging; you may stop early once the minimum is reached.";
+  if (page === "energy" && variant === "gr-prosumer" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && !grOfferChoice) return "Choose Offer A, Offer B or No V2G export before continuing. This is a practice choice and does not authorise export.";
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "retry" && !grWindow(values.scenario_choice, grDeparture, 30).feasible) return "Retry after the 30-minute delay would miss your departure margin. Choose Charge now or discuss support.";
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
@@ -483,6 +519,7 @@ async function next() {
   stopUkCycle();
   stopGrTimers();
   stopUkParkingTimer();
+  stopGrParkingTimer();
   stage += 1; render();
 }
 

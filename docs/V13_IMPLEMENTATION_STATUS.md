@@ -106,10 +106,24 @@ are draft and unscored. The Greek and UK journeys remain preview-only regardless
 of a collection-enabled host, since their workshop tasks are outside the current
 research submission contract. All prices, energy and compensation are fictional
 workshop assumptions pending partner confirmation. The `/v13.html` footer
-shows `V1.3 preview 2026-09-28b` to distinguish the deployed assets from the
+shows `V1.3 preview 2026-09-29a` to distinguish the deployed assets from the
 older preview Worker. A Git pull alone does not update the Worker; redeploy
 `variant-preview/wrangler.jsonc` after these changes land. The V1.2 RC1 Worker
 and its QR target are unchanged.
+
+The 29 September Trikala round extends the stop to daily parking, adds a
+pedestrian crossing that pauses illustrative guided positioning, and provides
+the same vertical arrow fallback after rechecking the path. A proposed 22 kW
+AC-side bidirectional WPT class is shown as an unverified ceiling, while the
+mock uses 10.5 kW effective charging and 3 kW reverse flow. After the chosen
+charging window, the car remains parked for a separate V2G period. Two fictional
+contract cards trade gross compensation against the permission arrangement;
+No export remains available. Card selection is a practice choice and does not
+enable sharing without a separate session action. `docs/V13_TRIKALA_DCE_ROUND1.md`
+maps the highest-priority WTP/WTA hypotheses to a later balanced T1.2 DCE and
+states why this one app task cannot estimate monetary thresholds. The exact
+T1.2 questionnaire is not in this repository, so attribute levels remain to be
+reconciled. No data is collected by the preview.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and
