@@ -1,4 +1,4 @@
-import { WORKSHOP_PRESETS } from "./v13-questions.js";
+import { WORKSHOP_PRESETS } from "./v13-questions.js?v=20260929d";
 
 const form = document.querySelector("#workshopSetup");
 const preset = form.elements.preset;
@@ -11,6 +11,9 @@ function updateLanguage() {
   const canUseFinnish = form.elements.site.value === "fi-fleet";
   form.elements.language.querySelector('option[value="fi"]').disabled = !canUseFinnish;
   if (!canUseFinnish) form.elements.language.value = "en";
+  const isTrikala = form.elements.site.value === "gr-prosumer";
+  document.querySelector("#trikalaFaultOption").hidden = !isTrikala;
+  form.elements.trikala_fault.disabled = !isTrikala;
 }
 
 function applyPreset() {
@@ -37,6 +40,7 @@ form.addEventListener("submit", event => {
   for (const key of ["questions", "sus", "scales"]) {
     url.searchParams.set(key, form.elements[key].checked ? "1" : "0");
   }
+  if (form.elements.site.value === "gr-prosumer" && form.elements.trikala_fault.checked) url.searchParams.set("fault", "1");
   previewUrl.value = url.href;
   openPreview.href = url.href;
   copyStatus.textContent = "";

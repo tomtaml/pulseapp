@@ -99,14 +99,15 @@ The Oxfordshire pad now places Forward above and Back below a central vehicle
 marker, with Left and Right on the middle row. The Trikala preview now
 implements an illustrative single-stop WPT/charging/V2G journey. It includes
 bay alignment, a protected next trip, feasibility-aware charging windows,
-explicit price and renewable cues, a hot-weather start-delay recovery, a
+explicit price and renewable cues, an optional next-day start-delay recovery, a
 five-checkpoint animated charge and a V2G plan accepted or declined before starting.
-Six optional Trikala task probes and four case-specific understanding questions
+Five optional Trikala task probes by default, a sixth with the fault exercise,
+and four case-specific understanding questions
 are draft and unscored. The Greek and UK journeys remain preview-only regardless
 of a collection-enabled host, since their workshop tasks are outside the current
 research submission contract. All prices, energy and compensation are fictional
 workshop assumptions pending partner confirmation. The `/v13.html` footer
-shows `V1.3 preview 2026-09-29c` to distinguish the deployed assets from the
+shows `V1.3 preview 2026-09-29d` to distinguish the deployed assets from the
 older preview Worker. A Git pull alone does not update the Worker; redeploy
 `variant-preview/wrangler.jsonc` after these changes land. The V1.2 RC1 Worker
 and its QR target are unchanged.
@@ -127,12 +128,15 @@ reconciled. No data is collected by the preview.
 
 The export period appears as a sixth checkpoint in the same parked-car
 session. The offer and explicit permission are chosen before charging. The
-staged start delay then leads into one run: the mock charges the car, shows it
+clean baseline runs first: the mock charges the car, shows it
 parked and waiting without energy transfer, then enters export if enabled and
 feasible. Planned export can be canceled before it begins. Reverse car-to-grid flow stays visible
 through four accelerated 15-minute checkpoints. The display updates exported
 kWh, gross credit and vehicle charge; participants can pause, resume or stop.
 Facilitator checkpoint controls appear only in instrument-review views.
+The setup page can add `fault=1` to Trikala links for a separate next-day
+start-delay reflection after the baseline. It does not revise the first day's
+schedule, cost or export ledger.
 Charging-only departure and an 80% reserve explain why no export can
 occur. Selecting an offer alone never enables V2G. No standing agreement is
 created by the preview.

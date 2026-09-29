@@ -3,6 +3,7 @@
 .study-options { display: grid; gap: .65rem; margin: 1.4rem 0; }
 .study-option { display: flex; align-items: start; gap: .8rem; padding: .95rem; border: 2px solid #aebfba; border-radius: .7rem; cursor: pointer; line-height: 1.45; }
 .study-option:has(input:checked) { border-color: #0b5d4b; background: #e6f5ef; }
+.study-option[hidden] { display: none; }
 .study-option input { margin-top: .2rem; width: 1.25rem; height: 1.25rem; flex: none; }
 .study-scale { display: flex; gap: .45rem; flex-wrap: wrap; margin: .65rem 0 1.5rem; }
 .study-scale .study-option { min-width: 3.4rem; justify-content: center; }
@@ -46,6 +47,12 @@
 .gr-settings select { min-height: 48px; padding: .45rem; border: 2px solid #527666; border-radius: .4rem; background: #fff; font: inherit; }
 .gr-contract { margin: 1.25rem 0; padding: 1rem; border: 2px solid #87aaa0; border-radius: .75rem; background: #f2f8f5; }
 .gr-contract h3 { margin-top: 0; }
+.gr-offer-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin: .8rem 0; }
+.gr-offer-option { display: grid; align-content: start; gap: .5rem; min-width: 0; padding: .85rem; border: 2px solid #aebfba; border-radius: .7rem; background: #fff; cursor: pointer; }
+.gr-offer-option:has(input:checked) { border-color: #0b5d4b; background: #e6f5ef; box-shadow: inset 0 0 0 1px #0b5d4b; }
+.gr-offer-heading { display: flex; align-items: start; gap: .45rem; min-height: 3.5rem; }
+.gr-offer-heading input { width: 1.25rem; height: 1.25rem; flex: none; margin: .15rem 0 0; }
+.gr-offer-term { display: grid; gap: .15rem; padding-top: .35rem; border-top: 1px solid #aebfba; font-size: .88rem; line-height: 1.4; overflow-wrap: anywhere; }
 .gr-consent { margin-top: 1rem; border-color: #0b5d4b; }
 .gr-plan-confirmation { padding: .65rem; border-left: .25rem solid #0b5d4b; background: #fff; font-weight: 700; }
 .gr-plan details summary, .gr-session details summary { cursor: pointer; font-weight: 700; }
@@ -140,7 +147,8 @@ body.high-contrast .study-status { background: #111; color: #fff; border-color: 
 body.high-contrast .study-error { color: #ff9292; }
 body.high-contrast .study-option { border-color: currentColor; }
 body.high-contrast .study-option:has(input:checked) { background: #111; color: #fff; }
-body.high-contrast .site-demo-card, body.high-contrast .charging-window, body.high-contrast .demo-permission, body.high-contrast .demo-state, body.high-contrast .demo-flow, body.high-contrast .home-safety-list, body.high-contrast .gr-export-progress, body.high-contrast .gr-contract, body.high-contrast .gr-plan-confirmation { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .site-demo-card, body.high-contrast .charging-window, body.high-contrast .demo-permission, body.high-contrast .demo-state, body.high-contrast .demo-flow, body.high-contrast .home-safety-list, body.high-contrast .gr-export-progress, body.high-contrast .gr-contract, body.high-contrast .gr-offer-option, body.high-contrast .gr-plan-confirmation { background: #111; color: #fff; border-color: #ffe600; }
+body.high-contrast .gr-offer-term { border-color: #ffe600; }
 body.high-contrast .gr-direction { color: #ffe600; }
 body.high-contrast .charging-window.selected { box-shadow: inset 0 0 0 2px #ffe600; }
 body.high-contrast .charging-window.unavailable, body.high-contrast .gr-bay, body.high-contrast .gr-settings select, body.high-contrast .gr-timeline .current { background: #111; color: #fff; border-color: #ffe600; }
@@ -166,5 +174,5 @@ body.high-contrast .night-timeline .current { border-color: #ffe600; }
 #workshopSetup .study-option input { min-height: 1.25rem; }
 #generated { margin-top: 1.5rem; }
 #copyStatus { min-height: 1.5rem; }
-@media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } .charging-windows { grid-template-columns: 1fr; } .charging-window { min-height: 0; } .site-demo-card .alignment-controls button { width: 100%; } .home-layout { min-height: 10rem; } .home-house { font-size: 3.2rem; } .home-vehicle { font-size: 2.6rem; } .night-timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); } .gr-timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } .charging-windows, .gr-offer-grid { grid-template-columns: 1fr; } .charging-window { min-height: 0; } .gr-offer-heading { min-height: 0; } .site-demo-card .alignment-controls button { width: 100%; } .home-layout { min-height: 10rem; } .home-house { font-size: 3.2rem; } .home-vehicle { font-size: 2.6rem; } .night-timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); } .gr-timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 420px) { .night-ledger { grid-template-columns: 1fr; } }

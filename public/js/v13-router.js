@@ -7,5 +7,5 @@ if (!variant || !["gr-prosumer", "uk-v2h"].includes(variant)) {
   for (const key of ["ops", "dev", "synthetic"]) target.searchParams.delete(key);
   location.replace(target.href);
 } else {
-  import("./v13-app.js?v=20260929c");
+  import("./v13-app.js?v=20260929d");
 }

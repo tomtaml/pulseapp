@@ -17,10 +17,10 @@ export function resolveWorkshopView(params) {
   return { modules, workshopOnly };
 }
 
-export function workshopPages(variant, participantGroup, modules, profiles) {
+export function workshopPages(variant, participantGroup, modules, profiles, grFaultExercise = false) {
   const pages = variant === "uk-v2h"
     ? ["intro", "home_intro", "energy"]
-    : variant === "gr-prosumer" ? ["intro", "gr_arrival", "scenario", "recovery", "energy"]
+    : variant === "gr-prosumer" ? ["intro", "gr_arrival", "scenario", "energy", ...(grFaultExercise ? ["recovery"] : [])]
     : ["intro", "alignment", "scenario", "energy", "recovery"];
   if (modules.questions && variant === "uk-v2h") pages.push("uk_probes");
   if (modules.questions && variant === "gr-prosumer") pages.push("gr_probes");
@@ -109,13 +109,13 @@ export const SITES = Object.freeze({
   },
   "gr-prosumer": {
     title: "Trikala passenger charging", badge: "Greece · passenger · tariff and RES", languages: ["en", "el"],
-    intro: "Try one simulated day with a passenger car parked at a shared wireless bay in Trikala. Guidance pauses for a pedestrian crossing. Before starting one energy session, set the next-trip minimum, compare charging windows and accept or decline an illustrative V2G plan with explicit limits. Respond to a start delay, then watch charging and any permitted car-to-grid export in the same parked stop. The illustrated 22 kW AC-side wireless equipment class, power limits, prices and payments are proposals for testing, not verified site equipment or a real contract.",
+    intro: "Try one simulated day with a passenger car parked at a shared wireless bay in Trikala. Guidance pauses for a pedestrian crossing. Set the next-trip minimum, compare charging windows, and choose whether to enable an illustrative V2G plan. Watch the car charge and, only after reaching its target, optionally send energy to the grid. A facilitator may add a separate next-day start-delay exercise. The illustrated equipment, power limits, prices and payments are proposals for testing, not verified site equipment or a real contract.",
     scenario: "The car is parked from 08:45 for a longer daily stop. Set a protected next-trip minimum and departure, compare price and renewable availability, then decide whether to enable V2G within stated limits before starting. A feasible later window must still leave the car ready in time.",
     scenarioOptions: [
       ["charge_now", "Charge now"], ["wait_for_lower_tariff", "Wait for the lower tariff"],
       ["wait_for_res_surplus", "Wait for the renewable surplus"]
     ],
-    recovery: "The confirmed session reports a warm-weather start delay before energy begins to move. Your next trip still needs its protected minimum. How should the scheduled plan recover?",
+    recovery: "Imagine a new stop on another warm day. The charging start is delayed before energy moves. Your next trip still needs its protected minimum. How should that day's plan recover?",
     recoveryOptions: [
       ["retry", "Retry the planned session"], ["charge_now", "Switch to the earliest available start"],
       ["contact_provider", "Contact provider about an assisted fallback"]

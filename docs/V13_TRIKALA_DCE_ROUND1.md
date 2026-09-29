@@ -22,7 +22,7 @@ Do not infer monetary thresholds from a single scripted app choice or from SUS/t
 
 ## One app practice choice (what is built)
 
-The single stop assumes arrival 08:45, an illustrative 60 kWh usable battery at 45%, target 80%, and a participant-selected minimum of 60–80%. Departure is 14:15 or 17:30. A proposed **22 kW AC-side equipment class is only a ceiling**, while this example models 10.5 kW effective charging and 3 kW export. A 21 kWh charge takes two illustrated hours; the car remains parked beyond that. The start-delay stress test adds 30 minutes. The earlier departure can rule out the late RES window or the 15:00–16:00 export opportunity. No vehicle, charger, grid, market signal, payment or support endpoint is connected.
+The single stop assumes arrival 08:45, an illustrative 60 kWh usable battery at 45%, target 80%, and a participant-selected minimum of 60–80%. Departure is 14:15 or 17:30. A proposed **22 kW AC-side equipment class is only a ceiling**, while this example models 10.5 kW effective charging and 3 kW export. A 21 kWh charge takes two illustrated hours; the car remains parked beyond that. A separate optional next-day start-delay exercise adds 30 minutes. The earlier departure can rule out the late RES window or the 15:00–16:00 export opportunity. No vehicle, charger, grid, market signal, payment or support endpoint is connected.
 
 Before starting the parked session, if the selected reserve and departure allow a 3 kWh cap, the participant sees two hypothetical *contract* cards and a charging-only option:
 
@@ -35,7 +35,7 @@ Before starting the parked session, if the selected reserve and departure allow 
 
 The two cards intentionally trade a higher gross rate against the permission arrangement. **Their attributes are confounded in this one task.** The choice is a comprehension and language probe, not a treatment effect or WTA estimate. Selecting A or B alone does not turn on export: before starting, the user must also accept the displayed reserve, cap and departure limits and enable this simulated stop. No binding agreement is created or stored, including for the standing-opt-in example. The charge-only choice needs no export permission. The user can pause or stop once export flows. The ledger keeps charging cost, exported kWh, gross payment and hypothetical replacement energy separate.
 
-One planned session runs after parking and the staged start-delay alert. Charging
+One planned session runs after parking and the offer decision. Charging
 progresses to 80%; if V2G was enabled beforehand and the limits still hold, the
 same run shows the car parked without energy transfer while waiting for 15:00;
 the participant can cancel planned export. It then enters the 15:00–16:00
@@ -45,7 +45,7 @@ accelerated checkpoints represent 15:00–16:00 at an illustrative 3 kW, totalin
 credit update together. Participants may pause, resume or stop; step controls
 appear only in the instrument-review view. Continuing to questions requires
 finishing or stopping this period.
-The 14:15 departure and 80% minimum are deliberate no-export cases and are
+The optional `fault=1` workshop link adds a **separate next-day** 30-minute start-delay thought exercise after the baseline energy session. It tests recovery reasoning without changing the first day's charging cost or export ledger. The 14:15 departure and 80% minimum are deliberate no-export cases and are
 explained when selected. A completed or stopped session retains its illustrated
 ledger; it does not imply a grid dispatch or real payment.
 
