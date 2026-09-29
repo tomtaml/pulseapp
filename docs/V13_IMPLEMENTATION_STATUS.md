@@ -106,7 +106,7 @@ are draft and unscored. The Greek and UK journeys remain preview-only regardless
 of a collection-enabled host, since their workshop tasks are outside the current
 research submission contract. All prices, energy and compensation are fictional
 workshop assumptions pending partner confirmation. The `/v13.html` footer
-shows `V1.3 preview 2026-09-29a` to distinguish the deployed assets from the
+shows `V1.3 preview 2026-09-29b` to distinguish the deployed assets from the
 older preview Worker. A Git pull alone does not update the Worker; redeploy
 `variant-preview/wrangler.jsonc` after these changes land. The V1.2 RC1 Worker
 and its QR target are unchanged.
@@ -124,6 +124,13 @@ maps the highest-priority WTP/WTA hypotheses to a later balanced T1.2 DCE and
 states why this one app task cannot estimate monetary thresholds. The exact
 T1.2 questionnaire is not in this repository, so attribute levels remain to be
 reconciled. No data is collected by the preview.
+
+The export period now appears as a sixth checkpoint in the same parked-car
+session. After separate permission, the reverse car-to-grid flow stays visible
+through four accelerated 15-minute checkpoints. The display updates exported
+kWh, gross credit and vehicle charge; participants can pause, step, resume or
+stop. Charging-only departure and an 80% reserve explain why no export can
+occur. Selecting an offer alone never starts V2G.
 
 Run `npm run test:v13`, `npm run test:v13:sqlite`, `npm run test:comprehension`,
 `node scripts/check_preview_isolation.mjs`, and

@@ -35,6 +35,15 @@ After charging, if the selected reserve and departure allow a 3 kWh cap, the par
 
 The two cards intentionally trade a higher gross rate against the permission arrangement. **Their attributes are confounded in this one task.** The choice is a comprehension and language probe, not a treatment effect or WTA estimate. Selecting A or B does not turn on export: the user must separately press *Allow this session's V2G*. They can stop while energy flows. The example ledger keeps charging cost, exported kWh, gross payment and hypothetical replacement energy separate. Choosing No export completes the task without sharing.
 
+The approved session follows charging on the same parked-car timeline. Four
+accelerated checkpoints represent 15:00–16:00 at an illustrative 3 kW, totaling
+3 kWh for a 65% minimum and 17:30 departure. Reverse flow, charge, kWh and gross
+credit update together. Participants may pause, advance one checkpoint, resume
+or stop; continuing to questions requires finishing or stopping this period.
+The 14:15 departure and 80% minimum are deliberate no-export cases and are
+explained when selected. A completed or stopped session retains its illustrated
+ledger; it does not imply a grid dispatch or real payment.
+
 Facilitator probes: “What decided your choice?”, “What would have to change for you to choose the other offer or No export?”, “Which amount is gross and what is missing from it?”, “Who can stop today's export?”, “Would the guarantee still feel credible if the car must leave early?”, “How could someone without a smartphone use or decline the service?” Record these only under a separately approved workshop method; the preview stores no answers.
 
 ## Later formal DCE design decisions

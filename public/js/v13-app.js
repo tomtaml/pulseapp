@@ -2,7 +2,7 @@ import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
 import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grPlanCard, grEnergyCard, grFrame, grWindow, GR_OFFER_TERMS } from "./v13-gr-journey.js";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260929b";
 import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
@@ -42,6 +42,7 @@ let grRunning = false;
 let grTimer = null;
 let grPermission = "off";
 let grExported = 0;
+let grExportStep = 0;
 let grExportTimer = null;
 let grLeftEarly = false;
 let grAssistedFallback = false;
@@ -94,7 +95,7 @@ function energyPreview() {
     return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
-    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, exportedKwh: grExported, delayMinutes: 30 });
+    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, exportStep: grExportStep, exportedKwh: grExported, delayMinutes: 30 });
   }
   return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning, ukMorningMinimum);
 }
@@ -141,6 +142,7 @@ function resetGrSession() {
   grPhase = 0;
   grPermission = "off";
   grExported = 0;
+  grExportStep = 0;
   grLeftEarly = false;
   grOfferChoice = null;
 }
@@ -154,13 +156,14 @@ function grNextCheckpoint() {
   if (grRunning) grTimer = setTimeout(grNextCheckpoint, 1250);
 }
 
-function grNextExport() {
-  if (grPermission !== "active") return;
-  const max = Math.max(0, Math.min(3, (80 - grReserve) * 0.6));
-  grExported = Math.min(max, grExported + 1.5);
-  if (grExported >= max) grPermission = "complete";
+function grNextExport(manual = false) {
+  if (grPermission !== "active" && !(manual && grPermission === "paused")) return;
+  grExportStep = Math.min(4, grExportStep + 1);
+  grExported = grExportCheckpoint(grExportStep, grReserve).exportedKwh;
+  if (grExportStep === 4) grPermission = "complete";
   render();
-  if (grPermission === "active") grExportTimer = setTimeout(grNextExport, 1400);
+  if (grPermission === "active") grExportTimer = setTimeout(grNextExport, 1800);
+  else if (manual) screen.querySelector('[data-gr-session="step_export"]')?.focus();
 }
 
 function stopUkCycle() {
@@ -375,10 +378,13 @@ function render() {
       else { grRunning = true; grLeftEarly = false; grTimer = setTimeout(grNextCheckpoint, 1250); }
     } else if (action === "step") grNextCheckpoint();
     else if (action === "leave") { clearTimeout(grTimer); grRunning = false; grLeftEarly = true; }
-    else if (action === "allow" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && ["offer_a", "offer_b"].includes(grOfferChoice)) { grPermission = "active"; grExportTimer = setTimeout(grNextExport, 1400); }
-    else if (action === "stop_export") { clearTimeout(grExportTimer); grPermission = "stopped"; }
+    else if (action === "allow" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && ["offer_a", "offer_b"].includes(grOfferChoice)) { grPermission = "active"; grExportStep = 0; grExported = 0; grExportTimer = setTimeout(grNextExport, 1800); }
+    else if (action === "pause_export" && grPermission === "active") { clearTimeout(grExportTimer); grPermission = "paused"; }
+    else if (action === "resume_export" && grPermission === "paused") { grPermission = "active"; grExportTimer = setTimeout(grNextExport, 1800); }
+    else if (action === "step_export" && grPermission === "paused") return grNextExport(true);
+    else if (action === "stop_export" && ["active", "paused"].includes(grPermission)) { clearTimeout(grExportTimer); grPermission = "stopped"; }
     render();
-    screen.querySelector(`[data-gr-session="${action === "allow" ? "stop_export" : action}"]`)?.focus();
+    screen.querySelector(`[data-gr-session="${({ allow: "pause_export", pause_export: "resume_export", resume_export: "pause_export" })[action] || action}"]`)?.focus();
   }));
   screen.querySelectorAll('input[name="offer_choice"]').forEach(input => input.addEventListener("change", () => {
     if (grPermission !== "off") return;
@@ -467,6 +473,7 @@ function valid() {
   if (page === "energy" && variant === "uk-v2h" && ukOvernightPhase !== 7) return "Run, step through or skip the overnight example to morning before continuing.";
   if (page === "energy" && variant === "gr-prosumer" && grPhase !== 4 && (!grLeftEarly || grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc < grReserve)) return "Reach the next-trip minimum before finishing. Run or step through charging; you may stop early once the minimum is reached.";
   if (page === "energy" && variant === "gr-prosumer" && grPhase === 4 && grReserve < 80 && grDeparture === "17:30" && !grOfferChoice) return "Choose Offer A, Offer B or No V2G export before continuing. This is a practice choice and does not authorise export.";
+  if (page === "energy" && variant === "gr-prosumer" && ["active", "paused"].includes(grPermission)) return "Finish or stop the V2G example before continuing. Your next-trip minimum stays protected.";
   if (page === "recovery" && !values.recovery_choice) return demoText("Choose a recovery action.", "Valitse toimintatapa häiriössä.");
   if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "retry" && !grWindow(values.scenario_choice, grDeparture, 30).feasible) return "Retry after the 30-minute delay would miss your departure margin. Choose Charge now or discuss support.";
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
