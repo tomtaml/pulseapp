@@ -81,7 +81,8 @@ assert.match(grPlanCard("charge_now", 65, "14:15"), /unverified 22 kW AC-side eq
 assert.match(grPlanCard("charge_now", 65, "14:15"), /charging only/);
 assert.match(grPlanCard("charge_now", 65, "17:30"), /possible V2G/);
 assert.match(grPlanCard("charge_now", 65, "17:30", "offer_a"), /data-gr-consent/);
-assert.match(grPlanCard("charge_now", 70, "17:30", "offer_a"), /leave about 75% in the car, above your 70% protected minimum/);
+assert.match(grPlanCard("charge_now", 70, "17:30", "offer_a"), /leave about 75% in the car, not below your 70% protected minimum/);
+assert.match(grPlanCard("charge_now", 75, "17:30", "offer_a"), /leave about 75% in the car, not below your 75% protected minimum/);
 assert.match(grPlanCard("wait_for_lower_tariff", 70, "17:30", "offer_a"), /up to €0\.54/);
 assert.match(grPlanCard("wait_for_lower_tariff", 70, "17:30", "offer_b"), /up to €0\.90/);
 assert.match(grPlanCard("charge_now", 70, "17:30", "none"), /Gross credit<\/b>€0; no export/);
