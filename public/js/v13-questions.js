@@ -3,6 +3,7 @@
 export const WORKSHOP_PRESETS = Object.freeze({
   demo: Object.freeze({ questions: false, sus: false, scales: false }),
   questions: Object.freeze({ questions: true, sus: false, scales: false }),
+  light: Object.freeze({ questions: true, sus: false, scales: true }),
   full: Object.freeze({ questions: true, sus: true, scales: true })
 });
 
@@ -18,12 +19,20 @@ export function resolveWorkshopView(params) {
 }
 
 export function workshopPages(variant, participantGroup, modules, profiles, grFaultExercise = false) {
+  if (variant === "gr-prosumer") {
+    const pages = ["intro", "gr_arrival", "scenario", "energy"];
+    if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
+    if (modules.questions || modules.scales) pages.push("gr_closing");
+    if (grFaultExercise) {
+      pages.push("recovery");
+      if (modules.questions) pages.push("gr_fault_followup");
+    }
+    return [...pages, "done"];
+  }
   const pages = variant === "uk-v2h"
     ? ["intro", "home_intro", "energy"]
-    : variant === "gr-prosumer" ? ["intro", "gr_arrival", "scenario", "energy", ...(grFaultExercise ? ["recovery"] : [])]
     : ["intro", "alignment", "scenario", "energy", "recovery"];
   if (modules.questions && variant === "uk-v2h") pages.push("uk_probes");
-  if (modules.questions && variant === "gr-prosumer") pages.push("gr_probes");
   if (modules.questions) pages.push("comprehension");
   if (modules.sus && profiles[variant]?.[participantGroup]?.sus) pages.push("sus");
   if (modules.scales) pages.push("outcomes");

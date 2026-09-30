@@ -1,4 +1,4 @@
-import { WORKSHOP_PRESETS } from "./v13-questions.js?v=20260929d";
+import { WORKSHOP_PRESETS } from "./v13-questions.js?v=20260930a";
 
 const form = document.querySelector("#workshopSetup");
 const preset = form.elements.preset;
@@ -26,6 +26,11 @@ function applyPreset() {
 
 preset.addEventListener("change", applyPreset);
 form.addEventListener("change", event => {
+  if (event.target === form.elements.site && form.elements.site.value === "gr-prosumer") {
+    preset.value = "light";
+    applyPreset();
+    return;
+  }
   if (event.target !== preset) { updateLanguage(); generated.hidden = true; }
 });
 form.addEventListener("input", () => { generated.hidden = true; });

@@ -1,12 +1,12 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
-import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260929d";
+import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260930a";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260929d";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260930a";
 import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
-import { GR_TASK_ITEMS, GR_COMPREHENSION } from "./v13-gr-instrument.js?v=20260929c";
+import { grCheckpointItem, GR_CLOSING_ITEMS, GR_FAULT_FOLLOWUP, grSharedItems, grAnswerValue } from "./v13-gr-instrument.js?v=20260930a";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -48,6 +48,8 @@ let grExportTimer = null;
 let grLeftEarly = false;
 let grOfferChoice = null;
 let grV2gEnabled = false;
+let grCheckpointPage = null;
+const grCompletedCheckpoints = new Set();
 let ukParking = initialUkParking();
 let ukParkingTimer = null;
 let ukOvernightPhase = 0;
@@ -96,7 +98,7 @@ function energyPreview() {
     return `<p class="study-note">${demoText("This is a conditional, illustrative V2G offer. Energy would flow from vehicle to grid only with the agreed permission and protected reserve.", "Tämä on kuvitteellinen V2G-tarjous. Sähköä siirtyisi autosta verkkoon vain sovitulla luvalla ja suojatun lähtövarauksen rajoissa.")}</p>${v2gOffer(finnishDemo ? "fi" : "en", fleetState)}`;
   }
   if (variant === "gr-prosumer") {
-    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, v2gEnabled: grV2gEnabled, facilitatorControls: mode !== "demo", exportStep: grExportStep, exportedKwh: grExported });
+    return grEnergyCard({ choice: values.scenario_choice, reserve: grReserve, departure: grDeparture, phase: grPhase, running: grRunning, permission: grPermission, offerChoice: grOfferChoice, v2gEnabled: grV2gEnabled, facilitatorControls: mode !== "demo" && params.get("view") !== "light", exportStep: grExportStep, exportedKwh: grExported });
   }
   return ukEnergyCard(values.scenario_choice, ukOvernightPhase, ukHomeSharing, ukHomeExported, ukCycleRunning, ukMorningMinimum);
 }
@@ -140,6 +142,9 @@ function grParkingAction(action) {
 
 function resetGrSession(preservePlan = false) {
   stopGrTimers();
+  grCompletedCheckpoints.delete("energy");
+  grCheckpointPage = null;
+  delete values.gr_reserve_understanding;
   grPhase = 0;
   grPermission = "off";
   grExported = 0;
@@ -286,12 +291,19 @@ function advanceUkCycle() {
 }
 
 function options(name, choices, selected = values[name]) {
-  return `<div class="study-options">${choices.map(([value, label]) => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${selected === value ? "checked" : ""}><span>${esc(label)}</span></label>`).join("")}</div>`;
+  return `<div class="study-options">${choices.map(([value, label]) => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${String(selected) === String(value) ? "checked" : ""}><span>${esc(label)}</span></label>`).join("")}</div>`;
 }
-function scale(name, label) {
-  return `<fieldset class="study-question"><legend>${esc(label)}</legend><p class="study-note">1 = strongly disagree · 5 = strongly agree</p><div class="study-scale">${[1,2,3,4,5].map(number => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${number}" ${values[name] === number ? "checked" : ""}><span>${number}</span></label>`).join("")}</div></fieldset>`;
+function scale(name, label, optional = false) {
+  return `<fieldset class="study-question"><legend>${esc(label)}</legend><p class="study-note">1 = strongly disagree · 5 = strongly agree</p><div class="study-scale">${[1,2,3,4,5].map(number => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${number}" ${values[name] === number ? "checked" : ""}><span>${number}</span></label>`).join("")}</div>${optional ? options(name, [["cannot_judge", "Cannot judge"]]) : ""}</fieldset>`;
+}
+function grQuestion(item) {
+  return `<fieldset class="study-question"><legend>${esc(item.label)}</legend>${options(item.key, item.choices)}</fieldset>`;
 }
 function buttonRow(label = demoText("Continue", "Jatka")) {
+  if (variant === "gr-prosumer" && grCheckpointPage === currentPage()) {
+    const item = grCheckpointItem(grCheckpointPage, grReserve);
+    return `<section class="gr-checkpoint" tabindex="-1" aria-label="Optional question after the completed task"><h2>One quick question · optional</h2><p class="study-note">You can answer or skip. There is no pass mark.</p>${grQuestion(item)}<div class="study-actions"><button type="button" class="secondary" data-action="back">Back</button><button type="button" class="primary" data-action="next">Continue</button><button type="button" class="secondary" data-action="skip_checkpoint">Skip question</button></div></section>`;
+  }
   return `<div class="study-actions">${stage ? `<button type="button" class="secondary" data-action="back">${demoText("Back", "Takaisin")}</button>` : ""}<button type="button" class="primary" data-action="next">${esc(label)}</button></div>`;
 }
 
@@ -310,6 +322,7 @@ function render() {
     body += `<h1>${esc(siteCopy.title)}</h1><p class="lead">${esc(siteCopy.intro)}</p>`;
     if (requestedLanguage !== "en" && !finnishDemo) body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : requestedLanguage === "el" ? "Greek" : "requested"} instrument wording is awaiting review. This preview uses English.</p>`;
     if (variant === "fi-fleet") body += `<fieldset class="study-question"><legend>${demoText("Your perspective", "Oma näkökulmasi")}</legend>${options("participant_group", Object.entries(siteCopy.roles))}</fieldset>`;
+    if (variant === "gr-prosumer") body += `<section class="study-question" aria-label="Preview participation and privacy information"><h2>About this preview</h2><p>Your answers and choices stay in this page and are not submitted or saved as a participant record. Reloading the page clears them. You may skip survey questions or stop at any time. Separate facilitator notes follow the workshop information provided to you.</p><label class="study-option"><input type="checkbox" name="gr_preview_notice_confirmed" ${values.gr_preview_notice_confirmed ? "checked" : ""}><span>I have read this preview information and choose to continue.</span></label></section>`;
     if (mode === "research") body += `<label class="study-option"><input type="checkbox" name="consent_confirmed" ${values.consent_confirmed ? "checked" : ""}><span>I have read the study information provided by the facilitator and agree to continue.</span></label>`;
     body += `<label class="study-option"><input type="checkbox" name="prototype_disclaimer_confirmed" ${values.prototype_disclaimer_confirmed ? "checked" : ""}><span>${demoText("I understand this is a simulation, not a real charging service.", "Ymmärrän, että tämä on simulaatio eikä oikea latauspalvelu.")}</span></label>${buttonRow()}`;
   } else if (page === "alignment") {
@@ -337,16 +350,21 @@ function render() {
   } else if (page === "uk_probes") {
     body += `<h1>Oxfordshire task experience</h1><p class="lead">Think about the home parking and V2H example you just used. These are draft workshop questions about accessible positioning, recovery, reserves and control. You may leave an item unanswered.</p>`;
     body += ukTaskItems(ukParking.manualUsed).map(item => scale(item.key, item.label)).join("") + buttonRow(nextLabel());
-  } else if (page === "gr_probes") {
-    body += `<h1>Trikala task experience</h1><p class="lead">Think about the single stop you just tried${grFaultExercise ? " and the separate start-delay exercise" : ""}. These draft workshop probes concern alignment, price and renewable cues, next-trip protection, and V2G control${grFaultExercise ? " and recovery" : ""}. You may leave an item unanswered.</p>`;
-    body += GR_TASK_ITEMS.filter(item => grFaultExercise || item.key !== "gr_recovery_access").map(item => scale(item.key, item.label)).join("") + buttonRow(nextLabel());
+  } else if (page === "gr_closing") {
+    body += `<h1>A few questions about this stop</h1><p class="lead">Think about the parking and energy session you just tried. All questions are optional. You can choose Cannot judge or continue without answering.</p>`;
+    // Preference ratings precede diagnostic checks and any next-day fault.
+    if (modules.scales) body += grSharedItems(COMMON_QUESTIONS, OUTCOME_QUESTIONS).map(([key, label]) => scale(key, label, true)).join("");
+    if (modules.questions) body += GR_CLOSING_ITEMS.map(grQuestion).join("");
+    body += buttonRow(nextLabel());
+  } else if (page === "gr_fault_followup") {
+    body += `<h1>After the separate delay exercise</h1><p class="lead">This optional response is separate from your first-session ratings.</p>${grQuestion(GR_FAULT_FOLLOWUP)}${buttonRow(nextLabel())}`;
   } else if (page === "comprehension") {
     body += `<h1>Understanding check</h1><p class="lead">These questions test whether the prototype explained the scenario clearly.</p>`;
-    body += (variant === "uk-v2h" ? UK_COMPREHENSION : variant === "gr-prosumer" ? GR_COMPREHENSION : COMPREHENSION).map(([question, choices], index) => {
+    body += (variant === "uk-v2h" ? UK_COMPREHENSION : COMPREHENSION).map(([question, choices], index) => {
       return `<fieldset class="study-question"><legend>${index + 1}. ${esc(question)}</legend>${options(`comprehension_${index + 1}`,choices)}</fieldset>`;
     }).join("") + buttonRow(nextLabel());
   } else if (page === "sus") {
-    body += `<h1>Usability (SUS)</h1><p class="lead">Rate the interface you just used.</p>`;
+    body += `<h1>Usability (SUS)</h1><p class="lead">Rate the interface you just used.${variant === "gr-prosumer" ? " This separate ten-item module is optional in the preview; you may continue without completing it." : ""}</p>`;
     body += susItems.en.map((label,index) => scale(`sus_${String(index + 1).padStart(2,"0")}`,`${index + 1}. ${label}`)).join("") + buttonRow(nextLabel());
   } else if (page === "outcomes") {
     body += `<h1>Confidence, trust and intention</h1><p class="lead">Rate the service shown in this scenario. Confidence in the service and trust in its operator are separate items.</p>`;
@@ -370,9 +388,11 @@ function render() {
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => {
     collect(); stopUkCycle(); stopUkParkingTimer(); stopGrTimers(); stopGrParkingTimer();
     if (page === "home_intro" && ["moving", "resuming"].includes(ukParking.stage)) ukParking = ukParkingTransition(ukParking, "stop");
+    grCheckpointPage = null;
     stage -= 1; render();
   });
-  screen.querySelector('[data-action="next"]')?.addEventListener("click", next);
+  screen.querySelector('[data-action="next"]')?.addEventListener("click", () => next());
+  screen.querySelector('[data-action="skip_checkpoint"]')?.addEventListener("click", () => next(true));
   if (page === "scenario" && variant === "gr-prosumer") screen.querySelectorAll('input[name="scenario_choice"]').forEach(input => {
     input.addEventListener("change", () => {
       collect();
@@ -477,9 +497,9 @@ function render() {
 
 function collect() {
   screen.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-    values[input.name] = /^sus_\d\d$/.test(input.name) || input.name.startsWith("service_confidence_") || input.name.startsWith("uk_") || input.name.startsWith("gr_") || Object.hasOwn(OUTCOME_QUESTIONS,input.name) ? Number(input.value) : input.value;
+    values[input.name] = variant === "gr-prosumer" ? grAnswerValue(input.name, input.value) : /^sus_\d\d$/.test(input.name) || input.name.startsWith("service_confidence_") || input.name.startsWith("uk_") || input.name.startsWith("gr_") || Object.hasOwn(OUTCOME_QUESTIONS,input.name) ? Number(input.value) : input.value;
   });
-  for (const name of ["consent_confirmed", "prototype_disclaimer_confirmed"]) {
+  for (const name of ["consent_confirmed", "prototype_disclaimer_confirmed", "gr_preview_notice_confirmed"]) {
     const control = screen.querySelector(`input[name="${name}"]`);
     if (control) values[name] = control.checked;
   }
@@ -498,6 +518,7 @@ function error(message) {
 function valid() {
   const page = currentPage();
   if (page === "intro" && (!profile() || !values.prototype_disclaimer_confirmed || (mode === "research" && !values.consent_confirmed))) return demoText("Choose a role and acknowledge the information above.", "Valitse rooli ja vahvista, että kyseessä on simulaatio.");
+  if (page === "intro" && variant === "gr-prosumer" && !values.gr_preview_notice_confirmed) return "Read and acknowledge the preview information before continuing.";
   if (page === "alignment" && values.participant_group === "fleet_driver" && !fleetState.alignment_completed) return demoText("Align the vehicle before continuing.", "Kohdista auto ennen jatkamista.");
   if (page === "home_intro" && ukParking.stage !== "parked") return "Complete the surrounding-area check and safely finish the illustrative home parking before continuing.";
   if (page === "gr_arrival" && grParking.stage !== "aligned") return "Complete the shared-path check and align the car before continuing.";
@@ -512,7 +533,7 @@ function valid() {
   if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "retry" && !grWindow(values.scenario_choice, grDeparture, 30).feasible) return "Retry after the 30-minute delay would miss your departure margin. Switch to an earlier start or discuss support.";
   if (page === "recovery" && variant === "gr-prosumer" && values.recovery_choice === "charge_now" && values.scenario_choice === "charge_now") return "Charge now is already selected. Retry the delayed start or discuss support.";
   if (page === "comprehension" && [1,2,3,4].some(index => !values[`comprehension_${index}`])) return "Answer all four questions.";
-  if (page === "sus" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
+  if (page === "sus" && variant !== "gr-prosumer" && Array.from({ length:10 },(_,i)=>`sus_${String(i + 1).padStart(2,"0")}`).some(key => !values[key])) return "Rate all ten usability statements.";
   if (page === "outcomes" && [...COMMON_QUESTIONS.map(([key])=>key),...outcomeKeys()].some(key => !values[key])) return "Rate all statements before continuing.";
   return null;
 }
@@ -533,10 +554,24 @@ function payload(token) {
   return body;
 }
 
-async function next() {
+async function next(skipCheckpoint = false) {
   collect();
   const problem = valid();
   if (problem) return error(problem);
+  const page = currentPage();
+  if (variant === "gr-prosumer" && modules.questions && grCheckpointItem(page, grReserve) && !grCompletedCheckpoints.has(page)) {
+    if (grCheckpointPage !== page) {
+      grCheckpointPage = page;
+      render();
+      const checkpoint = screen.querySelector(".gr-checkpoint");
+      checkpoint.focus({ preventScroll: true });
+      checkpoint.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    if (skipCheckpoint) delete values[grCheckpointItem(page, grReserve).key];
+    grCompletedCheckpoints.add(page);
+    grCheckpointPage = null;
+  }
   if (currentPage() === "home_intro" && variant === "uk-v2h") {
     stopUkCycle();
     ukHomeSharing = true;

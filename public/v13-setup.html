@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>PULSE workshop view setup</title>
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/v13-study.css?v=20260929d">
+  <link rel="stylesheet" href="/v13-study.css?v=20260930a">
 </head>
 <body>
   <a class="skip-link" href="#setup">Skip to workshop setup</a>
@@ -27,6 +27,7 @@
       <select id="preset" name="preset">
         <option value="demo">Demo only</option>
         <option value="questions">Demo plus understanding questions</option>
+        <option value="light">Short questions and shared ratings · no SUS</option>
         <option value="full">Questions, SUS and trust/outcome scales</option>
       </select>
       <label for="language">Language</label>
@@ -35,12 +36,12 @@
         <option value="en">English draft</option>
       </select>
       <fieldset class="study-question">
-        <legend>Modules to show after the scenario</legend>
-        <label class="study-option"><input type="checkbox" name="questions"><span>Understanding questions</span></label>
+        <legend>Question modules</legend>
+        <label class="study-option"><input type="checkbox" name="questions"><span>Case questions (Trikala: two optional checkpoints and two closing items)</span></label>
         <label class="study-option"><input type="checkbox" name="sus"><span>SUS (only for a participant who used the interface)</span></label>
         <label class="study-option"><input type="checkbox" name="scales"><span>Service confidence, trust and outcome scales</span></label>
       </fieldset>
-      <label class="study-option" id="trikalaFaultOption" hidden><input type="checkbox" name="trikala_fault"><span>Trikala only: add a separate next-day start-delay exercise after the energy session</span></label>
+      <label class="study-option" id="trikalaFaultOption" hidden><input type="checkbox" name="trikala_fault"><span>Trikala only: add a separate next-day start-delay exercise after the baseline questions</span></label>
       <p class="study-note">The Finnish fleet view uses the RC1 mobile flow. Its Finnish questions and scales are working wording for cognitive testing, not an approved research instrument. Greek questions use the English draft. Record workshop observations through your approved procedure.</p>
       <button class="primary" type="submit">Create preview link</button>
     </form>
@@ -54,6 +55,6 @@
     </div>
   </section></main>
   <footer class="footer">Research prototype · simulated charging · no participant responses submitted</footer>
-  <script type="module" src="/js/v13-setup.js?v=20260929d"></script>
+  <script type="module" src="/js/v13-setup.js?v=20260930a"></script>
 </body>
 </html>

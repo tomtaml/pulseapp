@@ -151,3 +151,8 @@ routes, site validation of service promises, Finnish and Greek instrument
 review, UK assistive-technology and participant checks, and ethics, retention
 and production security approval before any live research rollout. The preview
 and isolated test Workers remain separate from the public V1.2 Worker.
+
+
+## Trikala lighter instrument — 30 September 2026
+
+Build `2026-09-30a` adds `view=light`: two optional within-screen checkpoints after parking and energy, then eight closing items. SUS is a separate complete module. Baseline questions precede the optional next-day delay exercise and its single follow-up. The preview notice and simulation acknowledgement appear at the beginning. No survey response is scored, submitted or stored; the V1.3 collection schema and the partner V1.2 config remain unchanged. See [the instrument draft](V13_TRIKALA_INSTRUMENT_DRAFT.md).

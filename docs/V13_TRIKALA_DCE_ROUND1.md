@@ -45,7 +45,7 @@ accelerated checkpoints represent 15:00–16:00 at an illustrative 3 kW, totalin
 credit update together. Participants may pause, resume or stop; step controls
 appear only in the instrument-review view. Continuing to questions requires
 finishing or stopping this period.
-The optional `fault=1` workshop link adds a **separate next-day** 30-minute start-delay thought exercise after the baseline energy session. It tests recovery reasoning without changing the first day's charging cost or export ledger. The 14:15 departure and 80% minimum are deliberate no-export cases and are
+The optional `fault=1` workshop link adds a **separate next-day** 30-minute start-delay thought exercise after the baseline energy session and its closing ratings. It tests recovery reasoning without changing the first day's charging cost or export ledger. The 14:15 departure and 80% minimum are deliberate no-export cases and are
 explained when selected. A completed or stopped session retains its illustrated
 ledger; it does not imply a grid dispatch or real payment.
 
@@ -62,3 +62,5 @@ Facilitator probes: “What decided your choice?”, “What would have to chang
 ## Protected boundaries
 
 The new interaction is available only on the V1.3 preview branch. The current GR research payload does not include these contract terms, chosen minimum, parking events or practice choice. Even on a collection-enabled host the focused GR route resolves to instrument-preview and refuses research submission. The V1.2 partner RC1 Worker is unchanged.
+
+The lighter 30 September instrument has two optional checkpoints and eight closing items in `view=light`; SUS remains a separate complete module. The next-day task comes after baseline ratings and its single willingness-change follow-up is interpreted separately. See [the instrument map](V13_TRIKALA_INSTRUMENT_DRAFT.md).
