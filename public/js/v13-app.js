@@ -1,12 +1,12 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
-import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260930a";
+import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260930b";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
 import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260930a";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260930b";
 import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
-import { grCheckpointItem, GR_CLOSING_ITEMS, GR_FAULT_FOLLOWUP, grSharedItems, grAnswerValue } from "./v13-gr-instrument.js?v=20260930a";
+import { grCheckpointItem, GR_CLOSING_ITEMS, GR_FAULT_FOLLOWUP, grSharedItems, grAnswerValue } from "./v13-gr-instrument.js?v=20260930b";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -297,6 +297,11 @@ function scale(name, label, optional = false) {
   return `<fieldset class="study-question"><legend>${esc(label)}</legend><p class="study-note">1 = strongly disagree · 5 = strongly agree</p><div class="study-scale">${[1,2,3,4,5].map(number => `<label class="study-option"><input type="radio" name="${esc(name)}" value="${number}" ${values[name] === number ? "checked" : ""}><span>${number}</span></label>`).join("")}</div>${optional ? options(name, [["cannot_judge", "Cannot judge"]]) : ""}</fieldset>`;
 }
 function grQuestion(item) {
+  if (item.key === "gr_alignment_ease") {
+    const ratings = item.choices.filter(([value]) => /^[1-5]$/.test(value));
+    const other = item.choices.filter(([value]) => !/^[1-5]$/.test(value));
+    return `<fieldset class="study-question"><legend>${esc(item.label)}</legend><div class="study-scale study-scale-labelled">${ratings.map(([value, label]) => `<label class="study-option"><input type="radio" name="${esc(item.key)}" value="${esc(value)}" ${String(values[item.key]) === value ? "checked" : ""}><span class="scale-number" aria-hidden="true">${esc(value)}</span><span class="scale-label">${esc(label)}</span></label>`).join("")}</div>${options(item.key, other)}</fieldset>`;
+  }
   return `<fieldset class="study-question"><legend>${esc(item.label)}</legend>${options(item.key, item.choices)}</fieldset>`;
 }
 function buttonRow(label = demoText("Continue", "Jatka")) {
