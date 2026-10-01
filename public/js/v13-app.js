@@ -1,12 +1,12 @@
 import { V13_PROFILES, SCHEMA_VERSION } from "./research-v13-contract.js";
-import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20260930b";
+import { SITES, COMMON_QUESTIONS, OUTCOME_QUESTIONS, COMPREHENSION, resolveWorkshopView, workshopPages, resolveSiteMode, workshopOutcomeKeys } from "./v13-questions.js?v=20261001a";
 import { alignmentVisual, fleetScenarioCard, v2gOffer } from "./screens-core.js";
-import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js";
-import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20260930b";
+import { ukHomeParkingCard, ukEnergyCard, ukOvernightFrame, ukEnergyLedger } from "./v13-site-visuals.js?v=20261001a";
+import { grPlanCard, grEnergyCard, grFrame, grWindow, grExportCheckpoint, grCanExport, GR_OFFER_TERMS } from "./v13-gr-journey.js?v=20261001a";
 import { initialGrParking, grParkingTransition, grParkingCard } from "./v13-gr-parking.js";
 import { initialUkParking, ukParkingTransition } from "./v13-uk-parking.js";
 import { ukTaskItems, UK_COMPREHENSION } from "./v13-uk-instrument.js";
-import { grCheckpointItem, GR_CLOSING_ITEMS, GR_FAULT_FOLLOWUP, grSharedItems, grAnswerValue } from "./v13-gr-instrument.js?v=20260930b";
+import { grCheckpointItem, GR_CLOSING_ITEMS, GR_FAULT_FOLLOWUP, grSharedItems, grAnswerValue } from "./v13-gr-instrument.js?v=20261001a";
 import { susItems } from "./copy.js";
 import { esc } from "./ui.js";
 
@@ -67,7 +67,8 @@ let tokenWidget = null;
 let submitted = false;
 let submissionId = "";
 
-document.querySelector("#siteBadge").textContent = siteCopy.badge;
+document.querySelector("#siteBadge").textContent = variant === "uk-v2h" ? "Oxfordshire · V2H" : variant === "gr-prosumer" ? "Trikala · V2G" : siteCopy.badge;
+document.querySelector("#siteBadge").title = siteCopy.badge;
 document.querySelector("#textButton").addEventListener("click", event => {
   const pressed = document.body.classList.toggle("large-text");
   event.currentTarget.setAttribute("aria-pressed", String(pressed));
@@ -257,7 +258,7 @@ function updateUkEnergy() {
   card.querySelector("[data-uk-minimum]").disabled = ukOvernightPhase !== 0 || ukCycleRunning;
   const potential = ukEnergyLedger("support_home", 7, 80 - ukMorningMinimum, ukMorningMinimum);
   card.querySelector("[data-uk-min-preview]").textContent = `At ${ukMorningMinimum}% minimum, up to ${potential.homeKwh.toFixed(1)} kWh could reach the house after charging to 80%; illustrative energy cost difference £${potential.differencePounds.toFixed(2)} under the assumptions below. ${ukMorningMinimum === 80 ? "No V2H export is available." : "Compare household support with the charge retained for travel."}`;
-  card.querySelector("[data-uk-state]").textContent = ukOvernightPhase === 7 ? "Ready for next trip" : ukCycleRunning ? "Running" : paused ? "Paused" : "Ready to start";
+  card.querySelector("[data-uk-state]").textContent = ukOvernightPhase === 7 ? "Ready for next trip" : ukCycleRunning ? effectiveDirection === "home" ? "V2H · home support" : effectiveDirection === "charge" ? "Charging" : "Parked · waiting" : paused ? "Paused" : "Ready to start";
   flow.classList.toggle("idle", !ukCycleRunning || effectiveDirection === "idle");
   flow.setAttribute("aria-label", paused ? "Paused; no energy transfer is active" : direction);
   card.querySelector("[data-uk-from]").innerHTML = effectiveDirection === "home" ? "🚐<small>Vehicle</small>" : "⚡<small>Grid</small>";
@@ -313,6 +314,11 @@ function buttonRow(label = demoText("Continue", "Jatka")) {
 }
 
 function render() {
+  const previousPage = screen.dataset.page;
+  const openDetails = new Set([...screen.querySelectorAll("details[data-detail][open]")].map(item => item.dataset.detail));
+  const focused = document.activeElement;
+  const focusAttribute = ["data-gr-session", "data-gr-parking", "data-uk-parking", "data-gr-move", "data-uk-move", "data-action"].find(key => screen.contains(focused) && focused.hasAttribute(key));
+  const focusValue = focusAttribute ? focused.getAttribute(focusAttribute) : null;
   if (mode === "loading") {
     document.querySelector("#modeBadge").textContent = "Loading instrument";
     screen.innerHTML = `<h1>${esc(site.title)}</h1><p class="study-status" role="status">Loading the study instrument…</p>`;
@@ -321,10 +327,10 @@ function render() {
   const page = currentPage();
   const count = pages().length - 1;
   const status = mode === "demo" ? demoText("Demo · no survey or submission", "Esittely · ei kyselyä eikä lähetystä") : mode === "research" ? "Research · collection enabled" : "Workshop preview · no submission";
-  document.querySelector("#modeBadge").textContent = status;
+  document.querySelector("#modeBadge").textContent = mode === "demo" ? "Demo · surveys off" : "Survey preview · no storage";
   let body = `<p class="study-progress">${page === "done" ? demoText("Complete", "Valmis") : demoText(`Step ${stage + 1} of ${count}`, `Vaihe ${stage + 1} / ${count}`)}</p><p class="study-status">${status}</p>`;
   if (page === "intro") {
-    body += `<h1>${esc(siteCopy.title)}</h1><p class="lead">${esc(siteCopy.intro)}</p>`;
+    body += `<h1>${esc(siteCopy.title)}</h1><p class="lead">${variant === "uk-v2h" ? "Park beside the house, protect your morning trip, and follow charging and home support." : "Park for the day, choose your charging and V2G plan, then follow one energy session."}</p><details class="task-about" data-detail="intro"><summary>About this demo</summary><p>${esc(siteCopy.intro)}</p></details>`;
     if (requestedLanguage !== "en" && !finnishDemo) body += `<p class="study-status">The ${requestedLanguage === "fi" ? "Finnish" : requestedLanguage === "el" ? "Greek" : "requested"} instrument wording is awaiting review. This preview uses English.</p>`;
     if (variant === "fi-fleet") body += `<fieldset class="study-question"><legend>${demoText("Your perspective", "Oma näkökulmasi")}</legend>${options("participant_group", Object.entries(siteCopy.roles))}</fieldset>`;
     if (variant === "gr-prosumer") body += `<section class="study-question" aria-label="Preview participation and privacy information"><h2>About this preview</h2><p>Your answers and choices stay in this page and are not submitted or saved as a participant record. Reloading the page clears them. You may skip survey questions or stop at any time. Separate facilitator notes follow the workshop information provided to you.</p><label class="study-option"><input type="checkbox" name="gr_preview_notice_confirmed" ${values.gr_preview_notice_confirmed ? "checked" : ""}><span>I have read this preview information and choose to continue.</span></label></section>`;
@@ -339,9 +345,9 @@ function render() {
     }
     body += buttonRow();
   } else if (page === "gr_arrival") {
-    body += `<h1>Arrive at the Trikala wireless bay</h1><p class="lead">Park for a longer daily stop at a shared bay. Watch the crossing. In this staged example a pedestrian enters the route, so guided parking stops until you check the path again.</p>${grParkingCard(grParking)}${buttonRow()}`;
+    body += `<h1>Arrive at the Trikala wireless bay</h1><p class="lead">Check the crossing, then park. Guidance pauses for a staged pedestrian; recheck before continuing.</p>${grParkingCard(grParking)}${buttonRow()}`;
   } else if (page === "home_intro") {
-    body += `<h1>Check and park beside the house</h1><p class="lead">Follow one home V2H journey. Watch the space around the vehicle and the accessible entrance route. A guided manoeuvre can stop at an obstacle, or guidance can become unavailable. Recheck the route and choose guided parking or the three-step manual arrow controls; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
+    body += `<h1>Check and park beside the house</h1><p class="lead">Check the space and entrance route. Use guided parking or manual arrows after a route recheck; Stop remains available.</p>${ukHomeParkingCard(ukParking)}${buttonRow()}`;
   } else if (page === "scenario") {
     body += `<h1>${demoText("Plan the energy session", "Suunnittele latausjakso")}</h1><p class="lead">${esc(siteCopy.roleScenario?.[values.participant_group] || siteCopy.scenario)}</p>`;
     if (variant === "fi-fleet") body += fleetScenarioCard(finnishDemo ? "fi" : "en", fleetState);
@@ -349,7 +355,7 @@ function render() {
     else body += `<fieldset class="study-question"><legend>${demoText("Choose one action", "Valitse toimintatapa")}</legend>${options("scenario_choice",siteCopy.scenarioOptions)}</fieldset>`;
     body += buttonRow(variant === "gr-prosumer" ? "Confirm session plan" : demoText("Continue", "Jatka"));
   } else if (page === "energy") {
-    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : variant === "gr-prosumer" ? "One parked energy session" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Choose the minimum car charge needed for the morning. In this simulation home support is authorised, the car charges from 50% to 80%, then supplies some household demand only above your chosen minimum. Run, pause or step through the night; stop home support whenever needed. Actual compatibility, household backup rules and tariffs require site confirmation." : variant === "gr-prosumer" ? "The V2G plan was enabled or declined before starting. Run one parked session to see charging reach its 80% target, followed by any permitted export; the next-trip minimum remains protected." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${variant === "gr-prosumer" && grLeftEarly ? `<p class="study-note" role="status">${grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc < grReserve ? `Charging stopped before your ${grReserve}% next-trip minimum. Resume charging or ask for help before relying on this plan.` : `Charging stopped early at ${grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc}%; the ${grReserve}% minimum is retained. No export is permitted.`}</p>` : ""}${buttonRow()}`;
+    body += `<h1>${variant === "uk-v2h" ? "Home charging and V2H" : variant === "gr-prosumer" ? "One parked energy session" : demoText("Follow the energy flow", "Seuraa energian suuntaa")}</h1><p class="lead">${variant === "uk-v2h" ? "Set your morning minimum. Run the session to charge, then support the house within that limit. You can pause or stop home support." : variant === "gr-prosumer" ? "Run your planned session: charge to 80%, then export only if permitted. Your next-trip minimum stays protected." : demoText("See where energy would move in this simulated service and what remains protected.", "Katso, mihin sähkö siirtyisi tässä simulaatiossa ja mikä varaus säilyy suojattuna.")}</p>${energyPreview()}${variant === "gr-prosumer" && grLeftEarly ? `<p class="study-note" role="status">${grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc < grReserve ? `Charging stopped before your ${grReserve}% next-trip minimum. Resume charging or ask for help before relying on this plan.` : `Charging stopped early at ${grFrame(values.scenario_choice, grPhase, grReserve, grExported).soc}%; the ${grReserve}% minimum is retained. No export is permitted.`}</p>` : ""}${buttonRow()}`;
   } else if (page === "recovery") {
     body += `<h1>${variant === "gr-prosumer" ? "Optional exercise: another day's start delay" : demoText("Handle an interruption", "Toimi häiriötilanteessa")}</h1><p class="lead">${esc(siteCopy.roleRecovery?.[values.participant_group] || siteCopy.recovery)}</p>${variant === "gr-prosumer" ? `<div class="site-demo-card"><strong>A separate parking day, after the example you completed</strong><p>Imagine arriving at 45% again. A warm-weather fault delays the start by 30 minutes; no energy moves during that delay. The selected ${grWindow(values.scenario_choice, grDeparture).label.toLowerCase()} window would then be ready at ${grWindow(values.scenario_choice, grDeparture, 30).ready}, ${grWindow(values.scenario_choice, grDeparture, 30).feasible ? "within" : "past"} the ${grDeparture} departure margin. Any V2G would still require reaching the 80% target, your ${grReserve}% minimum and your permission. This fault did not happen during the first session.</p></div>` : ""}<fieldset class="study-question"><legend>${demoText("Choose one recovery action", "Valitse toimintatapa häiriössä")}</legend>${options("recovery_choice",variant === "gr-prosumer" && values.scenario_choice === "charge_now" ? siteCopy.recoveryOptions.filter(([action]) => action !== "charge_now") : siteCopy.recoveryOptions)}</fieldset>${variant === "gr-prosumer" ? grRecoveryNotice() : ""}${buttonRow(nextLabel())}`;
   } else if (page === "uk_probes") {
@@ -390,6 +396,8 @@ function render() {
     }
   }
   screen.innerHTML = body;
+  screen.dataset.page = page;
+  if (previousPage === page) screen.querySelectorAll("details[data-detail]").forEach(item => { item.open = openDetails.has(item.dataset.detail); });
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => {
     collect(); stopUkCycle(); stopUkParkingTimer(); stopGrTimers(); stopGrParkingTimer();
     if (page === "home_intro" && ["moving", "resuming"].includes(ukParking.stage)) ukParking = ukParkingTransition(ukParking, "stop");
@@ -497,7 +505,8 @@ function render() {
   });
   if (page === "energy" && variant === "uk-v2h") updateUkEnergy();
   if (page === "outcomes" && mode === "research" && config.collection_enabled) renderTurnstile();
-  screen.focus({ preventScroll: true });
+  if (previousPage !== page) screen.focus({ preventScroll: true });
+  else if (focusAttribute) screen.querySelector(`[${focusAttribute}="${CSS.escape(focusValue)}"]`)?.focus({ preventScroll: true });
 }
 
 function collect() {

@@ -32,3 +32,7 @@ SUS is presented only to roles marked as direct users: the fleet driver, Greek p
 ## Compact rating layout — 30 September 2026
 
 Build `2026-09-30b` displays the Trikala positioning checkpoint as five horizontal, fully labelled rating choices, with Cannot judge on a separate row. The shared V1.3 renderer keeps numeric agreement ratings in one five-column row for Trikala and Oxfordshire, including the intact SUS module when enabled. Native radio inputs, wording, response values and module routing remain unchanged. Finnish fleet screens use their existing layout. Check narrow phones, keyboard navigation, high contrast and enlarged text during the cognitive pilot.
+
+## Mobile control grouping — 1 October 2026
+
+Build `2026-10-01a` uses a short, non-sticky phone header and an in-flow footer. Oxfordshire parking controls precede expandable guidance, and both UK/GR sessions place controls next to battery and energy-flow displays. Compact progress strips stay visible; ledgers and assumptions remain available in expandable sections. Repeated Trikala updates preserve open details and control focus. Tampere responsibility probes for departure reserve and recovery now follow `questions`; V2G permission and recovery actions remain app controls in demo-only. Manual fallback cannot require an absent rating. Full survey links and all existing QR destinations remain usable.

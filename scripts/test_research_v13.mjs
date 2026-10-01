@@ -1,3 +1,5 @@
+import { renderCoreScreen } from "../public/js/screens-core.js";
+import { renderEvalScreen } from "../public/js/screens-eval.js";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { V13_PROFILES, V13_CHOICES, validateV13, scoreV13, minimisedV13 } from "../public/js/research-v13-contract.js";
@@ -273,12 +275,23 @@ for (const preset of [demoView, questionView, fullView, customView]) {
 const publicFile = name => readFileSync(new URL(`../public/${name}`, import.meta.url), "utf8");
 assert.match(publicFile("v13-study.css"), /grid-template-areas: "\. forward \." "left center right" "\. back \."/, "Forward and Back must share the vertical axis");
 const styleHrefs = html => [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(match => match[1]);
-const imports = js => [...js.matchAll(/^import "([^"]+)";/gm)].map(match => match[1]);
+const imports = js => [...js.matchAll(/^import "([^"]+)";/gm)].map(match => (match[1].startsWith("./js/main.js?") || match[1].startsWith("./v06.js?")) ? match[1].split("?")[0] : match[1]);
 assert.deepEqual(styleHrefs(publicFile("v13-fleet.html")), styleHrefs(publicFile("index.html")), "Finnish V1.3 must retain the RC1 mobile styles.");
 assert.deepEqual(imports(publicFile("v13-fleet-app.js")), imports(publicFile("app.js")).filter(name => !name.includes("research-test-browser-shim")), "Finnish V1.3 must retain the RC1 animations and overlays.");
 assert.match(publicFile("v13.html"), /v13-router\.js/);
 assert.deepEqual(SITES["fi-fleet"].demoFi.scenarioOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].scenario);
 assert.deepEqual(SITES["fi-fleet"].demoFi.recoveryOptions.map(([key]) => key), V13_CHOICES["fi-fleet"].recovery);
+
+// A demo retains permission/recovery controls without eliciting responsibility probes.
+for (const language of ["fi", "en"]) {
+  const ctx = { language, variant: "fi-fleet", state: { current_soc: 55, minimum_soc: 65, dwell_minutes: 90, departure_time: "17:00" }, config: { collection_enabled: false }, isDemo: true, taskQuestions: false, mode: rc1FleetWorkshopMode(demoView), collectionStatus: () => "Preview" };
+  assert.doesNotMatch(renderCoreScreen(3, ctx), /name="constraint_owner"/);
+  assert.doesNotMatch(renderEvalScreen(6, ctx), /name="fault_owner"/);
+  assert.match(renderCoreScreen(4, ctx), /name="v2g_authorisation"/);
+  assert.match(renderEvalScreen(6, ctx), /name="fault_decision"/);
+  assert.match(renderCoreScreen(3, { ...ctx, taskQuestions: true }), /name="constraint_owner"/);
+  assert.match(renderEvalScreen(6, { ...ctx, taskQuestions: true }), /name="fault_owner"/);
+}
 
 const stored = [];
 const db = { prepare(sql) { assert.match(sql, /research_v13_submissions/); return {

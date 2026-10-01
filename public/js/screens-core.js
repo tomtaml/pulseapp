@@ -52,6 +52,7 @@ export function renderCoreScreen(step, ctx) {
   const { language, variant, state, config, workshopCode, isDemo, mode, collectionStatus } = ctx;
   const citizen = variant === "fi-citizen";
   const fleet = variant === "fi-fleet";
+  const taskQuestions = ctx.taskQuestions !== false;
   const showMeasures = mode?.modules?.measurementFields === true;
 
   if (step === 0) return `${progress(step)}
@@ -80,7 +81,7 @@ export function renderCoreScreen(step, ctx) {
   if (step === 3) {
     if (citizen) return `${progress(step)}<div class="step-label">2 / 6</div><h1>${language === "fi" ? "Mitä sovellus suojaa?" : "What does the app protect?"}</h1><p class="lead">${language === "fi" ? "Seuraat samaa kuvitteellista Tampereen jakeluautoa. Sovellus suojaa sovitun lähtöajan ja vähimmäisvarauksen." : "You are following the same fictional Tampere delivery van. The app protects its agreed departure time and minimum battery reserve."}</p>${fleetScenarioCard(language,state)}${actions(language,step)}`;
     return `${progress(step)}<div class="step-label">2 / 6</div><h1>${language === "fi" ? "Seuraava toimitus määrittää rajat" : "The next delivery sets the limits"}</h1><p class="lead">${language === "fi" ? "Näitä arvoja käytetään seuraavassa V2G-päätöksessä. Ne ovat tämän työpajan kuvitteellisia skenaarioarvoja, eivät ajoneuvon oikeaa dataa." : "These values define the next V2G decision. They are illustrative workshop values, not live vehicle data."}</p>${fleetScenarioCard(language,state)}
-      <fieldset><legend>${language === "fi" ? "Kenen pitäisi normaalisti määrittää taattu lähtövaraus?" : "Who should normally set the guaranteed departure reserve?"}</legend>${radioGroup("constraint_owner",[["fleet_policy",language === "fi" ? "Kalustopolitiikka / ennalta sovittu sääntö" : "Fleet policy / predefined rule"],["dispatcher",language === "fi" ? "Ajojärjestely / operointi" : "Dispatcher / operations"],["driver",language === "fi" ? "Kuljettaja" : "Driver"],["shared",language === "fi" ? "Yhdistelmä tilanteen mukaan" : "Shared / depends on situation"]],state.constraint_owner)}</fieldset>
+      ${taskQuestions ? `<fieldset><legend>${language === "fi" ? "Kenen pitäisi normaalisti määrittää taattu lähtövaraus?" : "Who should normally set the guaranteed departure reserve?"}</legend>${radioGroup("constraint_owner",[["fleet_policy",language === "fi" ? "Kalustopolitiikka / ennalta sovittu sääntö" : "Fleet policy / predefined rule"],["dispatcher",language === "fi" ? "Ajojärjestely / operointi" : "Dispatcher / operations"],["driver",language === "fi" ? "Kuljettaja" : "Driver"],["shared",language === "fi" ? "Yhdistelmä tilanteen mukaan" : "Shared / depends on situation"]],state.constraint_owner)}</fieldset>` : ""}
       ${showMeasures ? `<fieldset><legend>${language === "fi" ? "Ovatko nämä tiedot riittävät V2G-päätöksen ymmärtämiseen?" : "Is this information sufficient to understand the upcoming V2G decision?"}</legend>${likert(language,"constraint_clarity",state.constraint_clarity)}</fieldset>` : ""}${actions(language,step)}`;
   }
 

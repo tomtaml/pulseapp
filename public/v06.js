@@ -109,7 +109,7 @@ if (v06Variant === "fi-fleet") {
       }
     }
 
-    if (stage === 2) requireExtraAnswer("alignment_fallback_acceptability", tr("Arvioi myös manuaalisen varakohdistuksen hyväksyttävyys.", "Also rate the acceptability of manual fallback positioning."));
+    if (stage === 2 && document.querySelector('input[name="alignment_fallback_acceptability"]')) requireExtraAnswer("alignment_fallback_acceptability", tr("Arvioi myös manuaalisen varakohdistuksen hyväksyttävyys.", "Also rate the acceptability of manual fallback positioning."));
   }
 
   function likertHtml(name) {

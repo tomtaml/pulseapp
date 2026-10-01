@@ -54,10 +54,13 @@ export function ukHomeParkingCard({ stage, obstacleSeen, obstacleCleared, manual
     <p class="demo-state" role="status">${status}</p>
     ${manual ? `<div class="home-manual-panel"><strong>Manual fallback positioning · step ${manualStep + 1} of 3</strong><p>Follow the highlighted arrow and short movement instruction. These buttons advance an illustration; they do not move a vehicle.</p>${ukManualPad(recommended)}<p class="home-move-feedback" role="status">${lastMoveWasWrong ? "That arrow did not advance the illustration. " : ""}Recommended correction: ${recommended.label}.${wrongMoves ? ` Wrong-direction attempts: ${wrongMoves}. Follow the highlighted arrow.` : ""}</p></div>` : stage === "manual_aligned" ? `<p class="home-move-feedback" role="status">Manual positioning complete in three illustrated corrections. Check the route once more before confirming.</p>` : ""}
     ${guidanceFault && stage !== "parked" ? `<p class="study-note">Illustrated fault: automatic guidance unavailable. No vehicle sensor or support service is connected.</p>` : ""}
+    <div class="study-actions">${controls}${stage !== "approach" && stage !== "parked" ? `<button type="button" class="secondary" data-uk-parking="cancel">Cancel manoeuvre</button>` : ""}</div>
+    <details data-detail="parking-help"><summary>Parking guidance and simulation details</summary>
     <div class="home-safety-list"><strong>Before and during the manoeuvre</strong><ul><li>Check people and objects around the vehicle.</li><li>Keep the entrance and walking/rolling route clear.</li><li>Watch the guidance; stop whenever needed.</li></ul></div>
     ${stage === "support" ? `<div class="demo-permission"><strong>Support to confirm with the site</strong><p>Who can clear an obstruction, and how could a user reach them through an accessible phone or assisted channel? The prototype has no provider contact and sends no request.</p></div>` : ""}
-    <div class="study-actions">${controls}${stage !== "approach" && stage !== "parked" ? `<button type="button" class="secondary" data-uk-parking="cancel">Cancel manoeuvre</button>` : ""}</div>
+
     <p class="study-note">This is a staged workshop illustration. It does not claim that a real vehicle detects this obstacle, parks autonomously, or has a verified home energy connection. The driver would check the physical space and seek accessible help if the route could not be cleared.</p>
+    </details>
   </div>`;
 }
 
@@ -103,15 +106,23 @@ export function ukEnergyCard(choice, phase, sharingActive, exportedPoints, runni
   const right = frame.direction === "home" ? ["🏠", "Home"] : ["🚐", "Vehicle"];
   return `<div class="site-demo-card overnight-card" aria-label="Illustrative overnight household V2H example">
     <div class="scenario-badge">Oxfordshire · home V2H session · simulated energy</div>
-    <div class="night-heading"><h2>Parked beside the house · <span data-uk-time>${frame.time}</span></h2><span class="night-live" data-uk-state>${running ? "Running" : phase === 7 ? "Ready for next trip" : "Ready to start"}</span></div>
+    <div class="night-heading"><h2>Overnight · <span data-uk-time>${frame.time}</span></h2><span class="night-live" data-uk-state>${running ? "Running" : phase === 7 ? "Ready for next trip" : "Ready to start"}</span></div>
     <label class="night-minimum" for="uk-morning-minimum"><strong>Minimum battery for the morning trip</strong><select id="uk-morning-minimum" data-uk-minimum ${phase !== 0 || running ? "disabled" : ""}>${ukMorningMinimums.map(value => `<option value="${value}" ${value === reserve ? "selected" : ""}>${value}%</option>`).join("")}</select></label>
-    <p class="study-note" data-uk-min-preview>At ${reserve}% minimum, up to ${potential.homeKwh.toFixed(1)} kWh could reach the house after charging to 80%; illustrative energy cost difference £${potential.differencePounds.toFixed(2)} under the assumptions below. ${reserve === 80 ? "No V2H export is available." : "Compare household support with the charge retained for travel."}</p>
+
     <div class="home-reserves"><div><span>Vehicle battery</span><strong data-uk-soc>${frame.soc}%</strong></div><div><span>Chosen morning minimum</span><strong data-uk-reserve>${reserve}%</strong></div></div>
     <div class="home-battery" data-uk-battery role="img" aria-label="Vehicle battery ${frame.soc} percent; chosen morning minimum ${reserve} percent"><span data-uk-fill style="width:${frame.soc}%"></span><span data-uk-marker style="left:${reserve}%"></span></div>
+
     <div class="night-timeline" aria-label="Illustrative overnight checkpoints">${ukTimes.map((time, index) => `<span data-uk-checkpoint="${index}" class="${index === phase ? "current" : ""}">${time}</span>`).join("")}</div>
     <div class="demo-flow ${active && running ? "" : "idle"}" data-uk-flow role="img" aria-label="${flowLabel}"><span data-uk-from>${left[0]}<small>${left[1]}</small></span><span class="flow-arrow" aria-hidden="true">→</span><span data-uk-to>${right[0]}<small>${right[1]}</small></span></div>
     <p class="night-direction" data-uk-direction>${flowLabel}</p>
+    <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 7 ? sharingActive ? "Replay overnight example" : "Replay with home support" : running ? "Pause example" : phase === 0 ? "Run overnight example" : "Resume example"}</button>
+      <button type="button" class="secondary" data-uk-night-step ${running || phase === 7 ? "hidden" : ""}>Next checkpoint</button>
+      <button type="button" class="secondary" data-uk-night-skip ${phase === 7 ? "hidden" : ""}>Skip to morning</button>
+      ${choice === "support_home" ? `<button type="button" class="secondary" data-uk-sharing ${!sharingActive || phase === 7 ? "hidden" : ""}>${phase < 4 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
     <p class="demo-state" data-uk-status>${frame.status}</p>
+
+    <details data-detail="energy-ledger"><summary>Energy totals and example costs</summary>
+    <p class="study-note" data-uk-min-preview>At ${reserve}% minimum, up to ${potential.homeKwh.toFixed(1)} kWh could reach the house after charging to 80%; illustrative energy cost difference £${potential.differencePounds.toFixed(2)} under the assumptions below. ${reserve === 80 ? "No V2H export is available." : "Compare household support with the charge retained for travel."}</p>
     <h3>How V2H helps this house in the example</h3><p class="study-note">The car can supply part of the household's overnight demand instead of importing that energy. If compatible backup equipment and an agreed essential-load rule existed, preserving selected home needs could be explored separately. This demo does not simulate an outage.</p>
     <h3>Energy and value in this example</h3>
     <div class="night-ledger" aria-label="Illustrative overnight energy ledger">
@@ -122,9 +133,7 @@ export function ukEnergyCard(choice, phase, sharingActive, exportedPoints, runni
     </div>
     <p class="night-equation" data-uk-equation>House import avoided: £${ledger.avoidedPounds.toFixed(2)} − battery energy replacement: £${ledger.replacementPounds.toFixed(2)} = £${ledger.differencePounds.toFixed(2)}.</p>
     <p class="study-note">Illustrative assumptions: ${ukHomeAssumptions.batteryKwh} kWh usable car battery; each 10 battery percentage points stores ${(ukHomeAssumptions.batteryKwh * 0.1).toFixed(1)} kWh; ${ukHomeAssumptions.homeDeliveryRatio * 100}% of energy drawn for V2H reaches the house; household electricity ${ukHomeAssumptions.importPence}p/kWh and replacement battery energy ${ukHomeAssumptions.replacementPence}p/kWh. The comparison excludes recharge losses, battery wear and fees. It is not a measured saving or a live tariff. Household essential-load protection still needs a separately agreed rule.</p>
-    <div class="study-actions"><button type="button" class="primary" data-uk-night>${phase === 7 ? sharingActive ? "Replay overnight example" : "Replay with home support" : running ? "Pause example" : phase === 0 ? "Run overnight example" : "Resume example"}</button>
-      <button type="button" class="secondary" data-uk-night-step ${running || phase === 7 ? "hidden" : ""}>Next checkpoint</button>
-      <button type="button" class="secondary" data-uk-night-skip ${phase === 7 ? "hidden" : ""}>Skip to morning</button>
-      ${choice === "support_home" ? `<button type="button" class="secondary" data-uk-sharing ${!sharingActive || phase === 7 ? "hidden" : ""}>${phase < 4 ? "Cancel home support" : "Stop home support"}</button>` : ""}</div>
+
+    </details>
   </div>`;
 }

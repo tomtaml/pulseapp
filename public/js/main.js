@@ -1,6 +1,6 @@
 import { APP_VERSION, variants } from "./copy.js";
-import { renderCoreScreen } from "./screens-core.js";
-import { renderEvalScreen } from "./screens-eval.js";
+import { renderCoreScreen } from "./screens-core.js?v=20261001a";
+import { renderEvalScreen } from "./screens-eval.js?v=20261001a";
 import { esc, progress, t } from "./ui.js";
 import { modePreset, moduleEnabled, resolveInstrumentMode, routeProfile } from "./variant-registry.js";
 import { resolveWorkshopView, rc1FleetWorkshopMode } from "./v13-questions.js";
@@ -63,7 +63,7 @@ function enabled(moduleName) {
   if (!isV13Fleet) return moduleEnabled(instrumentMode,moduleName,activeProfile());
   return mode.modules[moduleName] === true && (moduleName !== "sus" || activeProfile().sus === true);
 }
-function ctx() { return { language, variant, state, config, workshopCode, isDemo, instrumentMode, mode, profile:activeProfile(), collectionStatus }; }
+function ctx() { return { language, variant, state, config, workshopCode, isDemo, instrumentMode, mode, profile:activeProfile(), collectionStatus, taskQuestions: !isV13Fleet || v13FleetView.modules.questions }; }
 
 function stepEnabled(candidate) {
   if (candidate === 7) return enabled("comprehension");
@@ -101,11 +101,11 @@ function validStep() {
   if (step === 1 && !state.participant_group) return language === "fi" ? "Valitse näkökulma." : "Choose a perspective.";
   if (step === 2 && variant === "fi-fleet" && !state.alignment_completed) return language === "fi" ? "Kohdista auto ensin." : "Align the vehicle first.";
   if (step === 2 && enabled("measurementFields") && !Number.isInteger(state.alignment_clarity)) return language === "fi" ? "Arvioi kohdistuksen selkeys ennen jatkamista." : "Rate the clarity of alignment before continuing.";
-  if (step === 3 && variant === "fi-fleet" && (!state.constraint_owner || (enabled("measurementFields") && !Number.isInteger(state.constraint_clarity)))) return language === "fi" ? "Valitse vastuutaho ja arvioi tiedon riittävyys." : "Choose an owner and rate whether the information is sufficient.";
+  if (step === 3 && variant === "fi-fleet" && (((!isV13Fleet || v13FleetView.modules.questions) && !state.constraint_owner) || (enabled("measurementFields") && !Number.isInteger(state.constraint_clarity)))) return language === "fi" ? "Valitse vastuutaho ja arvioi tiedon riittävyys." : "Choose an owner and rate whether the information is sufficient.";
   if (step === 4 && variant === "fi-fleet" && (!state.v2g_authorisation || (enabled("measurementFields") && !Number.isInteger(state.preuse_v2g_acceptance)))) return language === "fi" ? "Valitse V2G:n hyväksyntätapa ja arvioi järjestelyn hyväksyttävyys." : "Choose a V2G authorisation method and rate the arrangement.";
   if (step === 4 && variant !== "fi-fleet" && enabled("measurementFields") && !Number.isInteger(state.preuse_v2g_acceptance)) return language === "fi" ? "Arvioi V2G-luvan ja keskeytyksen selkeys." : "Rate the clarity of V2G permission and override.";
   if (step === 5 && (!state.cycle_completed || (enabled("measurementFields") && !Number.isInteger(state.energy_flow_clarity)))) return language === "fi" ? "Suorita virtuaalinen jakso ja arvioi energian suunnan selkeys." : "Run the virtual cycle and rate the clarity of energy flow.";
-  if (step === 6 && variant === "fi-fleet" && (!state.fault_decision || !state.fault_owner)) return language === "fi" ? "Valitse toimintatapa ja päätösvastuu." : "Choose an action and decision owner.";
+  if (step === 6 && variant === "fi-fleet" && (!state.fault_decision || ((!isV13Fleet || v13FleetView.modules.questions) && !state.fault_owner))) return language === "fi" ? "Valitse toimintatapa ja päätösvastuu." : "Choose an action and decision owner.";
   if (step === 6 && variant !== "fi-fleet" && !state.fault_decision) return language === "fi" ? "Valitse tärkein tieto." : "Choose the most important information.";
   if (step === 7 && variant === "fi-fleet" && (!state.c1 || !state.c2 || !state.c3 || !state.c4)) return language === "fi" ? "Vastaa kaikkiin neljään kohtaan." : "Please answer all four items.";
   if (step === 7 && variant !== "fi-fleet" && (!state.c1 || !state.c2 || !state.c3)) return language === "fi" ? "Vastaa kaikkiin kolmeen kohtaan." : "Please answer all three items.";

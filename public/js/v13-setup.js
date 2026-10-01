@@ -1,4 +1,4 @@
-import { WORKSHOP_PRESETS } from "./v13-questions.js?v=20260930b";
+import { WORKSHOP_PRESETS } from "./v13-questions.js?v=20261001a";
 
 const form = document.querySelector("#workshopSetup");
 const preset = form.elements.preset;

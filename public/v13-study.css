@@ -187,3 +187,59 @@ body.high-contrast .gr-checkpoint { background: #111; color: #fff; border-color:
 @media (max-width: 620px) { .topbar { align-items: start; } .toolbar { flex-wrap: wrap; } .study-actions button { flex: 1 1 8rem; } .charging-windows, .gr-offer-grid { grid-template-columns: 1fr; } .charging-window { min-height: 0; } .gr-offer-heading { min-height: 0; } .site-demo-card .alignment-controls button { width: 100%; } .home-layout { min-height: 10rem; } .home-house { font-size: 3.2rem; } .home-vehicle { font-size: 2.6rem; } .night-timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); } .gr-timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 420px) { .night-ledger { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .shell:has(.study-scale) { padding-inline: .65rem; } .card:has(.study-scale) { padding-inline: .8rem; } .gr-checkpoint { padding-inline: .6rem; } .study-scale { gap: .2rem; } }
+
+/* Keep the live state and its controls together on phones. */
+.task-about, details[data-detail] { margin: .7rem 0; }
+.task-about summary, details[data-detail] > summary { cursor: pointer; font-weight: 650; padding: .65rem 0; min-height: 44px; }
+.session-controls { margin: .65rem 0; }
+@media (max-width: 620px) {
+  .topbar { position: static; flex-direction: column; align-items: stretch; gap: .4rem; padding: .6rem .75rem; }
+  .brand-block { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
+  .brand-block .badge, .brand-block .status-badge { margin: 0; border-radius: .4rem; font-size: .72rem; padding: .2rem .35rem; }
+  .toolbar { flex-wrap: wrap; gap: .35rem; }
+  .toolbar .ghost { min-height: 44px; font-size: .85rem; padding: .4rem .6rem; }
+  .footer { position: static; padding: .65rem .75rem; font-size: .72rem; }
+  .shell { padding: .65rem .65rem 1rem; }
+  .card { padding: .85rem; border-radius: .8rem; }
+  #screen > .study-status { display: none; }
+  .study-progress { margin: 0 0 .55rem; }
+  .lead { font-size: .95rem; margin: .5rem 0 .7rem; }
+  .site-demo-card { margin: .65rem 0; padding: .65rem; }
+  .site-demo-card > .scenario-badge { font-size: .7rem; }
+  .site-demo-card h2 { font-size: 1.05rem; margin: .3rem 0 .55rem; }
+  .night-heading { gap: .3rem; }
+  .night-heading h2 { font-size: 1rem; }
+  .night-minimum { padding: .4rem; gap: .3rem; flex-wrap: nowrap; font-size: .85rem; }
+  .night-minimum select { width: auto; min-width: 4.5rem; }
+  .home-reserves { gap: .4rem; margin: .5rem 0; }
+  .home-reserves > div { padding: .45rem; font-size: .82rem; }
+  .home-reserves strong, .overnight-card .home-reserves strong { font-size: 1.4rem; }
+  .home-battery { height: 1.1rem; margin: .45rem 0; }
+  .demo-flow, .overnight-card .demo-flow { padding: .4rem; min-height: 0; }
+  .demo-flow > span:not(.flow-arrow) { font-size: 1.6rem; }
+  .demo-flow small { font-size: .75rem; }
+  .night-direction, .gr-direction { margin: .35rem 0; font-size: .9rem; }
+  .study-actions { gap: .4rem; margin: .55rem 0; }
+  .study-actions button { padding: .5rem; min-height: 44px; font-size: .9rem; flex: 1 1 7rem; }
+  .study-actions:empty { display: none; }
+  .demo-state { padding: .5rem .6rem; margin: .5rem 0; font-size: .85rem; }
+  .night-ledger { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+  .night-ledger > div { padding: .45rem; font-size: .8rem; }
+  .night-ledger strong { font-size: 1.2rem; }
+  .home-layout { min-height: 0; gap: .4rem; padding: .5rem; }
+  .home-house { font-size: 2.4rem; }
+  .home-parking { min-height: 6rem; }
+  .home-vehicle { font-size: 2.2rem; }
+  .home-access-path { font-size: .8rem; padding: .35rem; }
+  .home-manual-panel { margin: .5rem 0; padding: .5rem; }
+  .home-manual-panel p { font-size: .85rem; margin: .35rem 0; }
+  .gr-bay { min-height: 0; grid-template-rows: minmax(6rem, auto) auto auto; gap: .35rem; padding: .5rem; }
+  .gr-car { font-size: 2.7rem; }
+  .gr-pad { font-size: 2rem; min-width: 7rem; }
+  .gr-crossing, .gr-bay-marker { font-size: .8rem; }
+}
+@media (max-width: 620px) {
+  .night-timeline, .gr-timeline { margin: .4rem 0; gap: .15rem; }
+  .night-timeline span, .gr-timeline span { font-size: .72rem; padding: .25rem .1rem; }
+  .overnight-card .home-battery { height: 1.1rem; }
+}

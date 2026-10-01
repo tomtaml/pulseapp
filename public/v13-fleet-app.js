@@ -1,10 +1,10 @@
 // Pin the RC1 participant stack for the separate V1.3 Finnish workshop page.
 // The synthetic test browser shim is intentionally absent; this page never submits.
-import "./js/main.js?v=1480";
+import "./js/main.js?v=20261001a";
 import "./js/augment.js";
 import "./js/charging/index.js?v=1420";
 import "./v05.js";
-import "./v06.js";
+import "./v06.js?v=20261001a";
 import "./v06-positioning-fix.js";
 import "./v06-core-sync.js";
 import "./v07.js";
